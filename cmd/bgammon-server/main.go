@@ -9,4 +9,9 @@ import (
 func main() {
 	b := bgammon.NewBoard()
 	log.Printf("%+v", b)
+
+	s := newServer()
+	go s.listen("tcp", "127.0.0.1:1337")
+
+	select {}
 }
