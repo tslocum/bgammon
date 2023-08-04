@@ -2,16 +2,14 @@ package bgammon
 
 // commands are always sent TO the server
 
-type Command struct {
-	Type int
-}
+type Command string
 
-type CommandChat struct {
-	Command
-	Message string
-}
-
-type CommandMove struct {
-	Event
-	Spaces []int // One or more sets of moves from A->B as A,B,A,B,A,B...
-}
+const (
+	CommandLogin  = "login"  // Log in with username and password, or as a guest.
+	CommandSay    = "say"    // Send chat message.
+	CommandList   = "list"   // List available games.
+	CommandCreate = "create" // Create game.
+	CommandJoin   = "join"   // Join game.
+	CommandRoll   = "roll"   // Roll dice.
+	CommandMove   = "move"   // Move checkers.
+)
