@@ -12,15 +12,6 @@ import (
 	"code.rocket9labs.com/tslocum/bgammon"
 )
 
-type serverGame struct {
-	id         int
-	created    int64
-	lastActive int64
-	client1    bgammon.Client
-	client2    bgammon.Client
-	bgammon.Game
-}
-
 type serverCommand struct {
 	client  *serverClient
 	command []byte
@@ -30,6 +21,7 @@ type server struct {
 	clients      []*serverClient
 	games        []*serverGame
 	listeners    []net.Listener
+	newGameIDs   chan int
 	newClientIDs chan int
 	commands     chan serverCommand
 }
@@ -37,9 +29,11 @@ type server struct {
 func newServer() *server {
 	const bufferSize = 10
 	s := &server{
+		newGameIDs:   make(chan int),
 		newClientIDs: make(chan int),
 		commands:     make(chan serverCommand, bufferSize),
 	}
+	go s.handleNewGameIDs()
 	go s.handleNewClientIDs()
 	go s.handleCommands()
 	return s
@@ -85,6 +79,8 @@ func (s *server) handleConnection(conn net.Conn) {
 	}
 	log.Println("socket client", c)
 
+	s.sendHello(c)
+
 	s.handleClientCommands(c)
 }
 
@@ -95,6 +91,14 @@ func (s *server) handleClientCommands(c *serverClient) {
 			client:  c,
 			command: command,
 		}
+	}
+}
+
+func (s *server) handleNewGameIDs() {
+	gameID := 1
+	for {
+		s.newGameIDs <- gameID
+		gameID++
 	}
 }
 
@@ -112,8 +116,12 @@ func (s *server) randomUsername() []byte {
 	return []byte(fmt.Sprintf("Guest%d", i))
 }
 
+func (s *server) sendHello(c *serverClient) {
+	c.events <- []byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!")
+}
+
 func (s *server) sendWelcome(c *serverClient) {
-	c.events <- []byte(fmt.Sprintf("welcome %s there are %d clients playing %d games", c.name, len(s.clients), len(s.games)))
+	c.events <- []byte(fmt.Sprintf("welcome %s there are %d clients playing %d games.", c.name, len(s.clients), len(s.games)))
 }
 
 func (s *server) handleCommands() {
@@ -183,6 +191,14 @@ func (s *server) handleCommands() {
 				continue
 			}
 		case bgammon.CommandList:
+			cmd.client.events <- []byte("liststart Games list:")
+			players := 0
+			password := 0
+			name := "game name"
+			for _, g := range s.games {
+				cmd.client.events <- []byte(fmt.Sprintf("game %d %d %d %s", g.id, players, password, name))
+			}
+			cmd.client.events <- []byte("listend End of games list.")
 		case bgammon.CommandCreate:
 			sendUsage := func() {
 				cmd.client.events <- []byte("notice To create a public game specify whether it is public or private.")
@@ -209,7 +225,14 @@ func (s *server) handleCommands() {
 				sendUsage()
 				continue
 			}
+
 			log.Printf("create game (password %s) name: %s", gamePassword, gameName)
+
+			g := newServerGame(<-s.newGameIDs)
+			g.name = gameName
+			g.password = gamePassword
+
+			s.games = append(s.games, g)
 		case bgammon.CommandJoin:
 		case bgammon.CommandRoll:
 		case bgammon.CommandMove:
