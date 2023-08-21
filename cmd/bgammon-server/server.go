@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -124,8 +125,18 @@ func (s *server) sendWelcome(c *serverClient) {
 	c.events <- []byte(fmt.Sprintf("welcome %s there are %d clients playing %d games.", c.name, len(s.clients), len(s.games)))
 }
 
+func (s *server) gameByClient(c *serverClient) *serverGame {
+	for _, g := range s.games {
+		if g.client1 == c || g.client2 == c {
+			return g
+		}
+	}
+	return nil
+}
+
 func (s *server) handleCommands() {
 	var cmd serverCommand
+COMMANDS:
 	for cmd = range s.commands {
 		if cmd.client == nil {
 			log.Panicf("nil client with command %s", cmd.command)
@@ -186,6 +197,11 @@ func (s *server) handleCommands() {
 		}
 
 		switch keyword {
+		case bgammon.CommandHelp:
+			// TODO get extended help by specifying a command after help
+			cmd.client.events <- []byte("helpstart Help text:")
+			cmd.client.events <- []byte("help Test help text")
+			cmd.client.events <- []byte("helpend End of help text.")
 		case bgammon.CommandSay:
 			if len(params) == 0 {
 				continue
@@ -196,13 +212,12 @@ func (s *server) handleCommands() {
 			password := 0
 			name := "game name"
 			for _, g := range s.games {
-				cmd.client.events <- []byte(fmt.Sprintf("game %d %d %d %s", g.id, players, password, name))
+				cmd.client.events <- []byte(fmt.Sprintf("game %d %d %d %s", g.id, password, players, name))
 			}
 			cmd.client.events <- []byte("listend End of games list.")
 		case bgammon.CommandCreate:
 			sendUsage := func() {
-				cmd.client.events <- []byte("notice To create a public game specify whether it is public or private.")
-				cmd.client.events <- []byte("notice When creating a private game, a password must be set.")
+				cmd.client.events <- []byte("notice To create a public game specify whether it is public or private. When creating a private game, a password must also be provided.")
 			}
 			if len(params) == 0 {
 				sendUsage()
@@ -232,10 +247,63 @@ func (s *server) handleCommands() {
 			g.name = gameName
 			g.password = gamePassword
 
+			if rand.Intn(2) == 0 { // Start as black.
+				g.client1 = cmd.client
+				g.Player1.Name = string(cmd.client.name)
+			} else { // Start as white.
+				g.client2 = cmd.client
+				g.Player2.Name = string(cmd.client.name)
+			}
+
 			s.games = append(s.games, g)
+
+			players := 1
+			password := 0
+			if len(gamePassword) != 0 {
+				password = 1
+			}
+			cmd.client.events <- []byte(fmt.Sprintf("joined %d %d %d %s", g.id, password, players, gameName))
 		case bgammon.CommandJoin:
+			if s.gameByClient(cmd.client) != nil {
+				cmd.client.events <- []byte("failedjoin Please leave the game you are in before joining another game.")
+				continue
+			}
+
+			sendUsage := func() {
+				cmd.client.events <- []byte("notice To join a public game specify its game ID. To join a private game, a password must also be specified.")
+			}
+
+			if len(params) == 0 {
+				sendUsage()
+				continue
+			}
+			gameID, err := strconv.Atoi(string(params[1]))
+			if err != nil || gameID < 1 {
+				sendUsage()
+				continue
+			}
+
+			for _, g := range s.games {
+				if g.id == gameID {
+					if len(g.password) != 0 && (len(params) < 2 || !bytes.Equal(g.password, bytes.Join(params[2:], []byte(" ")))) {
+						cmd.client.events <- []byte("failedjoin Invalid password.")
+						continue COMMANDS
+					}
+
+					log.Printf("join existing game %+v", g)
+					// cmd.client.events <- []byte(fmt.Sprintf("joined %d %d %d %s", g.id, players, password, gameName))
+					continue COMMANDS
+				}
+			}
+		case bgammon.CommandLeave:
 		case bgammon.CommandRoll:
 		case bgammon.CommandMove:
+		case bgammon.CommandDisconnect:
+			g := s.gameByClient(cmd.client)
+			if g != nil {
+				// todo leave game
+			}
+			cmd.client.Terminate("Client disconnected")
 		default:
 			log.Printf("unknown command %s", keyword)
 		}

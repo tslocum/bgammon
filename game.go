@@ -13,7 +13,9 @@ type Game struct {
 
 func NewGame() *Game {
 	return &Game{
-		Board: NewBoard(),
+		Board:   NewBoard(),
+		Player1: NewPlayer(1),
+		Player2: NewPlayer(2),
 	}
 }
 
