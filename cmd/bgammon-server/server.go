@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"log"
@@ -166,7 +167,7 @@ COMMANDS:
 
 		// Require users to send login command first.
 		if cmd.client.account == -1 {
-			if keyword == bgammon.CommandLogin {
+			if keyword == bgammon.CommandLogin || keyword == "l" {
 				var username []byte
 				var password []byte
 				switch len(params) {
@@ -197,16 +198,46 @@ COMMANDS:
 		}
 
 		switch keyword {
-		case bgammon.CommandHelp:
+		case bgammon.CommandHelp, "h":
 			// TODO get extended help by specifying a command after help
 			cmd.client.events <- []byte("helpstart Help text:")
 			cmd.client.events <- []byte("help Test help text")
 			cmd.client.events <- []byte("helpend End of help text.")
-		case bgammon.CommandSay:
+		case bgammon.CommandJSON:
+			sendUsage := func() {
+				cmd.client.events <- []byte("notice To enable JSON formatted messages, send 'json on'. To disable JSON formatted messages, send 'json off'.")
+			}
+			if len(params) != 1 {
+				sendUsage()
+				continue
+			}
+			paramLower := strings.ToLower(string(params[0]))
+			switch paramLower {
+			case "on":
+				cmd.client.json = true
+				cmd.client.events <- []byte("json JSON formatted messages enabled.")
+			case "off":
+				cmd.client.json = false
+				cmd.client.events <- []byte("json JSON formatted messages disabled.")
+			default:
+				sendUsage()
+			}
+		case bgammon.CommandSay, "s":
 			if len(params) == 0 {
 				continue
 			}
-		case bgammon.CommandList:
+			g := s.gameByClient(cmd.client)
+			if g == nil {
+				cmd.client.events <- []byte("notice Message not sent. You are not currently in a game.")
+				continue
+			}
+			opponent := g.opponent(cmd.client)
+			if opponent == nil {
+				cmd.client.events <- []byte("notice Message not sent. There is no one else in the game.")
+				continue
+			}
+			opponent.events <- []byte(fmt.Sprintf("say %s %s", cmd.client.name, bytes.Join(params, []byte(" "))))
+		case bgammon.CommandList, "ls":
 			cmd.client.events <- []byte("liststart Games list:")
 			players := 0
 			password := 0
@@ -215,7 +246,7 @@ COMMANDS:
 				cmd.client.events <- []byte(fmt.Sprintf("game %d %d %d %s", g.id, password, players, name))
 			}
 			cmd.client.events <- []byte("listend End of games list.")
-		case bgammon.CommandCreate:
+		case bgammon.CommandCreate, "c":
 			sendUsage := func() {
 				cmd.client.events <- []byte("notice To create a public game specify whether it is public or private. When creating a private game, a password must also be provided.")
 			}
@@ -246,24 +277,13 @@ COMMANDS:
 			g := newServerGame(<-s.newGameIDs)
 			g.name = gameName
 			g.password = gamePassword
-
-			if rand.Intn(2) == 0 { // Start as black.
-				g.client1 = cmd.client
-				g.Player1.Name = string(cmd.client.name)
-			} else { // Start as white.
-				g.client2 = cmd.client
-				g.Player2.Name = string(cmd.client.name)
+			if !g.addClient(cmd.client) {
+				log.Panicf("failed to add client to newly created game %+v %+v", g, cmd.client)
 			}
+			s.games = append(s.games, g) // TODO lock
 
-			s.games = append(s.games, g)
-
-			players := 1
-			password := 0
-			if len(gamePassword) != 0 {
-				password = 1
-			}
-			cmd.client.events <- []byte(fmt.Sprintf("joined %d %d %d %s", g.id, password, players, gameName))
-		case bgammon.CommandJoin:
+			g.sendBoard(cmd.client)
+		case bgammon.CommandJoin, "j":
 			if s.gameByClient(cmd.client) != nil {
 				cmd.client.events <- []byte("failedjoin Please leave the game you are in before joining another game.")
 				continue
@@ -277,7 +297,7 @@ COMMANDS:
 				sendUsage()
 				continue
 			}
-			gameID, err := strconv.Atoi(string(params[1]))
+			gameID, err := strconv.Atoi(string(params[0]))
 			if err != nil || gameID < 1 {
 				sendUsage()
 				continue
@@ -290,18 +310,63 @@ COMMANDS:
 						continue COMMANDS
 					}
 
-					log.Printf("join existing game %+v", g)
-					// cmd.client.events <- []byte(fmt.Sprintf("joined %d %d %d %s", g.id, players, password, gameName))
+					if !g.addClient(cmd.client) {
+						cmd.client.events <- []byte("failedjoin Game is full.")
+						continue COMMANDS
+					}
+
+					g.sendBoard(cmd.client)
 					continue COMMANDS
 				}
 			}
-		case bgammon.CommandLeave:
-		case bgammon.CommandRoll:
-		case bgammon.CommandMove:
+		case bgammon.CommandLeave, "l":
+			g := s.gameByClient(cmd.client)
+			if g == nil {
+				cmd.client.events <- []byte("failedleave You are not currently in a game.")
+				continue
+			}
+
+			id := g.id
+			// TODO remove
+			cmd.client.events <- []byte(fmt.Sprintf("left %d", id))
+		case bgammon.CommandRoll, "r":
+			g := s.gameByClient(cmd.client)
+			if g == nil {
+				cmd.client.events <- []byte("notice You are not currently in a game.")
+				continue COMMANDS
+			}
+
+			playerNumber := 1
+			if g.client2 == cmd.client {
+				playerNumber = 2
+			}
+			if !g.roll(playerNumber) {
+				cmd.client.events <- []byte("notice It is not your turn to roll.")
+			} else {
+				g.eachClient(func(client *serverClient) {
+					client.events <- []byte(fmt.Sprintf("rolled %d %d", g.Roll1, g.Roll2))
+				})
+			}
+		case bgammon.CommandMove, "m":
+		case bgammon.CommandBoard, "b":
+			g := s.gameByClient(cmd.client)
+			if g == nil {
+				cmd.client.events <- []byte("notice You are not currently in a game.")
+			} else {
+				playerNumber := 1
+				if g.client2 == cmd.client {
+					playerNumber = 2
+				}
+
+				scanner := bufio.NewScanner(bytes.NewReader(g.BoardState(playerNumber)))
+				for scanner.Scan() {
+					cmd.client.events <- append([]byte("notice "), scanner.Bytes()...)
+				}
+			}
 		case bgammon.CommandDisconnect:
 			g := s.gameByClient(cmd.client)
 			if g != nil {
-				// todo leave game
+				// todo remove client from game
 			}
 			cmd.client.Terminate("Client disconnected")
 		default:

@@ -31,11 +31,11 @@ func newSocketClient(conn net.Conn, commands chan<- []byte, events <-chan []byte
 func (c *socketClient) readCommands() {
 	var scanner = bufio.NewScanner(c.conn)
 	for scanner.Scan() {
-		log.Printf("READ COMMAND %s", scanner.Text())
-
 		buf := make([]byte, len(scanner.Bytes()))
 		copy(buf, scanner.Bytes())
 		c.commands <- buf
+
+		log.Printf("<- %s", scanner.Bytes())
 	}
 }
 
@@ -44,7 +44,8 @@ func (c *socketClient) writeEvents() {
 	for event = range c.events {
 		c.conn.Write(event)
 		c.conn.Write([]byte("\n"))
-		log.Printf("write event %s", event)
+
+		log.Printf("-> %s", event)
 	}
 }
 

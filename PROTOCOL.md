@@ -10,6 +10,12 @@ Log in to bgammon. A random username is assigned when none is provided.
 
 This must be the first command sent when a client connects to bgammon.
 
+### `json [on/off]`
+
+Turn JSON formatted messages on or off. JSON messages are not sent by default.
+
+Graphical clients should send the `json on` command immediately after sending `login`.
+
 ### `help [command]`
 
 Request help for all commands, or optionally a specific command.
@@ -22,7 +28,7 @@ List all games.
 
 List all games.
 
-### `join [ID] [password]`
+### `join [id] [password]`
 
 Join game.
 
@@ -41,6 +47,18 @@ Reset pending checker movement.
 ### `ok`
 
 Confirm checker movement and pass turn to next player.
+
+### `say <message>`
+
+Send a chat message.
+
+This command can only be used after creating or joining a game.
+
+### `board`
+
+Print current game state in human-readable form.
+
+This command is not normally used, as the game state is provided in JSON format.
 
 ### `disconnect`
 
@@ -73,10 +91,58 @@ Server message. This should always be displayed to the user.
 
 Start of games list.
 
-### `game <ID:integer> <password:boolean> <players:integer> <name:line>`
+### `game <id:integer> <password:boolean> <players:integer> <name:line>`
 
 Game description.
 
 ### `listend End of games list.`
 
 End of games list.
+
+### `joined <id:integer> <player:text> <name:line>`
+
+Sent after successfully creating or joining a game, and when another player
+joins a game you are in.
+
+The server will always send a `board` response immediately after `joined` to
+provide clients with the initial game state.
+
+### `failedjoin <message:line>`
+
+Sent after failing to join a game.
+
+### `parted <gameID:integer> <gameID:integer>`
+
+Sent after leaving a game.
+
+### `json <message:line>`
+
+Server confirmation of client requested JSON formatting.
+
+This message does not normally need to be displayed when using a graphical client.
+
+### `board <json:line>`
+
+Game state in JSON format.
+
+This message is only sent to clients that have explicitly enabled JSON formatted messages.
+
+```
+type Player struct {
+	Number int // 1 black, 2 white
+	Name   string
+}
+
+type Game struct {
+    Board   []int
+    Player1 Player
+    Player2 Player
+    Turn    int
+    Roll1   int
+    Roll2   int
+}
+```
+
+### `say <player:text> <message:line>`
+
+Chat message from another player.

@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"log"
+	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
 )
@@ -13,5 +16,23 @@ func main() {
 	s := newServer()
 	go s.listen("tcp", "127.0.0.1:1337")
 
+	g := newServerGame(1)
+	g.Board[bgammon.SpaceBarPlayer] = 3
+	g.Board[bgammon.SpaceBarOpponent] = -2
+	g.Roll1 = 3
+	g.Roll2 = 2
+	g.Turn = 1
+	log.Printf("%+v", g.LegalMoves())
+
+	playerNumber := 1
+
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		scanner := bufio.NewScanner(bytes.NewReader(g.BoardState(playerNumber)))
+		for scanner.Scan() {
+			log.Printf("%s", append([]byte("notice "), scanner.Bytes()...))
+		}
+
+	}()
 	select {}
 }

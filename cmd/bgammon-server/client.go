@@ -4,6 +4,7 @@ import "code.rocket9labs.com/tslocum/bgammon"
 
 type serverClient struct {
 	id         int
+	json       bool
 	name       []byte
 	account    int
 	connected  int64
