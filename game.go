@@ -284,9 +284,13 @@ func (g *Game) BoardState(player int) []byte {
 
 	var playerColor = "x"
 	var opponentColor = "o"
+	playerRoll := g.Roll1
+	opponentRoll := g.Roll2
 	if white {
 		playerColor = "o"
 		opponentColor = "x"
+		playerRoll = g.Roll2
+		opponentRoll = g.Roll1
 	}
 
 	if white {
@@ -365,16 +369,36 @@ func (g *Game) BoardState(player int) []byte {
 				t.Write([]byte(fmt.Sprintf("  %d off", v)))
 			}
 		} else if i == 2 {
-			if g.Turn != player && g.Roll1 > 0 {
-				t.Write([]byte(fmt.Sprintf("  %d  %d  ", g.Roll1, g.Roll2)))
-			} else {
-				t.Write([]byte(fmt.Sprintf("  -  -  ")))
+			if g.Turn == 0 {
+				if g.Player1.Name != "" && g.Player2.Name != "" {
+					if opponentRoll != 0 {
+						t.Write([]byte(fmt.Sprintf("  %d", opponentRoll)))
+					} else {
+						t.Write([]byte(fmt.Sprintf("  -")))
+					}
+				}
+			} else if g.Turn != player {
+				if g.Roll1 > 0 {
+					t.Write([]byte(fmt.Sprintf("  %d  %d  ", g.Roll1, g.Roll2)))
+				} else if opponentName != "" {
+					t.Write([]byte(fmt.Sprintf("  -  -  ")))
+				}
 			}
 		} else if i == 8 {
-			if g.Turn == player && g.Roll1 > 0 {
-				t.Write([]byte(fmt.Sprintf("  %d  %d  ", g.Roll1, g.Roll2)))
-			} else {
-				t.Write([]byte(fmt.Sprintf("  -  -  ")))
+			if g.Turn == 0 {
+				if g.Player1.Name != "" && g.Player2.Name != "" {
+					if playerRoll != 0 {
+						t.Write([]byte(fmt.Sprintf("  %d", playerRoll)))
+					} else {
+						t.Write([]byte(fmt.Sprintf("  -")))
+					}
+				}
+			} else if g.Turn == player {
+				if g.Roll1 > 0 {
+					t.Write([]byte(fmt.Sprintf("  %d  %d  ", g.Roll1, g.Roll2)))
+				} else if playerName != "" {
+					t.Write([]byte(fmt.Sprintf("  -  -  ")))
+				}
 			}
 		} else if i == 10 {
 			t.Write([]byte(playerColor + " " + playerName + " (" + playerRating + ")"))
@@ -435,6 +459,27 @@ func numOpponentCheckers(checkers int, player int) int {
 		}
 		return 0
 	}
+}
+
+func FlipSpace(space int, player int) int {
+	if player == 1 {
+		return space
+	}
+	if space < 1 || space > 24 {
+		return space // TODO fix
+	}
+	return 24 - space + 1
+}
+
+func FormatMoves(moves [][]int, player int) []byte {
+	var out bytes.Buffer
+	for i := range moves {
+		if i != 0 {
+			out.WriteByte(' ')
+		}
+		out.Write([]byte(fmt.Sprintf("%d/%d", FlipSpace(moves[i][0], player), FlipSpace(moves[i][1], player))))
+	}
+	return out.Bytes()
 }
 
 const (

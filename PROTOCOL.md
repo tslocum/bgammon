@@ -143,6 +143,12 @@ type Game struct {
 }
 ```
 
+### `failedok <reason:line>`
+
+Sent after sending `ok` when there are one or more legal moves still available to the player.
+
+Players must make moves using all available dice rolls before ending their turn.
+
 ### `say <player:text> <message:line>`
 
 Chat message from another player.

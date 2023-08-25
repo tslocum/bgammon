@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"slices"
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
@@ -58,10 +59,26 @@ func (g *serverGame) roll(player int) bool {
 }
 
 func (g *serverGame) sendBoard(client *serverClient) {
+	playerNumber := 1
+	if g.client2 == client {
+		playerNumber = 2
+	}
+
 	if client.json {
-		gameState := bgammon.GameState{
-			Game:      g.Game,
-			Available: g.LegalMoves(),
+		gameState := ServerGameState{
+			GameState: bgammon.GameState{
+				Game:      g.Game,
+				Available: g.LegalMoves(),
+			},
+			Board: g.Game.Board,
+		}
+		if playerNumber == 2 {
+			log.Println(gameState.Board)
+			log.Println(g.Game.Board)
+			slices.Reverse(gameState.Board)
+
+			log.Println(gameState.Board)
+			log.Println(g.Game.Board)
 		}
 		buf, err := json.Marshal(gameState)
 		if err != nil {
@@ -71,10 +88,6 @@ func (g *serverGame) sendBoard(client *serverClient) {
 		return
 	}
 
-	playerNumber := 1
-	if g.client2 == client {
-		playerNumber = 2
-	}
 	scanner := bufio.NewScanner(bytes.NewReader(g.BoardState(playerNumber)))
 	for scanner.Scan() {
 		client.events <- append([]byte("notice "), scanner.Bytes()...)
@@ -98,9 +111,11 @@ func (g *serverGame) addClient(client *serverClient) bool {
 		}
 		joinMessage := []byte(fmt.Sprintf("joined %d %s %s", g.id, client.name, g.name))
 		client.events <- joinMessage
+		g.sendBoard(client)
 		opponent := g.opponent(client)
 		if opponent != nil {
 			opponent.events <- joinMessage
+			g.sendBoard(opponent)
 		}
 	}()
 	switch {
@@ -108,16 +123,20 @@ func (g *serverGame) addClient(client *serverClient) bool {
 		ok = false
 	case g.client1 != nil:
 		g.client2 = client
+		g.Player2.Name = string(client.name)
 		ok = true
 	case g.client2 != nil:
 		g.client1 = client
+		g.Player1.Name = string(client.name)
 		ok = true
 	default:
 		i := rand.Intn(2)
 		if i == 0 {
 			g.client1 = client
+			g.Player1.Name = string(client.name)
 		} else {
 			g.client2 = client
+			g.Player2.Name = string(client.name)
 		}
 		ok = true
 	}
@@ -125,17 +144,34 @@ func (g *serverGame) addClient(client *serverClient) bool {
 }
 
 func (g *serverGame) removeClient(client *serverClient) {
+	// TODO game is considered paused when only one player is present
+	// once started, only the same player may join and continue the game
+	log.Println("remove client", client)
+	ok := true
+	defer func() {
+		if !ok {
+			return
+		}
+		opponent := g.opponent(client)
+		if opponent == nil {
+			return
+		}
+		opponent.events <- []byte(fmt.Sprintf("left %d %s %s", g.id, client.name, g.name))
+		if !opponent.json {
+			g.sendBoard(opponent)
+		}
+	}()
 	switch {
 	case g.client1 == client:
 		g.client1 = nil
+		g.Player1.Name = ""
 	case g.client2 == client:
 		g.client2 = nil
+		g.Player2.Name = ""
 	default:
+		ok = false
 		return
 	}
-	// TODO game is considered paused when only one player is present
-	// once started, only the same player may join and continue the game
-	log.Println("removed client", client)
 }
 
 func (g *serverGame) opponent(client *serverClient) *serverClient {
@@ -145,4 +181,9 @@ func (g *serverGame) opponent(client *serverClient) *serverClient {
 		return g.client1
 	}
 	return nil
+}
+
+type ServerGameState struct {
+	bgammon.GameState
+	Board []int
 }

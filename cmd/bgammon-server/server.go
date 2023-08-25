@@ -299,8 +299,6 @@ COMMANDS:
 				log.Panicf("failed to add client to newly created game %+v %+v", g, cmd.client)
 			}
 			s.games = append(s.games, g) // TODO lock
-
-			g.sendBoard(cmd.client)
 		case bgammon.CommandJoin, "j":
 			if clientGame != nil {
 				cmd.client.events <- []byte("failedjoin Please leave the game you are in before joining another game.")
@@ -330,10 +328,7 @@ COMMANDS:
 
 					if !g.addClient(cmd.client) {
 						cmd.client.events <- []byte("failedjoin Game is full.")
-						continue COMMANDS
 					}
-
-					g.sendBoard(cmd.client)
 					continue COMMANDS
 				}
 			}
@@ -368,19 +363,45 @@ COMMANDS:
 			}
 			if !clientGame.roll(playerNumber) {
 				cmd.client.events <- []byte("notice It is not your turn to roll.")
-			} else {
-				clientGame.eachClient(func(client *serverClient) {
-					client.events <- []byte(fmt.Sprintf("rolled %d %d", clientGame.Roll1, clientGame.Roll2))
-				})
+				continue
+			}
+			clientGame.eachClient(func(client *serverClient) {
+				roll1 := 0
+				roll2 := 0
+				if playerNumber == 1 {
+					roll1 = clientGame.Roll1
+				} else {
+					roll2 = clientGame.Roll2
+				}
+				client.events <- []byte(fmt.Sprintf("rolled %s %d %d", cmd.client.name, roll1, roll2))
+			})
+			if clientGame.Turn == 0 && clientGame.Roll1 != 0 && clientGame.Roll2 != 0 {
+				if clientGame.Roll1 > clientGame.Roll2 {
+					clientGame.Turn = 1
+				} else if clientGame.Roll2 > clientGame.Roll1 {
+					clientGame.Turn = 2
+				} else {
+					clientGame.Roll1 = 0
+					clientGame.Roll2 = 0
+				}
 			}
 		case bgammon.CommandMove, "m", "mv":
 			if clientGame == nil {
-				cmd.client.events <- []byte("notice You are not currently in a game.")
+				cmd.client.events <- []byte("failedmove You are not currently in a game.")
+				continue
+			}
+
+			playerNumber := 1
+			if clientGame.client2 == cmd.client {
+				playerNumber = 2
+			}
+			if clientGame.Turn != playerNumber {
+				cmd.client.events <- []byte("failedmove It is not your turn to move.")
 				continue
 			}
 
 			sendUsage := func() {
-				cmd.client.events <- []byte("notice Specify one or more moves in the form FROM/TO. For example: 8/4 6/4")
+				cmd.client.events <- []byte("failedmove Specify one or more moves in the form FROM/TO. For example: 8/4 6/4")
 			}
 
 			if len(params) == 0 {
@@ -390,7 +411,6 @@ COMMANDS:
 
 			gameCopy := bgammon.Game{}
 			gameCopy = *clientGame.Game
-			gameCopy.Moves = [][]int{}
 			copy(gameCopy.Moves, clientGame.Moves)
 
 			var moves [][]int
@@ -411,6 +431,9 @@ COMMANDS:
 					continue COMMANDS
 				}
 
+				originalFrom, originalTo := from, to
+				from, to = bgammon.FlipSpace(from, playerNumber), bgammon.FlipSpace(to, playerNumber)
+
 				legalMoves := gameCopy.LegalMoves()
 				var found bool
 				for j := range legalMoves {
@@ -420,7 +443,8 @@ COMMANDS:
 					}
 				}
 				if !found {
-					cmd.client.events <- []byte(fmt.Sprintf("failedmove %d/%d Illegal move.", from, to))
+					log.Printf("available legal moves: %s", bgammon.FormatMoves(legalMoves, playerNumber))
+					cmd.client.events <- []byte(fmt.Sprintf("failedmove %d/%d Illegal move.", originalFrom, originalTo))
 					continue COMMANDS
 				}
 
@@ -429,25 +453,48 @@ COMMANDS:
 				gameCopy.Moves = append(gameCopy.Moves, move)
 			}
 
-			paramsText := bytes.Join(params, []byte(" "))
 			clientGame.Moves = gameCopy.Moves
 			clientGame.eachClient(func(client *serverClient) {
-				client.events <- []byte(fmt.Sprintf("move %s %s", cmd.client.name, paramsText))
-				clientGame.sendBoard(client)
+				player := 1
+				if clientGame.client2 == client {
+					player = 2
+				}
+				client.events <- []byte(fmt.Sprintf("move %s %s", cmd.client.name, bgammon.FormatMoves(moves, player)))
+				if !client.json {
+					clientGame.sendBoard(client)
+				}
 			})
-		case bgammon.CommandBoard, "b":
+		case bgammon.CommandOk, "k":
 			if clientGame == nil {
 				cmd.client.events <- []byte("notice You are not currently in a game.")
-			} else {
+				continue
+			}
+
+			legalMoves := clientGame.LegalMoves()
+			if len(legalMoves) != 0 {
 				playerNumber := 1
 				if clientGame.client2 == cmd.client {
 					playerNumber = 2
 				}
+				cmd.client.events <- []byte(fmt.Sprintf("failedok You still have the following legal moves available: %s", bgammon.FormatMoves(legalMoves, playerNumber)))
+				continue
+			}
 
-				scanner := bufio.NewScanner(bytes.NewReader(clientGame.BoardState(playerNumber)))
-				for scanner.Scan() {
-					cmd.client.events <- append([]byte("notice "), scanner.Bytes()...)
-				}
+			log.Println("legal to pass turn")
+		case bgammon.CommandBoard, "b":
+			if clientGame == nil {
+				cmd.client.events <- []byte("notice You are not currently in a game.")
+				continue
+			}
+
+			playerNumber := 1
+			if clientGame.client2 == cmd.client {
+				playerNumber = 2
+			}
+
+			scanner := bufio.NewScanner(bytes.NewReader(clientGame.BoardState(playerNumber)))
+			for scanner.Scan() {
+				cmd.client.events <- append([]byte("notice "), scanner.Bytes()...)
 			}
 		case bgammon.CommandDisconnect:
 			if clientGame != nil {
