@@ -59,9 +59,13 @@ func (g *serverGame) roll(player int) bool {
 
 func (g *serverGame) sendBoard(client *serverClient) {
 	if client.json {
-		buf, err := json.Marshal(g.Game)
+		gameState := bgammon.GameState{
+			Game:      g.Game,
+			Available: g.LegalMoves(),
+		}
+		buf, err := json.Marshal(gameState)
 		if err != nil {
-			log.Fatalf("failed to marshal json for %+v: %s", g.Game, err)
+			log.Fatalf("failed to marshal json for %+v: %s", gameState, err)
 		}
 		client.events <- []byte(fmt.Sprintf("board %s", buf))
 		return
@@ -118,6 +122,20 @@ func (g *serverGame) addClient(client *serverClient) bool {
 		ok = true
 	}
 	return ok
+}
+
+func (g *serverGame) removeClient(client *serverClient) {
+	switch {
+	case g.client1 == client:
+		g.client1 = nil
+	case g.client2 == client:
+		g.client2 = nil
+	default:
+		return
+	}
+	// TODO game is considered paused when only one player is present
+	// once started, only the same player may join and continue the game
+	log.Println("removed client", client)
 }
 
 func (g *serverGame) opponent(client *serverClient) *serverClient {

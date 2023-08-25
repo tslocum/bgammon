@@ -83,7 +83,24 @@ func (s *server) handleConnection(conn net.Conn) {
 
 	s.sendHello(c)
 
+	go s.handlePingClient(c)
 	s.handleClientCommands(c)
+}
+
+func (s *server) handlePingClient(c *serverClient) {
+	// TODO only ping when there is no recent activity
+	t := time.NewTicker(time.Minute * 2)
+	for {
+		<-t.C
+
+		if len(c.name) == 0 {
+			c.Terminate("User did not send login command within 2 minutes.")
+			return
+		}
+
+		c.lastPing = time.Now().Unix()
+		c.events <- []byte(fmt.Sprintf("ping %d", c.lastPing))
+	}
 }
 
 func (s *server) handleClientCommands(c *serverClient) {
@@ -197,6 +214,8 @@ COMMANDS:
 			}
 		}
 
+		clientGame := s.gameByClient(cmd.client)
+
 		switch keyword {
 		case bgammon.CommandHelp, "h":
 			// TODO get extended help by specifying a command after help
@@ -226,12 +245,11 @@ COMMANDS:
 			if len(params) == 0 {
 				continue
 			}
-			g := s.gameByClient(cmd.client)
-			if g == nil {
+			if clientGame == nil {
 				cmd.client.events <- []byte("notice Message not sent. You are not currently in a game.")
 				continue
 			}
-			opponent := g.opponent(cmd.client)
+			opponent := clientGame.opponent(cmd.client)
 			if opponent == nil {
 				cmd.client.events <- []byte("notice Message not sent. There is no one else in the game.")
 				continue
@@ -284,7 +302,7 @@ COMMANDS:
 
 			g.sendBoard(cmd.client)
 		case bgammon.CommandJoin, "j":
-			if s.gameByClient(cmd.client) != nil {
+			if clientGame != nil {
 				cmd.client.events <- []byte("failedjoin Please leave the game you are in before joining another game.")
 				continue
 			}
@@ -320,53 +338,120 @@ COMMANDS:
 				}
 			}
 		case bgammon.CommandLeave, "l":
-			g := s.gameByClient(cmd.client)
-			if g == nil {
+			if clientGame == nil {
 				cmd.client.events <- []byte("failedleave You are not currently in a game.")
 				continue
 			}
+			if clientGame.client1 == cmd.client {
+				clientGame.client1 = nil
+			} else {
+				clientGame.client2 = nil
+			}
+			// TODO handle pausing or ending game
+			// TODO move to .removeClient
 
-			id := g.id
-			// TODO remove
-			cmd.client.events <- []byte(fmt.Sprintf("left %d", id))
+			leftMessage := []byte(fmt.Sprintf("left %s", cmd.client.name))
+			cmd.client.events <- leftMessage
+			opponent := clientGame.opponent(cmd.client)
+			if opponent != nil {
+				opponent.events <- leftMessage
+			}
 		case bgammon.CommandRoll, "r":
-			g := s.gameByClient(cmd.client)
-			if g == nil {
+			if clientGame == nil {
 				cmd.client.events <- []byte("notice You are not currently in a game.")
-				continue COMMANDS
+				continue
 			}
 
 			playerNumber := 1
-			if g.client2 == cmd.client {
+			if clientGame.client2 == cmd.client {
 				playerNumber = 2
 			}
-			if !g.roll(playerNumber) {
+			if !clientGame.roll(playerNumber) {
 				cmd.client.events <- []byte("notice It is not your turn to roll.")
 			} else {
-				g.eachClient(func(client *serverClient) {
-					client.events <- []byte(fmt.Sprintf("rolled %d %d", g.Roll1, g.Roll2))
+				clientGame.eachClient(func(client *serverClient) {
+					client.events <- []byte(fmt.Sprintf("rolled %d %d", clientGame.Roll1, clientGame.Roll2))
 				})
 			}
-		case bgammon.CommandMove, "m":
+		case bgammon.CommandMove, "m", "mv":
+			if clientGame == nil {
+				cmd.client.events <- []byte("notice You are not currently in a game.")
+				continue
+			}
+
+			sendUsage := func() {
+				cmd.client.events <- []byte("notice Specify one or more moves in the form FROM/TO. For example: 8/4 6/4")
+			}
+
+			if len(params) == 0 {
+				sendUsage()
+				continue
+			}
+
+			gameCopy := bgammon.Game{}
+			gameCopy = *clientGame.Game
+			gameCopy.Moves = [][]int{}
+			copy(gameCopy.Moves, clientGame.Moves)
+
+			var moves [][]int
+			for i := range params {
+				split := bytes.Split(params[i], []byte("/"))
+				if len(split) != 2 {
+					sendUsage()
+					continue COMMANDS
+				}
+				from, err := strconv.Atoi(string(split[0]))
+				if err != nil {
+					sendUsage()
+					continue COMMANDS
+				}
+				to, err := strconv.Atoi(string(split[1]))
+				if err != nil {
+					sendUsage()
+					continue COMMANDS
+				}
+
+				legalMoves := gameCopy.LegalMoves()
+				var found bool
+				for j := range legalMoves {
+					if legalMoves[j][0] == from && legalMoves[j][1] == to {
+						found = true
+						break
+					}
+				}
+				if !found {
+					cmd.client.events <- []byte(fmt.Sprintf("failedmove %d/%d Illegal move.", from, to))
+					continue COMMANDS
+				}
+
+				move := []int{from, to}
+				moves = append(moves, move)
+				gameCopy.Moves = append(gameCopy.Moves, move)
+			}
+
+			paramsText := bytes.Join(params, []byte(" "))
+			clientGame.Moves = gameCopy.Moves
+			clientGame.eachClient(func(client *serverClient) {
+				client.events <- []byte(fmt.Sprintf("move %s %s", cmd.client.name, paramsText))
+				clientGame.sendBoard(client)
+			})
 		case bgammon.CommandBoard, "b":
-			g := s.gameByClient(cmd.client)
-			if g == nil {
+			if clientGame == nil {
 				cmd.client.events <- []byte("notice You are not currently in a game.")
 			} else {
 				playerNumber := 1
-				if g.client2 == cmd.client {
+				if clientGame.client2 == cmd.client {
 					playerNumber = 2
 				}
 
-				scanner := bufio.NewScanner(bytes.NewReader(g.BoardState(playerNumber)))
+				scanner := bufio.NewScanner(bytes.NewReader(clientGame.BoardState(playerNumber)))
 				for scanner.Scan() {
 					cmd.client.events <- append([]byte("notice "), scanner.Bytes()...)
 				}
 			}
 		case bgammon.CommandDisconnect:
-			g := s.gameByClient(cmd.client)
-			if g != nil {
-				// todo remove client from game
+			if clientGame != nil {
+				clientGame.removeClient(cmd.client)
 			}
 			cmd.client.Terminate("Client disconnected")
 		default:

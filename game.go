@@ -3,6 +3,7 @@ package bgammon
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"strconv"
 )
 
@@ -19,6 +20,7 @@ type Game struct {
 	Turn    int
 	Roll1   int
 	Roll2   int
+	Moves   [][]int // Pending moves.
 }
 
 func NewGame() *Game {
@@ -71,6 +73,48 @@ func (g *Game) LegalMoves() [][]int {
 		return nil
 	}
 
+	rolls := []int{
+		g.Roll1,
+		g.Roll2,
+	}
+	if g.Roll1 == g.Roll2 { // Rolled doubles.
+		rolls = append(rolls, g.Roll1, g.Roll2)
+	}
+
+	haveDiceRoll := func(from, to int) bool {
+		// TODO diff needs to account for bar and home special spaces
+		diff := to - from
+		if diff < 0 {
+			diff *= -1
+		}
+		for _, roll := range rolls {
+			if roll == diff {
+				return true
+			}
+		}
+		return false
+	}
+
+	useDiceRoll := func(from, to int) {
+		// TODO diff needs to account for bar and home special spaces
+		diff := to - from
+		if diff < 0 {
+			diff *= -1
+		}
+		for i, roll := range rolls {
+			if roll == diff {
+				rolls = append(rolls[:i], rolls[i+1:]...)
+				return
+			}
+		}
+		log.Panicf("tried to use non-existent dice roll %d-%d, have %+v", from, to, rolls)
+	}
+
+	for _, move := range g.Moves {
+		log.Println("use move", move)
+		useDiceRoll(move[0], move[1])
+	}
+
 	var moves [][]int
 	for space := range g.Board {
 		if space == SpaceHomePlayer || space == SpaceHomeOpponent {
@@ -87,6 +131,9 @@ func (g *Game) LegalMoves() [][]int {
 			// Enter from bar.
 			from, to := HomeRange(g.Turn)
 			g.iterateSpaces(from, to, func(homeSpace int, spaceCount int) {
+				if !haveDiceRoll(space, homeSpace) {
+					return
+				}
 				if spaceCount != g.Roll1 && spaceCount != g.Roll2 {
 					return
 				}
@@ -109,7 +156,7 @@ func (g *Game) LegalMoves() [][]int {
 			}
 
 			g.iterateSpaces(space+dir, lastSpace, func(to int, spaceCount int) {
-				if spaceCount != g.Roll1 && spaceCount != g.Roll2 {
+				if !haveDiceRoll(space, to) {
 					return
 				}
 

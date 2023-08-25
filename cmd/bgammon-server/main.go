@@ -22,6 +22,11 @@ func main() {
 	g.Roll1 = 3
 	g.Roll2 = 2
 	g.Turn = 1
+	log.Println("initial legal moves")
+	log.Printf("%+v", g.LegalMoves())
+
+	g.Moves = append(g.Moves, []int{6, 4})
+	log.Printf("Legal moves after %+v", g.Moves)
 	log.Printf("%+v", g.LegalMoves())
 
 	playerNumber := 1

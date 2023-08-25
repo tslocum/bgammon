@@ -9,6 +9,7 @@ type serverClient struct {
 	account    int
 	connected  int64
 	lastActive int64
+	lastPing   int64
 	commands   <-chan []byte
 	events     chan<- []byte
 	bgammon.Client
