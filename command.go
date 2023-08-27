@@ -6,6 +6,7 @@ type Command string
 
 const (
 	CommandLogin      = "login"      // Log in with username and password, or as a guest.
+	CommandLoginJSON  = "loginjson"  // Log in with username and password, or as a guest, and enable JSON messages.
 	CommandHelp       = "help"       // Print help information.
 	CommandJSON       = "json"       // Enable or disable JSON formatted messages.
 	CommandSay        = "say"        // Send chat message.
@@ -19,4 +20,11 @@ const (
 	CommandOk         = "ok"         // Confirm checker movement and pass turn to next player.
 	CommandBoard      = "board"      // Print current board state in human-readable form.
 	CommandDisconnect = "disconnect" // Disconnect from server.
+)
+
+type EventType string
+
+const (
+	EventTypeWelcome = "welcome"
+	EventTypeJoined  = "joined"
 )

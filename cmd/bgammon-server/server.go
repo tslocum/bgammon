@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -184,7 +185,7 @@ COMMANDS:
 
 		// Require users to send login command first.
 		if cmd.client.account == -1 {
-			if keyword == bgammon.CommandLogin || keyword == "l" {
+			if keyword == bgammon.CommandLogin || keyword == bgammon.CommandLoginJSON || keyword == "l" || keyword == "lj" {
 				var username []byte
 				var password []byte
 				switch len(params) {
@@ -204,6 +205,10 @@ COMMANDS:
 				}
 				cmd.client.name = username
 
+				if keyword == bgammon.CommandLoginJSON || keyword == "lj" {
+					cmd.client.json = true
+				}
+
 				s.sendWelcome(cmd.client)
 
 				log.Printf("login as %s - %s", username, password)
@@ -215,6 +220,13 @@ COMMANDS:
 		}
 
 		clientGame := s.gameByClient(cmd.client)
+		clientNumber := 0
+		if clientGame != nil {
+			clientNumber = 1
+			if clientGame.client2 == cmd.client {
+				clientNumber = 2
+			}
+		}
 
 		switch keyword {
 		case bgammon.CommandHelp, "h":
@@ -256,6 +268,23 @@ COMMANDS:
 			}
 			opponent.events <- []byte(fmt.Sprintf("say %s %s", cmd.client.name, bytes.Join(params, []byte(" "))))
 		case bgammon.CommandList, "ls":
+			if cmd.client.json {
+				ev := bgammon.EventList{}
+				for _, g := range s.games {
+					ev.Games = append(ev.Games, bgammon.GameListing{
+						ID:       g.id,
+						Password: len(g.password) != 0,
+						Players:  g.playerCount(),
+						Name:     string(g.name),
+					})
+				}
+				buf, err := json.Marshal(ev)
+				if err != nil {
+					panic(err)
+				}
+				cmd.client.events <- buf
+				continue
+			}
 			cmd.client.events <- []byte("liststart Games list:")
 			players := 0
 			password := 0
@@ -357,18 +386,14 @@ COMMANDS:
 				continue
 			}
 
-			playerNumber := 1
-			if clientGame.client2 == cmd.client {
-				playerNumber = 2
-			}
-			if !clientGame.roll(playerNumber) {
+			if !clientGame.roll(clientNumber) {
 				cmd.client.events <- []byte("notice It is not your turn to roll.")
 				continue
 			}
 			clientGame.eachClient(func(client *serverClient) {
 				roll1 := 0
 				roll2 := 0
-				if playerNumber == 1 {
+				if clientNumber == 1 {
 					roll1 = clientGame.Roll1
 				} else {
 					roll2 = clientGame.Roll2
@@ -391,11 +416,7 @@ COMMANDS:
 				continue
 			}
 
-			playerNumber := 1
-			if clientGame.client2 == cmd.client {
-				playerNumber = 2
-			}
-			if clientGame.Turn != playerNumber {
+			if clientGame.Turn != clientNumber {
 				cmd.client.events <- []byte("failedmove It is not your turn to move.")
 				continue
 			}
@@ -432,7 +453,7 @@ COMMANDS:
 				}
 
 				originalFrom, originalTo := from, to
-				from, to = bgammon.FlipSpace(from, playerNumber), bgammon.FlipSpace(to, playerNumber)
+				from, to = bgammon.FlipSpace(from, clientNumber), bgammon.FlipSpace(to, clientNumber)
 
 				legalMoves := gameCopy.LegalMoves()
 				var found bool
@@ -443,7 +464,7 @@ COMMANDS:
 					}
 				}
 				if !found {
-					log.Printf("available legal moves: %s", bgammon.FormatMoves(legalMoves, playerNumber))
+					log.Printf("available legal moves: %s", bgammon.FormatMoves(legalMoves, clientNumber))
 					cmd.client.events <- []byte(fmt.Sprintf("failedmove %d/%d Illegal move.", originalFrom, originalTo))
 					continue COMMANDS
 				}
@@ -487,12 +508,7 @@ COMMANDS:
 				continue
 			}
 
-			playerNumber := 1
-			if clientGame.client2 == cmd.client {
-				playerNumber = 2
-			}
-
-			scanner := bufio.NewScanner(bytes.NewReader(clientGame.BoardState(playerNumber)))
+			scanner := bufio.NewScanner(bytes.NewReader(clientGame.BoardState(clientNumber)))
 			for scanner.Scan() {
 				cmd.client.events <- append([]byte("notice "), scanner.Bytes()...)
 			}

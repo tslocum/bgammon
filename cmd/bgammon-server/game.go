@@ -94,6 +94,17 @@ func (g *serverGame) sendBoard(client *serverClient) {
 	}
 }
 
+func (g *serverGame) playerCount() int {
+	c := 0
+	if g.client1 != nil {
+		c++
+	}
+	if g.client2 != nil {
+		c++
+	}
+	return c
+}
+
 func (g *serverGame) eachClient(f func(client *serverClient)) {
 	if g.client1 != nil {
 		f(g.client1)

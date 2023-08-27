@@ -10,11 +10,16 @@ Log in to bgammon. A random username is assigned when none is provided.
 
 This must be the first command sent when a client connects to bgammon.
 
-### `json [on/off]`
+### `loginjson [username] [password]`
+
+Log in to bgammon and enable JSON formatted responses.
+
+All client applications should use the `loginjson` command to log in, as JSON
+formatted responses are more easily parsed by computers.  
+
+### `json <on/off>`
 
 Turn JSON formatted messages on or off. JSON messages are not sent by default.
-
-Graphical clients should send the `json on` command immediately after sending `login`.
 
 ### `help [command]`
 
@@ -24,11 +29,11 @@ Request help for all commands, or optionally a specific command.
 
 List all games.
 
-### `create [public/private] [password]`
+### `create <public/private> [password]`
 
 List all games.
 
-### `join [id] [password]`
+### `join <id> [password]`
 
 Join game.
 
