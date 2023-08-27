@@ -83,8 +83,8 @@ Data types:
 - `line` - alphanumeric with spaces
 
 All events are sent in either JSON or human-readable format. The human-readable
-format is documented here. The structure of each JSON message is available by referencing
-[this file](https://code.rocket9labs.com/tslocum/bgammon/src/branch/main/event.go).
+format is documented here. The structure of each JSON message is available via
+[godoc](https://docs.rocket9labs.com/code.rocket9labs.com/tslocum/bgammon/#Event).
 
 ### `hello <message:line>`
 
