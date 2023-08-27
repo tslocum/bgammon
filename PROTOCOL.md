@@ -14,12 +14,16 @@ Log in to bgammon. A random username is assigned when none is provided.
 
 This must be the first command sent when a client connects to bgammon.
 
+*Aliases:* `l`
+
 ### `loginjson [username] [password]`
 
 Log in to bgammon and enable JSON formatted responses.
 
 All client applications should use the `loginjson` command to log in, as JSON
-formatted responses are more easily parsed by computers.  
+formatted responses are more easily parsed by computers.
+
+*Aliases:* `lj`
 
 ### `json <on/off>`
 
@@ -29,33 +33,49 @@ Turn JSON formatted messages on or off. JSON messages are not sent by default.
 
 Request help for all commands, or optionally a specific command.
 
+*Aliases:* `h`
+
 ### `list`
 
 List all games.
+
+*Aliases:* `ls`
 
 ### `create <public/private> [password]`
 
 List all games.
 
+*Aliases:* `c`
+
 ### `join <id> [password]`
 
 Join game.
+
+*Aliases:* `j`
 
 ### `roll`
 
 Roll dice.
 
+*Aliases:* `r`
+
 ### `move <from-to> [from-to]...`
 
 Move checkers.
+
+*Aliases:* `m`, `mv`
 
 ### `reset`
 
 Reset pending checker movement.
 
+*Aliases:* `r`
+
 ### `ok`
 
 Confirm checker movement and pass turn to next player.
+
+*Aliases:* `k`
 
 ### `say <message>`
 
@@ -63,11 +83,15 @@ Send a chat message.
 
 This command can only be used after creating or joining a game.
 
+*Aliases:* `s`
+
 ### `board`
 
 Print current game state in human-readable form.
 
 This command is not normally used, as the game state is provided in JSON format.
+
+*Aliases:* `b`
 
 ### `disconnect`
 
