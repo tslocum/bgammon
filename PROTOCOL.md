@@ -1,4 +1,8 @@
-# Secification of bgammon protocol
+# Specification of bgammon.org protocol
+
+Connect to `bgammon.org:1337` via TCP.
+
+All commands and events are separated by newlines.
 
 ## User commands
 
@@ -69,7 +73,7 @@ This command is not normally used, as the game state is provided in JSON format.
 
 Disconnect from the server.
 
-## Server responses
+## Events (server responses)
 
 Data types:
 
@@ -77,6 +81,10 @@ Data types:
 - `boolean` - `0` (representing false) or `1` (representing true)
 - `text` - alphanumeric without spaces
 - `line` - alphanumeric with spaces
+
+All events are sent in either JSON or human-readable format. The human-readable
+format is documented here. The structure of each JSON message is available by referencing
+[this file](https://code.rocket9labs.com/tslocum/bgammon/src/branch/main/event.go).
 
 ### `hello <message:line>`
 
@@ -104,7 +112,7 @@ Game description.
 
 End of games list.
 
-### `joined <id:integer> <player:text> <name:line>`
+### `joined <id:integer> <player:text>`
 
 Sent after successfully creating or joining a game, and when another player
 joins a game you are in.

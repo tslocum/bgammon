@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -65,26 +64,21 @@ func (g *serverGame) sendBoard(client *serverClient) {
 	}
 
 	if client.json {
-		gameState := ServerGameState{
+		ev := &bgammon.EventBoard{
 			GameState: bgammon.GameState{
-				Game:      g.Game,
+				Game:      g.Game.Copy(),
 				Available: g.LegalMoves(),
 			},
-			Board: g.Game.Board,
 		}
 		if playerNumber == 2 {
-			log.Println(gameState.Board)
-			log.Println(g.Game.Board)
-			slices.Reverse(gameState.Board)
+			/*log.Println(gameState.Board)
+			log.Println(g.Game.Board)*/
+			slices.Reverse(ev.Board)
 
-			log.Println(gameState.Board)
-			log.Println(g.Game.Board)
+			/*log.Println(gameState.Board)
+			log.Println(g.Game.Board)*/
 		}
-		buf, err := json.Marshal(gameState)
-		if err != nil {
-			log.Fatalf("failed to marshal json for %+v: %s", gameState, err)
-		}
-		client.events <- []byte(fmt.Sprintf("board %s", buf))
+		client.sendEvent(ev)
 		return
 	}
 
@@ -120,12 +114,18 @@ func (g *serverGame) addClient(client *serverClient) bool {
 		if !ok {
 			return
 		}
-		joinMessage := []byte(fmt.Sprintf("joined %d %s %s", g.id, client.name, g.name))
-		client.events <- joinMessage
+
+		ev := &bgammon.EventJoined{
+			GameID: g.id,
+		}
+		ev.Player = string(client.name)
+
+		client.sendEvent(ev)
 		g.sendBoard(client)
+
 		opponent := g.opponent(client)
 		if opponent != nil {
-			opponent.events <- joinMessage
+			opponent.sendEvent(ev)
 			g.sendBoard(opponent)
 		}
 	}()
@@ -135,19 +135,23 @@ func (g *serverGame) addClient(client *serverClient) bool {
 	case g.client1 != nil:
 		g.client2 = client
 		g.Player2.Name = string(client.name)
+		client.playerNumber = 2
 		ok = true
 	case g.client2 != nil:
 		g.client1 = client
 		g.Player1.Name = string(client.name)
+		client.playerNumber = 1
 		ok = true
 	default:
 		i := rand.Intn(2)
 		if i == 0 {
 			g.client1 = client
 			g.Player1.Name = string(client.name)
+			client.playerNumber = 1
 		} else {
 			g.client2 = client
 			g.Player2.Name = string(client.name)
+			client.playerNumber = 2
 		}
 		ok = true
 	}
@@ -163,6 +167,7 @@ func (g *serverGame) removeClient(client *serverClient) {
 		if !ok {
 			return
 		}
+		client.playerNumber = 0
 		opponent := g.opponent(client)
 		if opponent == nil {
 			return

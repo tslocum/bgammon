@@ -31,6 +31,19 @@ func NewGame() *Game {
 	}
 }
 
+func (g *Game) Copy() *Game {
+	newGame := &Game{
+		Player1: g.Player1,
+		Player2: g.Player2,
+		Turn:    g.Turn,
+		Roll1:   g.Roll1,
+		Roll2:   g.Roll2,
+	}
+	copy(newGame.Board, g.Board)
+	copy(newGame.Moves, g.Moves)
+	return newGame
+}
+
 func (g *Game) turnPlayer() Player {
 	switch g.Turn {
 	case 2:

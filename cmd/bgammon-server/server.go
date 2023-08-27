@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -141,7 +140,6 @@ func (s *server) sendHello(c *serverClient) {
 }
 
 func (s *server) sendWelcome(c *serverClient) {
-	c.events <- []byte(fmt.Sprintf("welcome %s there are %d clients playing %d games.", c.name, len(s.clients), len(s.games)))
 }
 
 func (s *server) gameByClient(c *serverClient) *serverGame {
@@ -209,7 +207,11 @@ COMMANDS:
 					cmd.client.json = true
 				}
 
-				s.sendWelcome(cmd.client)
+				cmd.client.sendEvent(&bgammon.EventWelcome{
+					PlayerName: string(cmd.client.name),
+					Clients:    len(s.clients),
+					Games:      len(s.games),
+				})
 
 				log.Printf("login as %s - %s", username, password)
 				continue
@@ -268,31 +270,16 @@ COMMANDS:
 			}
 			opponent.events <- []byte(fmt.Sprintf("say %s %s", cmd.client.name, bytes.Join(params, []byte(" "))))
 		case bgammon.CommandList, "ls":
-			if cmd.client.json {
-				ev := bgammon.EventList{}
-				for _, g := range s.games {
-					ev.Games = append(ev.Games, bgammon.GameListing{
-						ID:       g.id,
-						Password: len(g.password) != 0,
-						Players:  g.playerCount(),
-						Name:     string(g.name),
-					})
-				}
-				buf, err := json.Marshal(ev)
-				if err != nil {
-					panic(err)
-				}
-				cmd.client.events <- buf
-				continue
-			}
-			cmd.client.events <- []byte("liststart Games list:")
-			players := 0
-			password := 0
-			name := "game name"
+			ev := &bgammon.EventList{}
 			for _, g := range s.games {
-				cmd.client.events <- []byte(fmt.Sprintf("game %d %d %d %s", g.id, password, players, name))
+				ev.Games = append(ev.Games, bgammon.GameListing{
+					ID:       g.id,
+					Password: len(g.password) != 0,
+					Players:  g.playerCount(),
+					Name:     string(g.name),
+				})
 			}
-			cmd.client.events <- []byte("listend End of games list.")
+			cmd.client.sendEvent(ev)
 		case bgammon.CommandCreate, "c":
 			sendUsage := func() {
 				cmd.client.events <- []byte("notice To create a public game specify whether it is public or private. When creating a private game, a password must also be provided.")
@@ -319,8 +306,6 @@ COMMANDS:
 				continue
 			}
 
-			log.Printf("create game (password %s) name: %s", gamePassword, gameName)
-
 			g := newServerGame(<-s.newGameIDs)
 			g.name = gameName
 			g.password = gamePassword
@@ -330,12 +315,14 @@ COMMANDS:
 			s.games = append(s.games, g) // TODO lock
 		case bgammon.CommandJoin, "j":
 			if clientGame != nil {
-				cmd.client.events <- []byte("failedjoin Please leave the game you are in before joining another game.")
+				cmd.client.sendEvent(&bgammon.EventFailedJoin{
+					Reason: "Please leave the game you are in before joining another game.",
+				})
 				continue
 			}
 
 			sendUsage := func() {
-				cmd.client.events <- []byte("notice To join a public game specify its game ID. To join a private game, a password must also be specified.")
+				cmd.client.sendNotice("To join a public game specify its game ID. To join a private game, a password must also be specified.")
 			}
 
 			if len(params) == 0 {
@@ -351,12 +338,16 @@ COMMANDS:
 			for _, g := range s.games {
 				if g.id == gameID {
 					if len(g.password) != 0 && (len(params) < 2 || !bytes.Equal(g.password, bytes.Join(params[2:], []byte(" ")))) {
-						cmd.client.events <- []byte("failedjoin Invalid password.")
+						cmd.client.sendEvent(&bgammon.EventFailedJoin{
+							Reason: "Invalid password.",
+						})
 						continue COMMANDS
 					}
 
 					if !g.addClient(cmd.client) {
-						cmd.client.events <- []byte("failedjoin Game is full.")
+						cmd.client.sendEvent(&bgammon.EventFailedJoin{
+							Reason: "Game is full.",
+						})
 					}
 					continue COMMANDS
 				}
@@ -390,15 +381,16 @@ COMMANDS:
 				cmd.client.events <- []byte("notice It is not your turn to roll.")
 				continue
 			}
+			ev := &bgammon.EventRolled{
+				Roll1: clientGame.Roll1,
+				Roll2: clientGame.Roll2,
+			}
+			ev.Player = string(cmd.client.name)
 			clientGame.eachClient(func(client *serverClient) {
-				roll1 := 0
-				roll2 := 0
-				if clientNumber == 1 {
-					roll1 = clientGame.Roll1
-				} else {
-					roll2 = clientGame.Roll2
+				client.sendEvent(ev)
+				if !client.json {
+					clientGame.sendBoard(client)
 				}
-				client.events <- []byte(fmt.Sprintf("rolled %s %d %d", cmd.client.name, roll1, roll2))
 			})
 			if clientGame.Turn == 0 && clientGame.Roll1 != 0 && clientGame.Roll2 != 0 {
 				if clientGame.Roll1 > clientGame.Roll2 {
@@ -475,12 +467,12 @@ COMMANDS:
 			}
 
 			clientGame.Moves = gameCopy.Moves
+			ev := &bgammon.EventMoved{
+				Moves: moves,
+			}
+			ev.Player = string(cmd.client.name)
 			clientGame.eachClient(func(client *serverClient) {
-				player := 1
-				if clientGame.client2 == client {
-					player = 2
-				}
-				client.events <- []byte(fmt.Sprintf("move %s %s", cmd.client.name, bgammon.FormatMoves(moves, player)))
+				client.sendEvent(ev)
 				if !client.json {
 					clientGame.sendBoard(client)
 				}

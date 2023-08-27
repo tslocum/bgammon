@@ -13,17 +13,24 @@ type Event struct {
 }
 
 type EventWelcome struct {
+	Event
 	PlayerName string
 	Clients    int
 	Games      int
 }
 
-type EventJoined struct {
-	GameID     int
-	PlayerName string
+type EventNotice struct {
+	Event
+	Message string
+}
+
+type EventSay struct {
+	Event
+	Message string
 }
 
 type GameListing struct {
+	Event
 	ID       int
 	Password bool
 	Players  int
@@ -31,23 +38,33 @@ type GameListing struct {
 }
 
 type EventList struct {
+	Event
 	Games []GameListing
 }
 
-type EventSay struct {
-	Message string
+type EventJoined struct {
+	Event
+	GameID int
+}
+
+type EventFailedJoin struct {
+	Event
+	Reason string
 }
 
 type EventBoard struct {
+	Event
 	GameState
 }
 
-type EventRoll struct {
+type EventRolled struct {
+	Event
 	Roll1 int
 	Roll2 int
 }
 
-type EventMove struct {
+type EventMoved struct {
+	Event
 	Moves [][]int
 }
 
