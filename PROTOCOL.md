@@ -68,6 +68,11 @@ formatted responses are more easily parsed by computers.
   - This command is not normally used, as the game state is provided in JSON format.
   - *Aliases:* `b`
 
+- `pong <message>`
+  - Sent in response to server `ping` event to prevent the connection from timing out.
+  - Whether the client sends a `pong` command, or any other command, clients
+must write some data to the server at least once every ten minutes.
+
 - `disconnect`
   - Disconnect from the server.
 
@@ -106,9 +111,9 @@ This document lists events in human-readable format.
 - `listend End of games list.`
   - End of games list.
 
-- `joined <id:integer> <player:text>`
+- `joined <id:integer> <playerNumber:integer> <playerName:text>`
   - Sent after successfully creating or joining a game, and when another player
-joins a game you are in. 
+joins a game you are in.
   - The server will always send a `board` response immediately after `joined` to
 provide clients with the initial game state.
 
@@ -128,3 +133,8 @@ provide clients with the initial game state.
 
 - `say <player:text> <message:line>`
   - Chat message from another player.
+
+- `ping <message:text>`
+  - Sent to clients to prevent their connection from timing out.
+  - Whether the client replies with a `pong` command, or any other command,
+clients must write some data to the server at least once every ten minutes.

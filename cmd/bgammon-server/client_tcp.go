@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -27,9 +26,16 @@ func newSocketClient(conn net.Conn, commands chan<- []byte, events chan []byte) 
 		events:   events,
 		commands: commands,
 	}
-	go c.readCommands()
-	go c.writeEvents()
 	return c
+}
+
+func (c *socketClient) HandleReadWrite() {
+	if c.terminated {
+		return
+	}
+
+	go c.writeEvents()
+	c.readCommands()
 }
 
 func (c *socketClient) Write(message []byte) {
@@ -105,14 +111,12 @@ func (c *socketClient) Terminate(reason string) {
 		return
 	}
 	c.terminated = true
-	c.conn.Write([]byte(fmt.Sprintf("Connection closed: %s\n", reason)))
 	c.conn.Close()
 	go func() {
 		time.Sleep(5 * time.Second)
 		c.wgEvents.Wait()
 		close(c.events)
 		close(c.commands)
-		log.Println("FINISHED CLEANUP")
 	}()
 }
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"log"
@@ -9,6 +8,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
@@ -28,6 +28,8 @@ type server struct {
 	newGameIDs   chan int
 	newClientIDs chan int
 	commands     chan serverCommand
+
+	clientsLock sync.RWMutex // TODO need RW?
 }
 
 func newServer() *server {
@@ -63,6 +65,33 @@ func (s *server) handleListener(listener net.Listener) {
 	}
 }
 
+func (s *server) addClient(c *serverClient) {
+	s.clientsLock.Lock()
+	defer s.clientsLock.Unlock()
+
+	s.clients = append(s.clients, c)
+}
+
+func (s *server) removeClient(c *serverClient) {
+	go func() {
+		g := s.gameByClient(c)
+		if g != nil {
+			g.removeClient(c)
+		}
+		c.Terminate("")
+	}()
+
+	s.clientsLock.Lock()
+	defer s.clientsLock.Unlock()
+
+	for i, sc := range s.clients {
+		if sc == c {
+			s.clients = append(s.clients[:i], s.clients[i+1:]...)
+			return
+		}
+	}
+}
+
 func (s *server) handleConnection(conn net.Conn) {
 	log.Printf("new conn %+v", conn)
 
@@ -80,12 +109,16 @@ func (s *server) handleConnection(conn net.Conn) {
 		commands:   commands,
 		Client:     newSocketClient(conn, commands, events),
 	}
-	log.Println("socket client", c)
-
 	s.sendHello(c)
+	s.addClient(c)
 
 	go s.handlePingClient(c)
-	s.handleClientCommands(c)
+	go s.handleClientCommands(c)
+
+	c.HandleReadWrite()
+
+	// Remove client.
+	s.removeClient(c)
 }
 
 func (s *server) handlePingClient(c *serverClient) {
@@ -242,13 +275,13 @@ COMMANDS:
 		switch keyword {
 		case bgammon.CommandHelp, "h":
 			// TODO get extended help by specifying a command after help
-			cmd.client.Write([]byte("helpstart Help text:"))
-			cmd.client.Write([]byte("help Test help text"))
-			cmd.client.Write([]byte("helpend End of help text."))
-			// TODO JSON format
+			cmd.client.sendEvent(&bgammon.EventHelp{
+				Topic:   "",
+				Message: "Test help text",
+			})
 		case bgammon.CommandJSON:
 			sendUsage := func() {
-				cmd.client.Write([]byte("notice To enable JSON formatted messages, send 'json on'. To disable JSON formatted messages, send 'json off'."))
+				cmd.client.sendNotice("To enable JSON formatted messages, send 'json on'. To disable JSON formatted messages, send 'json off'.")
 			}
 			if len(params) != 1 {
 				sendUsage()
@@ -258,10 +291,10 @@ COMMANDS:
 			switch paramLower {
 			case "on":
 				cmd.client.json = true
-				cmd.client.Write([]byte("json JSON formatted messages enabled.")) // TODO send in JSON format
+				cmd.client.sendNotice("JSON formatted messages enabled.")
 			case "off":
 				cmd.client.json = false
-				cmd.client.Write([]byte("json JSON formatted messages disabled."))
+				cmd.client.sendNotice("JSON formatted messages disabled.")
 			default:
 				sendUsage()
 			}
@@ -270,15 +303,19 @@ COMMANDS:
 				continue
 			}
 			if clientGame == nil {
-				cmd.client.Write([]byte("notice Message not sent. You are not currently in a game."))
+				cmd.client.sendNotice("Message not sent. You are not currently in a game.")
 				continue
 			}
 			opponent := clientGame.opponent(cmd.client)
 			if opponent == nil {
-				cmd.client.Write([]byte("notice Message not sent. There is no one else in the game."))
+				cmd.client.sendNotice("Message not sent. There is no one else in the game.")
 				continue
 			}
-			opponent.Write([]byte(fmt.Sprintf("say %s %s", cmd.client.name, bytes.Join(params, []byte(" ")))))
+			ev := &bgammon.EventSay{
+				Message: string(bytes.Join(params, []byte(" "))),
+			}
+			ev.Player = string(cmd.client.name)
+			opponent.sendEvent(ev)
 		case bgammon.CommandList, "ls":
 			ev := &bgammon.EventList{}
 			for _, g := range s.games {
@@ -292,7 +329,7 @@ COMMANDS:
 			cmd.client.sendEvent(ev)
 		case bgammon.CommandCreate, "c":
 			sendUsage := func() {
-				cmd.client.Write([]byte("notice To create a public game specify whether it is public or private. When creating a private game, a password must also be provided."))
+				cmd.client.sendNotice("To create a public game specify whether it is public or private. When creating a private game, a password must also be provided.")
 			}
 			if len(params) == 0 {
 				sendUsage()
@@ -364,31 +401,25 @@ COMMANDS:
 			}
 		case bgammon.CommandLeave, "l":
 			if clientGame == nil {
-				cmd.client.Write([]byte("failedleave You are not currently in a game."))
+				cmd.client.sendEvent(&bgammon.EventFailedLeave{
+					Reason: "You are not currently in a game.",
+				})
 				continue
 			}
-			if clientGame.client1 == cmd.client {
-				clientGame.client1 = nil
-			} else {
-				clientGame.client2 = nil
-			}
-			// TODO handle pausing or ending game
-			// TODO move to .removeClient
 
-			leftMessage := []byte(fmt.Sprintf("left %s", cmd.client.name))
-			cmd.client.Write(leftMessage)
-			opponent := clientGame.opponent(cmd.client)
-			if opponent != nil {
-				opponent.Write(leftMessage)
-			}
+			clientGame.removeClient(cmd.client)
 		case bgammon.CommandRoll, "r":
 			if clientGame == nil {
-				cmd.client.Write([]byte("notice You are not currently in a game."))
+				cmd.client.sendEvent(&bgammon.EventFailedRoll{
+					Reason: "You are not currently in a game.",
+				})
 				continue
 			}
 
 			if !clientGame.roll(clientNumber) {
-				cmd.client.Write([]byte("notice It is not your turn to roll."))
+				cmd.client.sendEvent(&bgammon.EventFailedRoll{
+					Reason: "It is not your turn to roll.",
+				})
 				continue
 			}
 			ev := &bgammon.EventRolled{
@@ -414,17 +445,23 @@ COMMANDS:
 			}
 		case bgammon.CommandMove, "m", "mv":
 			if clientGame == nil {
-				cmd.client.Write([]byte("failedmove You are not currently in a game."))
+				cmd.client.sendEvent(&bgammon.EventFailedMove{
+					Reason: "You are not currently in a game.",
+				})
 				continue
 			}
 
 			if clientGame.Turn != clientNumber {
-				cmd.client.Write([]byte("failedmove It is not your turn to move."))
+				cmd.client.sendEvent(&bgammon.EventFailedMove{
+					Reason: "It is not your turn to move.",
+				})
 				continue
 			}
 
 			sendUsage := func() {
-				cmd.client.Write([]byte("failedmove Specify one or more moves in the form FROM/TO. For example: 8/4 6/4"))
+				cmd.client.sendEvent(&bgammon.EventFailedMove{
+					Reason: "Specify one or more moves in the form FROM/TO. For example: 8/4 6/4",
+				})
 			}
 
 			if len(params) == 0 {
@@ -467,7 +504,11 @@ COMMANDS:
 				}
 				if !found {
 					log.Printf("available legal moves: %s", bgammon.FormatMoves(legalMoves, clientNumber))
-					cmd.client.Write([]byte(fmt.Sprintf("failedmove %d/%d Illegal move.", originalFrom, originalTo)))
+					cmd.client.sendEvent(&bgammon.EventFailedMove{
+						From:   originalFrom,
+						To:     originalTo,
+						Reason: "Illegal move.",
+					})
 					continue COMMANDS
 				}
 
@@ -476,20 +517,26 @@ COMMANDS:
 				gameCopy.Moves = append(gameCopy.Moves, move)
 			}
 
-			clientGame.Moves = gameCopy.Moves
+			if !clientGame.AddMoves(moves) {
+				log.Panicf("FAILED TO ADD MOVES")
+				cmd.client.sendEvent(&bgammon.EventFailedMove{
+					From:   0,
+					To:     0,
+					Reason: "Illegal move.",
+				})
+				continue
+			}
 			ev := &bgammon.EventMoved{
 				Moves: moves,
 			}
 			ev.Player = string(cmd.client.name)
 			clientGame.eachClient(func(client *serverClient) {
 				client.sendEvent(ev)
-				if !client.json {
-					clientGame.sendBoard(client)
-				}
+				clientGame.sendBoard(client)
 			})
 		case bgammon.CommandOk, "k":
 			if clientGame == nil {
-				cmd.client.Write([]byte("notice You are not currently in a game."))
+				cmd.client.sendNotice("You are not currently in a game.")
 				continue
 			}
 
@@ -499,21 +546,20 @@ COMMANDS:
 				if clientGame.client2 == cmd.client {
 					playerNumber = 2
 				}
-				cmd.client.Write([]byte(fmt.Sprintf("failedok You still have the following legal moves available: %s", bgammon.FormatMoves(legalMoves, playerNumber))))
+				cmd.client.sendEvent(&bgammon.EventFailedOk{
+					Reason: fmt.Sprintf("The following legal moves are available: %s", bgammon.FormatMoves(legalMoves, playerNumber)),
+				})
 				continue
 			}
 
 			log.Println("legal to pass turn")
 		case bgammon.CommandBoard, "b":
 			if clientGame == nil {
-				cmd.client.Write([]byte("notice You are not currently in a game."))
+				cmd.client.sendNotice("You are not currently in a game.")
 				continue
 			}
 
-			scanner := bufio.NewScanner(bytes.NewReader(clientGame.BoardState(clientNumber)))
-			for scanner.Scan() {
-				cmd.client.Write(append([]byte("notice "), scanner.Bytes()...))
-			}
+			clientGame.sendBoard(cmd.client)
 		case bgammon.CommandDisconnect:
 			if clientGame != nil {
 				clientGame.removeClient(cmd.client)

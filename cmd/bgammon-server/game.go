@@ -3,10 +3,8 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"log"
 	"math/rand"
-	"slices"
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
@@ -58,33 +56,35 @@ func (g *serverGame) roll(player int) bool {
 }
 
 func (g *serverGame) sendBoard(client *serverClient) {
-	playerNumber := 1
-	if g.client2 == client {
-		playerNumber = 2
-	}
-
 	if client.json {
 		ev := &bgammon.EventBoard{
 			GameState: bgammon.GameState{
-				Game:      g.Game.Copy(),
-				Available: g.LegalMoves(),
+				Game:         g.Game,
+				PlayerNumber: client.playerNumber,
+				Available:    g.LegalMoves(),
 			},
 		}
-		if playerNumber == 2 {
-			/*log.Println(gameState.Board)
-			log.Println(g.Game.Board)*/
-			slices.Reverse(ev.Board)
 
-			/*log.Println(gameState.Board)
-			log.Println(g.Game.Board)*/
+		// Reverse spaces for white.
+		if client.playerNumber == 2 {
+			log.Println(g.Game.Board)
+
+			ev.GameState.Game = ev.GameState.Copy()
+			for space := 1; space <= 24; space++ {
+				ev.Board[space] = g.Game.Board[24-space+1]
+			}
+
+			log.Println(g.Game.Board)
+			log.Println("AFTER")
 		}
+
 		client.sendEvent(ev)
 		return
 	}
 
-	scanner := bufio.NewScanner(bytes.NewReader(g.BoardState(playerNumber)))
+	scanner := bufio.NewScanner(bytes.NewReader(g.BoardState(client.playerNumber)))
 	for scanner.Scan() {
-		client.Write(append([]byte("notice "), scanner.Bytes()...))
+		client.sendNotice(string(scanner.Bytes()))
 	}
 }
 
@@ -109,14 +109,15 @@ func (g *serverGame) eachClient(f func(client *serverClient)) {
 }
 
 func (g *serverGame) addClient(client *serverClient) bool {
-	var ok bool
+	var playerNumber int
 	defer func() {
-		if !ok {
+		if playerNumber == 0 {
 			return
 		}
 
 		ev := &bgammon.EventJoined{
-			GameID: g.id,
+			GameID:       g.id,
+			PlayerNumber: playerNumber,
 		}
 		ev.Player = string(client.name)
 
@@ -126,66 +127,86 @@ func (g *serverGame) addClient(client *serverClient) bool {
 		opponent := g.opponent(client)
 		if opponent != nil {
 			opponent.sendEvent(ev)
-			g.sendBoard(opponent)
+			if !opponent.json {
+				g.sendBoard(opponent)
+			}
 		}
 	}()
 	switch {
 	case g.client1 != nil && g.client2 != nil:
-		ok = false
+		// Do not assign player number.
 	case g.client1 != nil:
 		g.client2 = client
 		g.Player2.Name = string(client.name)
 		client.playerNumber = 2
-		ok = true
+		playerNumber = 2
 	case g.client2 != nil:
 		g.client1 = client
 		g.Player1.Name = string(client.name)
 		client.playerNumber = 1
-		ok = true
+		playerNumber = 1
 	default:
 		i := rand.Intn(2)
 		if i == 0 {
 			g.client1 = client
 			g.Player1.Name = string(client.name)
 			client.playerNumber = 1
+			playerNumber = 1
 		} else {
 			g.client2 = client
 			g.Player2.Name = string(client.name)
 			client.playerNumber = 2
+			playerNumber = 2
 		}
-		ok = true
 	}
-	return ok
+	return playerNumber != 0
 }
 
 func (g *serverGame) removeClient(client *serverClient) {
 	// TODO game is considered paused when only one player is present
 	// once started, only the same player may join and continue the game
-	log.Println("remove client", client)
-	ok := true
+	var playerNumber int
 	defer func() {
-		if !ok {
+		if playerNumber == 0 {
 			return
 		}
+
+		ev := &bgammon.EventLeft{
+			GameID:       g.id,
+			PlayerNumber: client.playerNumber,
+		}
+		ev.Player = string(client.name)
+
+		client.sendEvent(ev)
+		if !client.json {
+			g.sendBoard(client)
+		}
+
+		var opponent *serverClient
+		if playerNumber == 1 && g.client2 != nil {
+			opponent = g.client2
+		} else if playerNumber == 2 && g.client1 != nil {
+			opponent = g.client1
+		}
+		if opponent != nil {
+			opponent.sendEvent(ev)
+			if !opponent.json {
+				g.sendBoard(opponent)
+			}
+		}
+
 		client.playerNumber = 0
-		opponent := g.opponent(client)
-		if opponent == nil {
-			return
-		}
-		opponent.Write([]byte(fmt.Sprintf("left %d %s %s", g.id, client.name, g.name)))
-		if !opponent.json {
-			g.sendBoard(opponent)
-		}
 	}()
 	switch {
 	case g.client1 == client:
 		g.client1 = nil
 		g.Player1.Name = ""
+		playerNumber = 1
 	case g.client2 == client:
 		g.client2 = nil
 		g.Player2.Name = ""
+		playerNumber = 2
 	default:
-		ok = false
 		return
 	}
 }

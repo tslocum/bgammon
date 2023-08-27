@@ -83,6 +83,35 @@ func (g *Game) iterateSpaces(from int, to int, f func(space int, spaceCount int)
 	}
 }
 
+func (g *Game) AddMoves(moves [][]int) bool {
+	original := make([]int, len(g.Board))
+	copy(original, g.Board)
+ADDMOVES:
+	for _, move := range moves {
+		l := g.LegalMoves()
+		for _, lm := range l {
+			if lm[0] == move[0] && lm[1] == move[1] {
+				delta := 1
+				if g.Turn == 2 {
+					delta = -1
+				}
+				lm[0] -= delta
+				opponentCheckers := numOpponentCheckers(g.Board[lm[1]], g.Turn)
+				if opponentCheckers == 1 {
+					lm[1] = delta
+				} else {
+					lm[1] += delta
+				}
+				continue ADDMOVES
+			}
+		}
+		g.Board = original
+		return false
+	}
+	g.Moves = append(g.Moves, moves...)
+	return true
+}
+
 func (g *Game) LegalMoves() [][]int {
 	if g.Roll1 == 0 || g.Roll2 == 0 {
 		return nil
@@ -126,7 +155,6 @@ func (g *Game) LegalMoves() [][]int {
 	}
 
 	for _, move := range g.Moves {
-		log.Println("use move", move)
 		useDiceRoll(move[0], move[1])
 	}
 

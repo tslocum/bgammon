@@ -27,13 +27,18 @@ type EventType string
 
 const (
 	EventTypeWelcome    = "welcome"
+	EventTypeHelp       = "help"
 	EventTypePing       = "ping"
 	EventTypeNotice     = "notice"
 	EventTypeSay        = "say"
 	EventTypeList       = "list"
 	EventTypeJoined     = "joined"
 	EventTypeFailedJoin = "failedjoin"
+	EventTypeLeft       = "left"
 	EventTypeBoard      = "board"
 	EventTypeRolled     = "rolled"
+	EventTypeFailedRoll = "failedroll"
 	EventTypeMoved      = "moved"
+	EventTypeFailedMove = "failedmove"
+	EventTypeFailedOk   = "failedok"
 )

@@ -19,6 +19,12 @@ type EventWelcome struct {
 	Games      int
 }
 
+type EventHelp struct {
+	Event
+	Topic   string
+	Message string
+}
+
 type EventPing struct {
 	Event
 	Message string
@@ -49,10 +55,22 @@ type EventList struct {
 
 type EventJoined struct {
 	Event
-	GameID int
+	GameID       int
+	PlayerNumber int
 }
 
 type EventFailedJoin struct {
+	Event
+	Reason string
+}
+
+type EventLeft struct {
+	Event
+	GameID       int
+	PlayerNumber int
+}
+
+type EventFailedLeave struct {
 	Event
 	Reason string
 }
@@ -68,9 +86,26 @@ type EventRolled struct {
 	Roll2 int
 }
 
+type EventFailedRoll struct {
+	Event
+	Reason string
+}
+
 type EventMoved struct {
 	Event
 	Moves [][]int
+}
+
+type EventFailedMove struct {
+	Event
+	From   int
+	To     int
+	Reason string
+}
+
+type EventFailedOk struct {
+	Event
+	Reason string
 }
 
 func DecodeEvent(message []byte) (interface{}, error) {
@@ -79,78 +114,46 @@ func DecodeEvent(message []byte) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	var ev interface{}
 	switch e.Type {
 	case EventTypeWelcome:
-		ev := &EventWelcome{}
-		err = json.Unmarshal(message, ev)
-		if err != nil {
-			return nil, err
-		}
-		return ev, nil
+		ev = &EventWelcome{}
+	case EventTypeHelp:
+		ev = &EventHelp{}
 	case EventTypePing:
-		ev := &EventPing{}
-		err = json.Unmarshal(message, ev)
-		if err != nil {
-			return nil, err
-		}
-		return ev, nil
+		ev = &EventPing{}
 	case EventTypeNotice:
-		ev := &EventNotice{}
-		err = json.Unmarshal(message, ev)
-		if err != nil {
-			return nil, err
-		}
-		return ev, nil
+		ev = &EventNotice{}
 	case EventTypeSay:
-		ev := &EventSay{}
-		err = json.Unmarshal(message, ev)
-		if err != nil {
-			return nil, err
-		}
-		return ev, nil
+		ev = &EventSay{}
 	case EventTypeList:
-		ev := &EventList{}
-		err = json.Unmarshal(message, ev)
-		if err != nil {
-			return nil, err
-		}
-		return ev, nil
+		ev = &EventList{}
 	case EventTypeJoined:
-		ev := &EventJoined{}
-		err = json.Unmarshal(message, ev)
-		if err != nil {
-			return nil, err
-		}
-		return ev, nil
+		ev = &EventJoined{}
 	case EventTypeFailedJoin:
-		ev := &EventFailedJoin{}
-		err = json.Unmarshal(message, ev)
-		if err != nil {
-			return nil, err
-		}
-		return ev, nil
+		ev = &EventFailedJoin{}
+	case EventTypeLeft:
+		ev = &EventLeft{}
 	case EventTypeBoard:
-		ev := &EventBoard{}
-		err = json.Unmarshal(message, ev)
-		if err != nil {
-			return nil, err
-		}
-		return ev, nil
+		ev = &EventBoard{}
 	case EventTypeRolled:
-		ev := &EventRolled{}
-		err = json.Unmarshal(message, ev)
-		if err != nil {
-			return nil, err
-		}
-		return ev, nil
+		ev = &EventRolled{}
+	case EventTypeFailedRoll:
+		ev = &EventFailedRoll{}
 	case EventTypeMoved:
-		ev := &EventMoved{}
-		err = json.Unmarshal(message, ev)
-		if err != nil {
-			return nil, err
-		}
-		return ev, nil
+		ev = &EventMoved{}
+	case EventTypeFailedMove:
+		ev = &EventFailedMove{}
+	case EventTypeFailedOk:
+		ev = &EventFailedOk{}
 	default:
 		return nil, fmt.Errorf("failed to decode event: unknown event type: %s", e.Type)
 	}
+
+	err = json.Unmarshal(message, ev)
+	if err != nil {
+		return nil, err
+	}
+	return ev, nil
 }
