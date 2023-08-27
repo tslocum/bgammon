@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"code.rocket9labs.com/tslocum/bgammon"
 )
@@ -16,7 +17,6 @@ type serverClient struct {
 	lastActive   int64
 	lastPing     int64
 	commands     <-chan []byte
-	events       chan<- []byte
 	playerNumber int
 	bgammon.Client
 }
@@ -25,42 +25,48 @@ func (c *serverClient) sendEvent(e interface{}) {
 	if c.json {
 		switch ev := e.(type) {
 		case *bgammon.EventWelcome:
-			ev.Type = "welcome"
+			ev.Type = bgammon.EventTypeWelcome
+		case *bgammon.EventPing:
+			ev.Type = bgammon.EventTypePing
 		case *bgammon.EventNotice:
-			ev.Type = "notice"
+			ev.Type = bgammon.EventTypeNotice
 		case *bgammon.EventSay:
-			ev.Type = "say"
+			ev.Type = bgammon.EventTypeSay
 		case *bgammon.EventList:
-			ev.Type = "list"
+			ev.Type = bgammon.EventTypeList
 		case *bgammon.EventJoined:
-			ev.Type = "joined"
+			ev.Type = bgammon.EventTypeJoined
 		case *bgammon.EventFailedJoin:
-			ev.Type = "failedjoin"
+			ev.Type = bgammon.EventTypeFailedJoin
 		case *bgammon.EventBoard:
-			ev.Type = "board"
+			ev.Type = bgammon.EventTypeBoard
 		case *bgammon.EventRolled:
-			ev.Type = "rolled"
+			ev.Type = bgammon.EventTypeRolled
 		case *bgammon.EventMoved:
-			ev.Type = "moved"
+			ev.Type = bgammon.EventTypeMoved
+		default:
+			log.Panicf("unknown event type %+v", ev)
 		}
 
 		buf, err := json.Marshal(e)
 		if err != nil {
 			panic(err)
 		}
-		c.events <- buf
+		c.Write(buf)
 		return
 	}
 
 	switch ev := e.(type) {
 	case *bgammon.EventWelcome:
-		c.events <- []byte(fmt.Sprintf("welcome %s there are %d clients playing %d games.", ev.PlayerName, ev.Clients, ev.Games))
+		c.Write([]byte(fmt.Sprintf("welcome %s there are %d clients playing %d games.", ev.PlayerName, ev.Clients, ev.Games)))
+	case *bgammon.EventPing:
+		c.Write([]byte(fmt.Sprintf("ping %s", ev.Message)))
 	case *bgammon.EventNotice:
-		c.events <- []byte(fmt.Sprintf("notice %s", ev.Message))
+		c.Write([]byte(fmt.Sprintf("notice %s", ev.Message)))
 	case *bgammon.EventSay:
-		c.events <- []byte(fmt.Sprintf("say %s %s", ev.Player, ev.Message))
+		c.Write([]byte(fmt.Sprintf("say %s %s", ev.Player, ev.Message)))
 	case *bgammon.EventList:
-		c.events <- []byte("liststart Games list:")
+		c.Write([]byte("liststart Games list:"))
 		for _, g := range ev.Games {
 			password := 0
 			if g.Password {
@@ -70,17 +76,19 @@ func (c *serverClient) sendEvent(e interface{}) {
 			if g.Name != "" {
 				name = g.Name
 			}
-			c.events <- []byte(fmt.Sprintf("game %d %d %d %s", g.ID, password, g.Players, name))
+			c.Write([]byte(fmt.Sprintf("game %d %d %d %s", g.ID, password, g.Players, name)))
 		}
-		c.events <- []byte("listend End of games list.")
+		c.Write([]byte("listend End of games list."))
 	case *bgammon.EventJoined:
-		c.events <- []byte(fmt.Sprintf("joined %d %s", ev.GameID, ev.Player))
+		c.Write([]byte(fmt.Sprintf("joined %d %s", ev.GameID, ev.Player)))
 	case *bgammon.EventFailedJoin:
-		c.events <- []byte(fmt.Sprintf("failedjoin %s", ev.Reason))
+		c.Write([]byte(fmt.Sprintf("failedjoin %s", ev.Reason)))
 	case *bgammon.EventRolled:
-		c.events <- []byte(fmt.Sprintf("rolled %s %d %d", ev.Player, ev.Roll1, ev.Roll2))
+		c.Write([]byte(fmt.Sprintf("rolled %s %d %d", ev.Player, ev.Roll1, ev.Roll2)))
 	case *bgammon.EventMoved:
-		c.events <- []byte(fmt.Sprintf("moved %s %s", ev.Player, bgammon.FormatMoves(ev.Moves, c.playerNumber)))
+		c.Write([]byte(fmt.Sprintf("moved %s %s", ev.Player, bgammon.FormatMoves(ev.Moves, c.playerNumber))))
+	default:
+		log.Panicf("unknown event type %+v", ev)
 	}
 }
 

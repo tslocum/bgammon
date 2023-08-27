@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
+	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
 )
@@ -12,12 +14,14 @@ import (
 var _ bgammon.Client = &socketClient{}
 
 type socketClient struct {
-	conn     net.Conn
-	events   <-chan []byte
-	commands chan<- []byte
+	conn       net.Conn
+	events     chan []byte
+	commands   chan<- []byte
+	terminated bool
+	wgEvents   sync.WaitGroup
 }
 
-func newSocketClient(conn net.Conn, commands chan<- []byte, events <-chan []byte) *socketClient {
+func newSocketClient(conn net.Conn, commands chan<- []byte, events chan []byte) *socketClient {
 	c := &socketClient{
 		conn:     conn,
 		events:   events,
@@ -28,29 +32,90 @@ func newSocketClient(conn net.Conn, commands chan<- []byte, events <-chan []byte
 	return c
 }
 
+func (c *socketClient) Write(message []byte) {
+	if c.terminated {
+		return
+	}
+
+	c.wgEvents.Add(1)
+	c.events <- message
+}
+
 func (c *socketClient) readCommands() {
+	setTimeout := func() {
+		err := c.conn.SetReadDeadline(time.Now().Add(clientTimeout))
+		if err != nil {
+			c.Terminate(err.Error())
+			return
+		}
+	}
+
+	setTimeout()
 	var scanner = bufio.NewScanner(c.conn)
 	for scanner.Scan() {
+		if c.terminated {
+			continue // TODO wait group
+		}
+
+		if scanner.Err() != nil {
+			c.Terminate(scanner.Err().Error())
+			return
+		}
+
 		buf := make([]byte, len(scanner.Bytes()))
 		copy(buf, scanner.Bytes())
 		c.commands <- buf
 
 		log.Printf("<- %s", scanner.Bytes())
+		setTimeout()
 	}
 }
 
 func (c *socketClient) writeEvents() {
+	setTimeout := func() {
+		err := c.conn.SetWriteDeadline(time.Now().Add(clientTimeout))
+		if err != nil {
+			c.Terminate(err.Error())
+			return
+		}
+	}
+
 	var event []byte
 	for event = range c.events {
-		c.conn.Write(event)
-		c.conn.Write([]byte("\n"))
+		if c.terminated {
+			c.wgEvents.Done()
+			continue
+		}
+		setTimeout()
+
+		_, err := c.conn.Write(append(event, '\n'))
+		if err != nil {
+			c.Terminate(err.Error())
+			c.wgEvents.Done()
+			continue
+		}
 
 		log.Printf("-> %s", event)
+		c.wgEvents.Done()
 	}
 }
 
-func (c *socketClient) Terminate(reason string) error {
+func (c *socketClient) Terminate(reason string) {
+	if c.terminated {
+		return
+	}
+	c.terminated = true
 	c.conn.Write([]byte(fmt.Sprintf("Connection closed: %s\n", reason)))
 	c.conn.Close()
-	return nil
+	go func() {
+		time.Sleep(5 * time.Second)
+		c.wgEvents.Wait()
+		close(c.events)
+		close(c.commands)
+		log.Println("FINISHED CLEANUP")
+	}()
+}
+
+func (c *socketClient) Terminated() bool {
+	return c.terminated
 }

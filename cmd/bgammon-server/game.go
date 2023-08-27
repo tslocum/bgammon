@@ -84,7 +84,7 @@ func (g *serverGame) sendBoard(client *serverClient) {
 
 	scanner := bufio.NewScanner(bytes.NewReader(g.BoardState(playerNumber)))
 	for scanner.Scan() {
-		client.events <- append([]byte("notice "), scanner.Bytes()...)
+		client.Write(append([]byte("notice "), scanner.Bytes()...))
 	}
 }
 
@@ -172,7 +172,7 @@ func (g *serverGame) removeClient(client *serverClient) {
 		if opponent == nil {
 			return
 		}
-		opponent.events <- []byte(fmt.Sprintf("left %d %s %s", g.id, client.name, g.name))
+		opponent.Write([]byte(fmt.Sprintf("left %d %s %s", g.id, client.name, g.name)))
 		if !opponent.json {
 			g.sendBoard(opponent)
 		}

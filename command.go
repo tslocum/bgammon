@@ -19,12 +19,21 @@ const (
 	CommandReset      = "reset"      // Reset checker movement.
 	CommandOk         = "ok"         // Confirm checker movement and pass turn to next player.
 	CommandBoard      = "board"      // Print current board state in human-readable form.
+	CommandPong       = "pong"       // Response to server ping.
 	CommandDisconnect = "disconnect" // Disconnect from server.
 )
 
 type EventType string
 
 const (
-	EventTypeWelcome = "welcome"
-	EventTypeJoined  = "joined"
+	EventTypeWelcome    = "welcome"
+	EventTypePing       = "ping"
+	EventTypeNotice     = "notice"
+	EventTypeSay        = "say"
+	EventTypeList       = "list"
+	EventTypeJoined     = "joined"
+	EventTypeFailedJoin = "failedjoin"
+	EventTypeBoard      = "board"
+	EventTypeRolled     = "rolled"
+	EventTypeMoved      = "moved"
 )

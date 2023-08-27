@@ -1,5 +1,7 @@
 package bgammon
 
 type Client interface {
-	Terminate(reason string) error
+	Write(message []byte)
+	Terminate(reason string)
+	Terminated() bool
 }
