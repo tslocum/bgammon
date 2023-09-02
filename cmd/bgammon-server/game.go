@@ -71,7 +71,14 @@ func (g *serverGame) sendBoard(client *serverClient) {
 
 			ev.GameState.Game = ev.GameState.Copy()
 			for space := 1; space <= 24; space++ {
-				ev.Board[space] = g.Game.Board[24-space+1]
+				ev.Board[space] = g.Game.Board[bgammon.FlipSpace(space, client.playerNumber)]
+			}
+
+			ev.Moves = bgammon.FlipMoves(g.Game.Moves, client.playerNumber)
+
+			legalMoves := g.LegalMoves()
+			for i := range ev.GameState.Available {
+				ev.GameState.Available[i][0], ev.GameState.Available[i][1] = bgammon.FlipSpace(legalMoves[i][0], client.playerNumber), bgammon.FlipSpace(legalMoves[i][1], client.playerNumber)
 			}
 
 			log.Println(g.Game.Board)
@@ -218,9 +225,4 @@ func (g *serverGame) opponent(client *serverClient) *serverClient {
 		return g.client1
 	}
 	return nil
-}
-
-type ServerGameState struct {
-	bgammon.GameState
-	Board []int
 }

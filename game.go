@@ -91,16 +91,17 @@ ADDMOVES:
 		l := g.LegalMoves()
 		for _, lm := range l {
 			if lm[0] == move[0] && lm[1] == move[1] {
+				log.Printf("ADD MOV %d/%d", lm[0], lm[1])
 				delta := 1
 				if g.Turn == 2 {
 					delta = -1
 				}
-				lm[0] -= delta
-				opponentCheckers := numOpponentCheckers(g.Board[lm[1]], g.Turn)
+				g.Board[lm[0]] -= delta
+				opponentCheckers := OpponentCheckers(g.Board[lm[1]], g.Turn)
 				if opponentCheckers == 1 {
-					lm[1] = delta
+					g.Board[lm[1]] = delta
 				} else {
-					lm[1] += delta
+					g.Board[lm[1]] += delta
 				}
 				continue ADDMOVES
 			}
@@ -165,7 +166,7 @@ func (g *Game) LegalMoves() [][]int {
 		}
 
 		checkers := g.Board[space]
-		playerCheckers := numPlayerCheckers(checkers, g.Turn)
+		playerCheckers := PlayerCheckers(checkers, g.Turn)
 		if playerCheckers == 0 {
 			continue
 		}
@@ -180,7 +181,7 @@ func (g *Game) LegalMoves() [][]int {
 				if spaceCount != g.Roll1 && spaceCount != g.Roll2 {
 					return
 				}
-				opponentCheckers := numOpponentCheckers(g.Board[homeSpace], g.Turn)
+				opponentCheckers := OpponentCheckers(g.Board[homeSpace], g.Turn)
 				if opponentCheckers <= 1 {
 					moves = append(moves, []int{space, homeSpace})
 				}
@@ -207,7 +208,7 @@ func (g *Game) LegalMoves() [][]int {
 					return // TODO
 				}
 
-				opponentCheckers := numOpponentCheckers(g.Board[to], g.Turn)
+				opponentCheckers := OpponentCheckers(g.Board[to], g.Turn)
 				if opponentCheckers <= 1 {
 					movable := 1
 					if g.Roll1 == g.Roll2 {
@@ -243,9 +244,9 @@ func (g *Game) RenderSpace(player int, space int, spaceValue int, legalMoves [][
 		pieceColor = opponentColor
 	} else {
 		if value < 0 {
-			pieceColor = "x"
-		} else if value > 0 {
 			pieceColor = "o"
+		} else if value > 0 {
+			pieceColor = "x"
 		} else {
 			pieceColor = playerColor
 		}
@@ -358,33 +359,24 @@ func (g *Game) BoardState(player int) []byte {
 			return g.RenderSpace(player, SpaceBarPlayer, spaceValue, legalMoves)
 		}
 
-		var index int
-		if !white {
-			if row < 6 {
-				col = 12 - col
-			} else {
-				col = 11 - col
-			}
-
-			index = col
+		var space int
+		if white {
+			space = 24 - col
 			if row > 5 {
-				index = 11 - col + 13
+				space = 1 + col
 			}
 		} else {
-			index = col + 3
+			space = 13 + col
 			if row > 5 {
-				index = 11 - col + 15
+				space = 12 - col
 			}
-		}
-		if white {
-			index = BoardSpaces - 1 - index
 		}
 
 		if row == 5 {
 			return []byte("   ")
 		}
 
-		return g.RenderSpace(player, index, spaceValue, legalMoves)
+		return g.RenderSpace(player, space, spaceValue, legalMoves)
 	}
 
 	for i := 0; i < 11; i++ {
@@ -476,7 +468,7 @@ func spaceDiff(from int, to int) int {
 	return diff
 }
 
-func numPlayerCheckers(checkers int, player int) int {
+func PlayerCheckers(checkers int, player int) int {
 	if player == 1 {
 		if checkers > 0 {
 			return checkers
@@ -490,7 +482,7 @@ func numPlayerCheckers(checkers int, player int) int {
 	}
 }
 
-func numOpponentCheckers(checkers int, player int) int {
+func OpponentCheckers(checkers int, player int) int {
 	if player == 2 {
 		if checkers > 0 {
 			return checkers
@@ -509,9 +501,28 @@ func FlipSpace(space int, player int) int {
 		return space
 	}
 	if space < 1 || space > 24 {
-		return space // TODO fix
+		switch space {
+		case SpaceHomePlayer:
+			return SpaceHomeOpponent
+		case SpaceHomeOpponent:
+			return SpaceHomePlayer
+		case SpaceBarPlayer:
+			return SpaceBarOpponent
+		case SpaceBarOpponent:
+			return SpaceBarPlayer
+		default:
+			log.Panicf("unknown space %d", space)
+		}
 	}
 	return 24 - space + 1
+}
+
+func FlipMoves(moves [][]int, player int) [][]int {
+	m := make([][]int, len(moves))
+	for i := range moves {
+		m[i] = []int{FlipSpace(moves[i][0], player), FlipSpace(moves[i][1], player)}
+	}
+	return m
 }
 
 func FormatMoves(moves [][]int, player int) []byte {
@@ -520,7 +531,8 @@ func FormatMoves(moves [][]int, player int) []byte {
 		if i != 0 {
 			out.WriteByte(' ')
 		}
-		out.Write([]byte(fmt.Sprintf("%d/%d", FlipSpace(moves[i][0], player), FlipSpace(moves[i][1], player))))
+		// TODO
+		out.Write([]byte(fmt.Sprintf("{{%d/%d}}", FlipSpace(moves[i][0], player), FlipSpace(moves[i][1], player))))
 	}
 	return out.Bytes()
 }

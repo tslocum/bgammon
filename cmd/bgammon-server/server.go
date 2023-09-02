@@ -264,13 +264,6 @@ COMMANDS:
 		}
 
 		clientGame := s.gameByClient(cmd.client)
-		clientNumber := 0
-		if clientGame != nil {
-			clientNumber = 1
-			if clientGame.client2 == cmd.client {
-				clientNumber = 2
-			}
-		}
 
 		switch keyword {
 		case bgammon.CommandHelp, "h":
@@ -416,7 +409,7 @@ COMMANDS:
 				continue
 			}
 
-			if !clientGame.roll(clientNumber) {
+			if !clientGame.roll(cmd.client.playerNumber) {
 				cmd.client.sendEvent(&bgammon.EventFailedRoll{
 					Reason: "It is not your turn to roll.",
 				})
@@ -427,12 +420,6 @@ COMMANDS:
 				Roll2: clientGame.Roll2,
 			}
 			ev.Player = string(cmd.client.name)
-			clientGame.eachClient(func(client *serverClient) {
-				client.sendEvent(ev)
-				if !client.json {
-					clientGame.sendBoard(client)
-				}
-			})
 			if clientGame.Turn == 0 && clientGame.Roll1 != 0 && clientGame.Roll2 != 0 {
 				if clientGame.Roll1 > clientGame.Roll2 {
 					clientGame.Turn = 1
@@ -443,6 +430,12 @@ COMMANDS:
 					clientGame.Roll2 = 0
 				}
 			}
+			clientGame.eachClient(func(client *serverClient) {
+				client.sendEvent(ev)
+				if clientGame.Turn != 0 || !client.json {
+					clientGame.sendBoard(client)
+				}
+			})
 		case bgammon.CommandMove, "m", "mv":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
@@ -451,7 +444,7 @@ COMMANDS:
 				continue
 			}
 
-			if clientGame.Turn != clientNumber {
+			if clientGame.Turn != cmd.client.playerNumber {
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
 					Reason: "It is not your turn to move.",
 				})
@@ -492,7 +485,8 @@ COMMANDS:
 				}
 
 				originalFrom, originalTo := from, to
-				from, to = bgammon.FlipSpace(from, clientNumber), bgammon.FlipSpace(to, clientNumber)
+				from, to = bgammon.FlipSpace(from, cmd.client.playerNumber), bgammon.FlipSpace(to, cmd.client.playerNumber)
+				log.Printf("translated player %d %d-%d as %d-%d", cmd.client.playerNumber, originalFrom, originalTo, from, to)
 
 				legalMoves := gameCopy.LegalMoves()
 				var found bool
@@ -503,7 +497,7 @@ COMMANDS:
 					}
 				}
 				if !found {
-					log.Printf("available legal moves: %s", bgammon.FormatMoves(legalMoves, clientNumber))
+					log.Printf("available legal moves: %s", bgammon.FormatMoves(legalMoves, cmd.client.playerNumber))
 					cmd.client.sendEvent(&bgammon.EventFailedMove{
 						From:   originalFrom,
 						To:     originalTo,
@@ -526,12 +520,10 @@ COMMANDS:
 				})
 				continue
 			}
-			ev := &bgammon.EventMoved{
-				Moves: moves,
-			}
-			ev.Player = string(cmd.client.name)
 			clientGame.eachClient(func(client *serverClient) {
-				client.sendEvent(ev)
+				client.sendEvent(&bgammon.EventMoved{
+					Moves: bgammon.FlipMoves(moves, client.playerNumber),
+				})
 				clientGame.sendBoard(client)
 			})
 		case bgammon.CommandOk, "k":
@@ -552,7 +544,14 @@ COMMANDS:
 				continue
 			}
 
-			log.Println("legal to pass turn")
+			nextTurn := 1
+			if clientGame.Turn == 1 {
+				nextTurn = 2
+			}
+			clientGame.Roll1, clientGame.Roll2, clientGame.Moves, clientGame.Turn = 0, 0, nil, nextTurn
+			clientGame.eachClient(func(client *serverClient) {
+				clientGame.sendBoard(client)
+			})
 		case bgammon.CommandBoard, "b":
 			if clientGame == nil {
 				cmd.client.sendNotice("You are not currently in a game.")
