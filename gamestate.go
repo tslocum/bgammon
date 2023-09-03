@@ -60,9 +60,9 @@ func (g *GameState) NeedRoll() bool {
 	switch g.Turn {
 	case 0:
 		if g.PlayerNumber == 1 {
-			return g.Player2.Name != "" && g.Roll1 == 0
+			return g.Player2.Name != "" && (g.Roll1 == 0 || (g.Roll1 == g.Roll2))
 		} else if g.PlayerNumber == 2 {
-			return g.Player1.Name != "" && g.Roll2 == 0
+			return g.Player1.Name != "" && (g.Roll2 == 0 || (g.Roll1 == g.Roll2))
 		}
 		return false
 	case 1:
