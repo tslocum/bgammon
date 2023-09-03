@@ -3,7 +3,25 @@
 [![Donate via LiberaPay](https://img.shields.io/liberapay/receives/rocket9labs.com.svg?logo=liberapay)](https://liberapay.com/rocket9labs.com)
 [![Donate via Patreon](https://img.shields.io/badge/dynamic/json?color=%23e85b46&label=Patreon&query=data.attributes.patron_count&suffix=%20patrons&url=https%3A%2F%2Fwww.patreon.com%2Fapi%2Fcampaigns%2F5252223)](https://www.patreon.com/rocketnine)
 
-**Note:** This is unfinished, alpha-quality software. Here be dragons. 
+**Note:** This is unfinished, alpha-quality software. Here be dragons.
+
+## Play
+
+### Browser
+
+[Click here to play](https://play.bgammon.org)
+
+### Terminal (SSH)
+
+`ssh bgammon.org -p 5000`
+
+### Terminal (local)
+
+See [bgammon-cli](https://code.rocket9labs.com/tslocum/bgammon-cli)
+
+### GUI
+
+*Coming soon*
 
 ## Support
 
