@@ -21,6 +21,8 @@ type Game struct {
 	Roll1   int
 	Roll2   int
 	Moves   [][]int // Pending moves.
+
+	boardStates [][]int // One board state for each move to allow undoing a move.
 }
 
 func NewGame() *Game {
@@ -83,33 +85,112 @@ func (g *Game) iterateSpaces(from int, to int, f func(space int, spaceCount int)
 	}
 }
 
+// AddMoves adds moves to the game state.  Adding a backwards move will remove the equivalent existing move.
 func (g *Game) AddMoves(moves [][]int) bool {
-	original := make([]int, len(g.Board))
-	copy(original, g.Board)
-ADDMOVES:
+	log.Printf("ADD MOVES - %+v", moves)
+
+	delta := 1
+	if g.Turn == 2 {
+		delta = -1
+	}
+
+	var addMoves [][]int
+	var undoMoves [][]int
+
+	newBoard := make([]int, len(g.Board))
+	var boardStates [][]int
+	copy(newBoard, g.Board)
+	validateOffset := 0
+VALIDATEMOVES:
 	for _, move := range moves {
 		l := g.LegalMoves()
 		for _, lm := range l {
 			if lm[0] == move[0] && lm[1] == move[1] {
+				addMoves = append(addMoves, []int{move[0], move[1]})
+				continue VALIDATEMOVES
+			}
+		}
+		if len(g.Moves) > 0 {
+			i := len(g.Moves) - 1 - validateOffset
+			if i < 0 {
+				log.Printf("FAILED MOVE %d/%d", move[0], move[1])
+				return false
+			}
+			gameMove := g.Moves[i]
+			if move[0] == gameMove[1] && move[1] == gameMove[0] {
+				undoMoves = append(undoMoves, []int{gameMove[1], gameMove[0]})
+				validateOffset++
+				continue VALIDATEMOVES
+			}
+		}
+		log.Printf("FAILED MOVE %d/%d", move[0], move[1])
+		return false
+	}
+
+	if len(addMoves) != 0 && len(undoMoves) != 0 {
+		return false
+	}
+
+ADDMOVES:
+	for _, move := range addMoves {
+		l := g.LegalMoves()
+		for _, lm := range l {
+			if lm[0] == move[0] && lm[1] == move[1] {
 				log.Printf("ADD MOV %d/%d", lm[0], lm[1])
-				delta := 1
-				if g.Turn == 2 {
-					delta = -1
-				}
-				g.Board[lm[0]] -= delta
-				opponentCheckers := OpponentCheckers(g.Board[lm[1]], g.Turn)
+
+				boardState := make([]int, len(newBoard))
+				copy(boardState, newBoard)
+				boardStates = append(boardStates, boardState)
+
+				newBoard[move[0]] -= delta
+				opponentCheckers := OpponentCheckers(newBoard[lm[1]], g.Turn)
 				if opponentCheckers == 1 {
-					g.Board[lm[1]] = delta
+					newBoard[move[1]] = delta
 				} else {
-					g.Board[lm[1]] += delta
+					newBoard[move[1]] += delta
 				}
 				continue ADDMOVES
 			}
 		}
-		g.Board = original
+	}
+	if len(addMoves) != 0 {
+		g.Moves = append(g.Moves, moves...)
+		g.boardStates = append(g.boardStates, boardStates...)
+	}
+
+	newMoves := make([][]int, len(g.Moves))
+	copy(newMoves, g.Moves)
+	newBoardStates := make([][]int, len(g.boardStates))
+	copy(newBoardStates, g.boardStates)
+	for _, move := range undoMoves {
+		log.Printf("TRY UNDO MOV %d/%d %+v", move[0], move[1], newMoves)
+		if len(g.Moves) > 0 {
+			i := len(newMoves) - 1
+			if i < 0 {
+				log.Printf("FAILED UNDO MOVE %d/%d", move[0], move[1])
+				return false
+			}
+			gameMove := newMoves[i]
+			if move[0] == gameMove[1] && move[1] == gameMove[0] {
+				log.Printf("UNDO MOV %d/%d", gameMove[0], gameMove[1])
+
+				copy(newBoard, g.boardStates[i])
+				newMoves = g.Moves[:i]
+				newBoardStates = g.boardStates[:i]
+				log.Printf("NEW MOVES %+v", newMoves)
+				continue
+			}
+			log.Printf("COMPARE MOV %d/%d %d/%d", gameMove[0], gameMove[1], move[0], move[1])
+		}
+		log.Printf("FAILED UNDO MOVE %d/%d", move[0], move[1])
 		return false
 	}
-	g.Moves = append(g.Moves, moves...)
+	if len(undoMoves) != 0 {
+		g.Moves = newMoves
+		g.boardStates = newBoardStates
+	}
+
+	g.Board = newBoard
 	return true
 }
 

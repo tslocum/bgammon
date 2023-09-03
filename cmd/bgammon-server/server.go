@@ -462,10 +462,6 @@ COMMANDS:
 				continue
 			}
 
-			gameCopy := bgammon.Game{}
-			gameCopy = *clientGame.Game
-			copy(gameCopy.Moves, clientGame.Moves)
-
 			var moves [][]int
 			for i := range params {
 				split := bytes.Split(params[i], []byte("/"))
@@ -488,31 +484,10 @@ COMMANDS:
 				from, to = bgammon.FlipSpace(from, cmd.client.playerNumber), bgammon.FlipSpace(to, cmd.client.playerNumber)
 				log.Printf("translated player %d %d-%d as %d-%d", cmd.client.playerNumber, originalFrom, originalTo, from, to)
 
-				legalMoves := gameCopy.LegalMoves()
-				var found bool
-				for j := range legalMoves {
-					if legalMoves[j][0] == from && legalMoves[j][1] == to {
-						found = true
-						break
-					}
-				}
-				if !found {
-					log.Printf("available legal moves: %s", bgammon.FormatMoves(legalMoves, cmd.client.playerNumber))
-					cmd.client.sendEvent(&bgammon.EventFailedMove{
-						From:   originalFrom,
-						To:     originalTo,
-						Reason: "Illegal move.",
-					})
-					continue COMMANDS
-				}
-
-				move := []int{from, to}
-				moves = append(moves, move)
-				gameCopy.Moves = append(gameCopy.Moves, move)
+				moves = append(moves, []int{from, to})
 			}
 
 			if !clientGame.AddMoves(moves) {
-				log.Panicf("FAILED TO ADD MOVES")
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
 					From:   0,
 					To:     0,
@@ -526,6 +501,36 @@ COMMANDS:
 				})
 				clientGame.sendBoard(client)
 			})
+		case bgammon.CommandReset:
+			if clientGame == nil {
+				cmd.client.sendNotice("You are not currently in a game.")
+				continue
+			}
+
+			if clientGame.Turn != cmd.client.playerNumber {
+				cmd.client.sendNotice("It is not your turn.")
+				continue
+			}
+
+			if len(clientGame.Moves) == 0 {
+				continue
+			}
+
+			l := len(clientGame.Moves)
+			undoMoves := make([][]int, l)
+			for i, move := range clientGame.Moves {
+				undoMoves[l-1-i] = []int{move[1], move[0]}
+			}
+			if !clientGame.AddMoves(undoMoves) {
+				cmd.client.sendNotice("Failed to undo move: invalid move.")
+			} else {
+				clientGame.eachClient(func(client *serverClient) {
+					client.sendEvent(&bgammon.EventMoved{
+						Moves: bgammon.FlipMoves(undoMoves, client.playerNumber),
+					})
+					clientGame.sendBoard(client)
+				})
+			}
 		case bgammon.CommandOk, "k":
 			if clientGame == nil {
 				cmd.client.sendNotice("You are not currently in a game.")
