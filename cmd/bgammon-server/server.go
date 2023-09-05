@@ -346,6 +346,16 @@ COMMANDS:
 				continue
 			}
 
+			// Set default game name.
+			if len(bytes.TrimSpace(gameName)) == 0 {
+				abbr := "'s"
+				lastLetter := cmd.client.name[len(cmd.client.name)-1]
+				if lastLetter == 's' || lastLetter == 'S' {
+					abbr = "'"
+				}
+				gameName = []byte(fmt.Sprintf("%s%s game", cmd.client.name, abbr))
+			}
+
 			g := newServerGame(<-s.newGameIDs)
 			g.name = gameName
 			g.password = gamePassword
@@ -480,6 +490,14 @@ COMMANDS:
 					continue COMMANDS
 				}
 
+				if !bgammon.ValidSpace(from) || !bgammon.ValidSpace(to) {
+					cmd.client.sendEvent(&bgammon.EventFailedMove{
+						From:   from,
+						To:     to,
+						Reason: "Illegal move.",
+					})
+				}
+
 				originalFrom, originalTo := from, to
 				from, to = bgammon.FlipSpace(from, cmd.client.playerNumber), bgammon.FlipSpace(to, cmd.client.playerNumber)
 				log.Printf("translated player %d %d-%d as %d-%d", cmd.client.playerNumber, originalFrom, originalTo, from, to)
@@ -496,9 +514,12 @@ COMMANDS:
 				continue
 			}
 			clientGame.eachClient(func(client *serverClient) {
-				client.sendEvent(&bgammon.EventMoved{
+				ev := &bgammon.EventMoved{
 					Moves: bgammon.FlipMoves(moves, client.playerNumber),
-				})
+				}
+				ev.Player = string(cmd.client.name)
+
+				client.sendEvent(ev)
 				clientGame.sendBoard(client)
 			})
 		case bgammon.CommandReset:
@@ -525,9 +546,12 @@ COMMANDS:
 				cmd.client.sendNotice("Failed to undo move: invalid move.")
 			} else {
 				clientGame.eachClient(func(client *serverClient) {
-					client.sendEvent(&bgammon.EventMoved{
+					ev := &bgammon.EventMoved{
 						Moves: bgammon.FlipMoves(undoMoves, client.playerNumber),
-					})
+					}
+					ev.Player = string(cmd.client.name)
+
+					client.sendEvent(ev)
 					clientGame.sendBoard(client)
 				})
 			}
@@ -544,7 +568,7 @@ COMMANDS:
 					playerNumber = 2
 				}
 				cmd.client.sendEvent(&bgammon.EventFailedOk{
-					Reason: fmt.Sprintf("The following legal moves are available: %s", bgammon.FormatMoves(legalMoves, playerNumber)),
+					Reason: fmt.Sprintf("The following legal moves are available: %s", bgammon.FormatAndFlipMoves(legalMoves, playerNumber)),
 				})
 				continue
 			}

@@ -592,7 +592,7 @@ func FlipSpace(space int, player int) int {
 		case SpaceBarOpponent:
 			return SpaceBarPlayer
 		default:
-			log.Panicf("unknown space %d", space)
+			return -1
 		}
 	}
 	return 24 - space + 1
@@ -606,16 +606,31 @@ func FlipMoves(moves [][]int, player int) [][]int {
 	return m
 }
 
-func FormatMoves(moves [][]int, player int) []byte {
+func FormatMoves(moves [][]int) []byte {
 	var out bytes.Buffer
 	for i := range moves {
 		if i != 0 {
 			out.WriteByte(' ')
 		}
-		// TODO
-		out.Write([]byte(fmt.Sprintf("{{%d/%d}}", FlipSpace(moves[i][0], player), FlipSpace(moves[i][1], player))))
+		out.Write([]byte(fmt.Sprintf("%d/%d", moves[i][0], moves[i][1])))
 	}
 	return out.Bytes()
+}
+
+func FormatAndFlipMoves(moves [][]int, player int) []byte {
+	return FormatMoves(FlipMoves(moves, player))
+}
+
+func ValidSpace(space int) bool {
+	if space < 1 || space > 24 {
+		return false
+	}
+	switch space {
+	case SpaceHomePlayer, SpaceHomeOpponent, SpaceBarPlayer, SpaceBarOpponent:
+		return true
+	default:
+		return false
+	}
 }
 
 const (

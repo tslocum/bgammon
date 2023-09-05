@@ -106,7 +106,7 @@ func (c *serverClient) sendEvent(e interface{}) {
 	case *bgammon.EventFailedRoll:
 		c.Write([]byte(fmt.Sprintf("failedroll %s", ev.Reason)))
 	case *bgammon.EventMoved:
-		c.Write([]byte(fmt.Sprintf("moved %s %s", ev.Player, bgammon.FormatMoves(ev.Moves, c.playerNumber))))
+		c.Write([]byte(fmt.Sprintf("moved %s %s", ev.Player, bgammon.FormatAndFlipMoves(ev.Moves, c.playerNumber))))
 	case *bgammon.EventFailedMove:
 		c.Write([]byte(fmt.Sprintf("failedmove %d/%d %s", ev.From, ev.To, ev.Reason)))
 	case *bgammon.EventFailedOk:
