@@ -29,6 +29,7 @@ type server struct {
 	newClientIDs chan int
 	commands     chan serverCommand
 
+	gamesLock   sync.RWMutex
 	clientsLock sync.RWMutex // TODO need RW?
 }
 
@@ -42,6 +43,7 @@ func newServer() *server {
 	go s.handleNewGameIDs()
 	go s.handleNewClientIDs()
 	go s.handleCommands()
+	go s.handleTerminatedGames()
 	return s
 }
 
@@ -89,6 +91,27 @@ func (s *server) removeClient(c *serverClient) {
 			s.clients = append(s.clients[:i], s.clients[i+1:]...)
 			return
 		}
+	}
+}
+
+func (s *server) handleTerminatedGames() {
+	t := time.NewTicker(time.Minute)
+	for range t.C {
+		s.gamesLock.Lock()
+
+		i := 0
+		for _, g := range s.games {
+			if !g.terminated() {
+				s.games[i] = g
+				i++
+			}
+		}
+		for j := i; j < len(s.games); j++ {
+			s.games[j] = nil // Allow memory to be deallocated.
+		}
+		s.games = s.games[:i]
+
+		s.gamesLock.Unlock()
 	}
 }
 
@@ -185,6 +208,9 @@ func (s *server) sendWelcome(c *serverClient) {
 }
 
 func (s *server) gameByClient(c *serverClient) *serverGame {
+	s.gamesLock.RLock()
+	defer s.gamesLock.RUnlock()
+
 	for _, g := range s.games {
 		if g.client1 == c || g.client2 == c {
 			return g
@@ -311,7 +337,12 @@ COMMANDS:
 			opponent.sendEvent(ev)
 		case bgammon.CommandList, "ls":
 			ev := &bgammon.EventList{}
+
+			s.gamesLock.RLock()
 			for _, g := range s.games {
+				if g.terminated() {
+					continue
+				}
 				ev.Games = append(ev.Games, bgammon.GameListing{
 					ID:       g.id,
 					Password: len(g.password) != 0,
@@ -319,6 +350,8 @@ COMMANDS:
 					Name:     string(g.name),
 				})
 			}
+			s.gamesLock.RUnlock()
+
 			cmd.client.sendEvent(ev)
 		case bgammon.CommandCreate, "c":
 			sendUsage := func() {
@@ -362,7 +395,10 @@ COMMANDS:
 			if !g.addClient(cmd.client) {
 				log.Panicf("failed to add client to newly created game %+v %+v", g, cmd.client)
 			}
-			s.games = append(s.games, g) // TODO lock
+
+			s.gamesLock.Lock()
+			s.games = append(s.games, g)
+			s.gamesLock.Unlock()
 		case bgammon.CommandJoin, "j":
 			if clientGame != nil {
 				cmd.client.sendEvent(&bgammon.EventFailedJoin{
@@ -385,12 +421,17 @@ COMMANDS:
 				continue
 			}
 
+			s.gamesLock.Lock()
 			for _, g := range s.games {
+				if g.terminated() {
+					continue
+				}
 				if g.id == gameID {
 					if len(g.password) != 0 && (len(params) < 2 || !bytes.Equal(g.password, bytes.Join(params[2:], []byte(" ")))) {
 						cmd.client.sendEvent(&bgammon.EventFailedJoin{
 							Reason: "Invalid password.",
 						})
+						s.gamesLock.Unlock()
 						continue COMMANDS
 					}
 
@@ -399,9 +440,11 @@ COMMANDS:
 							Reason: "Game is full.",
 						})
 					}
+					s.gamesLock.Unlock()
 					continue COMMANDS
 				}
 			}
+			s.gamesLock.Unlock()
 		case bgammon.CommandLeave, "l":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedLeave{
@@ -496,6 +539,7 @@ COMMANDS:
 						To:     to,
 						Reason: "Illegal move.",
 					})
+					continue COMMANDS
 				}
 
 				originalFrom, originalTo := from, to
@@ -595,6 +639,19 @@ COMMANDS:
 			cmd.client.Terminate("Client disconnected")
 		case bgammon.CommandPong:
 			// Do nothing.
+
+			// TODO remove
+		case "endgame":
+			if clientGame == nil {
+				cmd.client.sendNotice("You are not currently in a game.")
+				continue
+			}
+
+			clientGame.Board = []int{0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -5, 0, 0, 0}
+
+			clientGame.eachClient(func(client *serverClient) {
+				clientGame.sendBoard(client)
+			})
 		default:
 			log.Printf("unknown command %s", keyword)
 		}

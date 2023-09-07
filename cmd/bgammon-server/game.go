@@ -70,9 +70,13 @@ func (g *serverGame) sendBoard(client *serverClient) {
 			log.Println(g.Game.Board)
 
 			ev.GameState.Game = ev.GameState.Copy()
+
+			// Flip board.
 			for space := 1; space <= 24; space++ {
 				ev.Board[space] = g.Game.Board[bgammon.FlipSpace(space, client.playerNumber)]
 			}
+			ev.Board[bgammon.SpaceHomePlayer], ev.Board[bgammon.SpaceHomeOpponent] = ev.Board[bgammon.SpaceHomeOpponent], ev.Board[bgammon.SpaceHomePlayer]
+			ev.Board[bgammon.SpaceBarPlayer], ev.Board[bgammon.SpaceBarOpponent] = ev.Board[bgammon.SpaceBarOpponent], ev.Board[bgammon.SpaceBarPlayer]
 
 			ev.Moves = bgammon.FlipMoves(g.Game.Moves, client.playerNumber)
 
@@ -80,9 +84,6 @@ func (g *serverGame) sendBoard(client *serverClient) {
 			for i := range ev.GameState.Available {
 				ev.GameState.Available[i][0], ev.GameState.Available[i][1] = bgammon.FlipSpace(legalMoves[i][0], client.playerNumber), bgammon.FlipSpace(legalMoves[i][1], client.playerNumber)
 			}
-
-			log.Println(g.Game.Board)
-			log.Println("AFTER")
 		}
 
 		client.sendEvent(ev)
@@ -225,4 +226,8 @@ func (g *serverGame) opponent(client *serverClient) *serverClient {
 		return g.client1
 	}
 	return nil
+}
+
+func (g *serverGame) terminated() bool {
+	return g.client1 == nil && g.client2 == nil
 }

@@ -74,3 +74,7 @@ func (g *GameState) NeedRoll() bool {
 		return false
 	}
 }
+
+func (g *GameState) NeedOk() bool {
+	return g.Turn != 0 && g.Turn == g.PlayerNumber && len(g.Available) == 0
+}

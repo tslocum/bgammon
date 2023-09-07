@@ -35,16 +35,18 @@ func NewGame() *Game {
 
 func (g *Game) Copy() *Game {
 	newGame := &Game{
-		Board:   make([]int, len(g.Board)),
-		Player1: g.Player1,
-		Player2: g.Player2,
-		Turn:    g.Turn,
-		Roll1:   g.Roll1,
-		Roll2:   g.Roll2,
-		Moves:   make([][]int, len(g.Moves)),
+		Board:       make([]int, len(g.Board)),
+		Player1:     g.Player1,
+		Player2:     g.Player2,
+		Turn:        g.Turn,
+		Roll1:       g.Roll1,
+		Roll2:       g.Roll2,
+		Moves:       make([][]int, len(g.Moves)),
+		boardStates: make([][]int, len(g.boardStates)),
 	}
 	copy(newGame.Board, g.Board)
 	copy(newGame.Moves, g.Moves)
+	copy(newGame.boardStates, g.boardStates)
 	return newGame
 }
 
@@ -67,7 +69,7 @@ func (g *Game) opponentPlayer() Player {
 }
 
 func (g *Game) iterateSpaces(from int, to int, f func(space int, spaceCount int)) {
-	if from == to {
+	if from == to || from < 1 || from > 24 || to < 1 || to > 24 {
 		return
 	}
 
@@ -97,26 +99,25 @@ func (g *Game) AddMoves(moves [][]int) bool {
 	var addMoves [][]int
 	var undoMoves [][]int
 
-	newBoard := make([]int, len(g.Board))
-	var boardStates [][]int
-	copy(newBoard, g.Board)
+	gameCopy := g.Copy()
+
 	validateOffset := 0
 VALIDATEMOVES:
 	for _, move := range moves {
-		l := g.LegalMoves()
+		l := gameCopy.LegalMoves()
 		for _, lm := range l {
 			if lm[0] == move[0] && lm[1] == move[1] {
 				addMoves = append(addMoves, []int{move[0], move[1]})
 				continue VALIDATEMOVES
 			}
 		}
-		if len(g.Moves) > 0 {
-			i := len(g.Moves) - 1 - validateOffset
+		if len(gameCopy.Moves) > 0 {
+			i := len(gameCopy.Moves) - 1 - validateOffset
 			if i < 0 {
 				log.Printf("FAILED MOVE %d/%d", move[0], move[1])
 				return false
 			}
-			gameMove := g.Moves[i]
+			gameMove := gameCopy.Moves[i]
 			if move[0] == gameMove[1] && move[1] == gameMove[0] {
 				undoMoves = append(undoMoves, []int{gameMove[1], gameMove[0]})
 				validateOffset++
@@ -133,51 +134,49 @@ VALIDATEMOVES:
 
 ADDMOVES:
 	for _, move := range addMoves {
-		l := g.LegalMoves()
+		l := gameCopy.LegalMoves()
 		for _, lm := range l {
 			if lm[0] == move[0] && lm[1] == move[1] {
 				log.Printf("ADD MOV %d/%d", lm[0], lm[1])
+				log.Printf("BOARD %+v", gameCopy.Board)
+				log.Printf("LEGAL %+v", l)
+				log.Printf("ROLL %+v %+v", gameCopy.Roll1, gameCopy.Roll2)
 
-				boardState := make([]int, len(newBoard))
-				copy(boardState, newBoard)
-				boardStates = append(boardStates, boardState)
+				boardState := make([]int, len(gameCopy.Board))
+				copy(boardState, gameCopy.Board)
+				gameCopy.boardStates = append(gameCopy.boardStates, boardState)
 
-				newBoard[move[0]] -= delta
-				opponentCheckers := OpponentCheckers(newBoard[lm[1]], g.Turn)
+				gameCopy.Board[move[0]] -= delta
+				opponentCheckers := OpponentCheckers(gameCopy.Board[lm[1]], gameCopy.Turn)
 				if opponentCheckers == 1 {
-					newBoard[move[1]] = delta
+					gameCopy.Board[move[1]] = delta
 				} else {
-					newBoard[move[1]] += delta
+					gameCopy.Board[move[1]] += delta
 				}
+
+				gameCopy.Moves = append(gameCopy.Moves, []int{move[0], move[1]})
+				log.Printf("NEW MOVES %+v", gameCopy.Moves)
 				continue ADDMOVES
 			}
 		}
 	}
-	if len(addMoves) != 0 {
-		g.Moves = append(g.Moves, moves...)
-		g.boardStates = append(g.boardStates, boardStates...)
-	}
-
-	newMoves := make([][]int, len(g.Moves))
-	copy(newMoves, g.Moves)
-	newBoardStates := make([][]int, len(g.boardStates))
-	copy(newBoardStates, g.boardStates)
 	for _, move := range undoMoves {
-		log.Printf("TRY UNDO MOV %d/%d %+v", move[0], move[1], newMoves)
-		if len(g.Moves) > 0 {
-			i := len(newMoves) - 1
+		log.Printf("TRY UNDO MOV %d/%d %+v", move[0], move[1], gameCopy.Moves)
+		if len(gameCopy.Moves) > 0 {
+			i := len(gameCopy.Moves) - 1
 			if i < 0 {
 				log.Printf("FAILED UNDO MOVE %d/%d", move[0], move[1])
 				return false
 			}
-			gameMove := newMoves[i]
+			gameMove := gameCopy.Moves[i]
 			if move[0] == gameMove[1] && move[1] == gameMove[0] {
 				log.Printf("UNDO MOV %d/%d", gameMove[0], gameMove[1])
 
-				copy(newBoard, g.boardStates[i])
-				newMoves = g.Moves[:i]
-				newBoardStates = g.boardStates[:i]
-				log.Printf("NEW MOVES %+v", newMoves)
+				copy(gameCopy.Board, gameCopy.boardStates[i])
+				gameCopy.boardStates = gameCopy.boardStates[:i]
+
+				gameCopy.Moves = gameCopy.Moves[:i]
+				log.Printf("NEW MOVES %+v", gameCopy.Moves)
 				continue
 			}
 			log.Printf("COMPARE MOV %d/%d %d/%d", gameMove[0], gameMove[1], move[0], move[1])
@@ -185,12 +184,10 @@ ADDMOVES:
 		log.Printf("FAILED UNDO MOVE %d/%d", move[0], move[1])
 		return false
 	}
-	if len(undoMoves) != 0 {
-		g.Moves = newMoves
-		g.boardStates = newBoardStates
-	}
 
-	g.Board = newBoard
+	g.Board = gameCopy.Board
+	g.Moves = gameCopy.Moves
+	g.boardStates = gameCopy.boardStates
 	return true
 }
 
@@ -207,42 +204,61 @@ func (g *Game) LegalMoves() [][]int {
 		rolls = append(rolls, g.Roll1, g.Roll2)
 	}
 
-	haveDiceRoll := func(from, to int) bool {
+	haveDiceRoll := func(from, to int) int {
 		// TODO diff needs to account for bar and home special spaces
-		diff := to - from
-		if diff < 0 {
-			diff *= -1
-		}
+		diff := SpaceDiff(from, to)
+		var c int
 		for _, roll := range rolls {
 			if roll == diff {
-				return true
+				c++
 			}
 		}
-		return false
+		return c
+	}
+
+	haveBearOffDiceRoll := func(diff int) int {
+		var c int
+		for _, roll := range rolls {
+			if roll >= diff {
+				c++
+			}
+		}
+		return c
 	}
 
 	useDiceRoll := func(from, to int) {
-		// TODO diff needs to account for bar and home special spaces
-		diff := to - from
-		if diff < 0 {
-			diff *= -1
+		if to == SpaceHomePlayer || to == SpaceHomeOpponent {
+			needRoll := from
+			if to == SpaceHomeOpponent {
+				needRoll = 25 - from
+			}
+			for i, roll := range rolls {
+				if roll >= needRoll {
+					rolls = append(rolls[:i], rolls[i+1:]...)
+					return
+				}
+			}
+			log.Panicf("no dice roll to use for %d/%d", from, to)
 		}
+
+		diff := SpaceDiff(from, to)
 		for i, roll := range rolls {
 			if roll == diff {
 				rolls = append(rolls[:i], rolls[i+1:]...)
 				return
 			}
 		}
-		log.Panicf("tried to use non-existent dice roll %d-%d, have %+v", from, to, rolls)
 	}
 
 	for _, move := range g.Moves {
 		useDiceRoll(move[0], move[1])
 	}
 
+	canBearOff := CanBearOff(g.Board, g.Turn)
+
 	var moves [][]int
 	for space := range g.Board {
-		if space == SpaceHomePlayer || space == SpaceHomeOpponent {
+		if space == SpaceHomePlayer || space == SpaceHomeOpponent { // No entering from home spaces (until acey-deucey is added).
 			continue
 		}
 
@@ -256,7 +272,7 @@ func (g *Game) LegalMoves() [][]int {
 			// Enter from bar.
 			from, to := HomeRange(g.Turn)
 			g.iterateSpaces(from, to, func(homeSpace int, spaceCount int) {
-				if !haveDiceRoll(space, homeSpace) {
+				if haveDiceRoll(space, homeSpace) == 0 {
 					return
 				}
 				if spaceCount != g.Roll1 && spaceCount != g.Roll2 {
@@ -268,6 +284,24 @@ func (g *Game) LegalMoves() [][]int {
 				}
 			})
 		} else {
+			if canBearOff {
+				homeSpace := SpaceHomePlayer
+				if g.Turn == 2 {
+					homeSpace = SpaceHomeOpponent
+				}
+				available := haveBearOffDiceRoll(SpaceDiff(space, homeSpace))
+				//log.Printf("HAVE BEAR OFF DICE ROLL %d for %d/%d (diff %d)", available, space, homeSpace, SpaceDiff(space, homeSpace))
+				if available > 0 {
+					movable := playerCheckers
+					if movable > available {
+						movable = available
+					}
+					for i := 0; i < movable; i++ {
+						moves = append(moves, []int{space, homeSpace})
+					}
+				}
+			}
+
 			// Move normally.
 			lastSpace := 1
 			dir := -1
@@ -276,34 +310,24 @@ func (g *Game) LegalMoves() [][]int {
 				dir = 1
 			}
 
-			if space == lastSpace {
-				continue // TODO check if all pieces in home
-			}
-
 			g.iterateSpaces(space+dir, lastSpace, func(to int, spaceCount int) {
-				if !haveDiceRoll(space, to) {
+				available := haveDiceRoll(space, to)
+				if available == 0 {
 					return
-				}
-
-				if to == SpaceHomePlayer || to == SpaceHomeOpponent {
-					return // TODO
 				}
 
 				opponentCheckers := OpponentCheckers(g.Board[to], g.Turn)
 				if opponentCheckers <= 1 {
-					movable := 1
-					if g.Roll1 == g.Roll2 {
-						movable = playerCheckers
-						if movable > 4 {
-							movable = 4
-						}
+					movable := playerCheckers
+					if movable > available {
+						movable = available
 					}
 					for i := 0; i < movable; i++ {
 						moves = append(moves, []int{space, to})
-						//log.Printf("ADD MOVE %d-%d", space, to)
 					}
 				}
 			})
+
 		}
 	}
 	return moves
@@ -541,7 +565,29 @@ func (g *Game) BoardState(player int) []byte {
 	return t.Bytes()
 }
 
-func spaceDiff(from int, to int) int {
+func SpaceDiff(from int, to int) int {
+	if from < 0 || from > 27 || to < 0 || to > 27 {
+		return 0
+	} else if from == SpaceHomePlayer || from == SpaceHomeOpponent || to == SpaceBarPlayer || to == SpaceBarOpponent {
+		return 0
+	}
+
+	if (from == SpaceBarPlayer || from == SpaceBarOpponent) && (to == SpaceBarPlayer || to == SpaceBarOpponent || to == SpaceHomePlayer || to == SpaceHomeOpponent) {
+		return 0
+	}
+
+	if from == SpaceBarPlayer {
+		return 25 - to
+	} else if from == SpaceBarOpponent {
+		return to
+	}
+
+	if to == SpaceHomePlayer {
+		return from
+	} else if to == SpaceHomeOpponent {
+		return 25 - from
+	}
+
 	diff := to - from
 	if diff < 0 {
 		return diff * -1
@@ -622,15 +668,7 @@ func FormatAndFlipMoves(moves [][]int, player int) []byte {
 }
 
 func ValidSpace(space int) bool {
-	if space < 1 || space > 24 {
-		return false
-	}
-	switch space {
-	case SpaceHomePlayer, SpaceHomeOpponent, SpaceBarPlayer, SpaceBarOpponent:
-		return true
-	default:
-		return false
-	}
+	return space >= 0 && space <= 27
 }
 
 const (
