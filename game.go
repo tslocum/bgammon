@@ -50,6 +50,17 @@ func (g *Game) Copy() *Game {
 	return newGame
 }
 
+func (g *Game) NextTurn() {
+	nextTurn := 1
+	if g.Turn == 1 {
+		nextTurn = 2
+	}
+	g.Roll1, g.Roll2 = 0, 0
+	g.Turn = nextTurn
+	g.Moves = g.Moves[:0]
+	g.boardStates = g.boardStates[:0]
+}
+
 func (g *Game) turnPlayer() Player {
 	switch g.Turn {
 	case 2:
@@ -89,8 +100,6 @@ func (g *Game) iterateSpaces(from int, to int, f func(space int, spaceCount int)
 
 // AddMoves adds moves to the game state.  Adding a backwards move will remove the equivalent existing move.
 func (g *Game) AddMoves(moves [][]int) bool {
-	log.Printf("ADD MOVES - %+v", moves)
-
 	delta := 1
 	if g.Turn == 2 {
 		delta = -1
@@ -114,7 +123,6 @@ VALIDATEMOVES:
 		if len(gameCopy.Moves) > 0 {
 			i := len(gameCopy.Moves) - 1 - validateOffset
 			if i < 0 {
-				log.Printf("FAILED MOVE %d/%d", move[0], move[1])
 				return false
 			}
 			gameMove := gameCopy.Moves[i]
@@ -124,7 +132,6 @@ VALIDATEMOVES:
 				continue VALIDATEMOVES
 			}
 		}
-		log.Printf("FAILED MOVE %d/%d", move[0], move[1])
 		return false
 	}
 
@@ -137,51 +144,47 @@ ADDMOVES:
 		l := gameCopy.LegalMoves()
 		for _, lm := range l {
 			if lm[0] == move[0] && lm[1] == move[1] {
-				log.Printf("ADD MOV %d/%d", lm[0], lm[1])
-				log.Printf("BOARD %+v", gameCopy.Board)
-				log.Printf("LEGAL %+v", l)
-				log.Printf("ROLL %+v %+v", gameCopy.Roll1, gameCopy.Roll2)
-
 				boardState := make([]int, len(gameCopy.Board))
 				copy(boardState, gameCopy.Board)
 				gameCopy.boardStates = append(gameCopy.boardStates, boardState)
 
 				gameCopy.Board[move[0]] -= delta
 				opponentCheckers := OpponentCheckers(gameCopy.Board[lm[1]], gameCopy.Turn)
-				if opponentCheckers == 1 {
+				if opponentCheckers == 1 { // Hit checker.
 					gameCopy.Board[move[1]] = delta
+
+					// Move opponent checker to bar.
+					barSpace := SpaceBarOpponent
+					if g.Turn == 2 {
+						barSpace = SpaceBarPlayer
+					}
+					gameCopy.Board[barSpace] += delta * -1
+				} else if opponentCheckers != 0 {
+					return false
 				} else {
 					gameCopy.Board[move[1]] += delta
 				}
 
 				gameCopy.Moves = append(gameCopy.Moves, []int{move[0], move[1]})
-				log.Printf("NEW MOVES %+v", gameCopy.Moves)
 				continue ADDMOVES
 			}
 		}
 	}
 	for _, move := range undoMoves {
-		log.Printf("TRY UNDO MOV %d/%d %+v", move[0], move[1], gameCopy.Moves)
 		if len(gameCopy.Moves) > 0 {
 			i := len(gameCopy.Moves) - 1
 			if i < 0 {
-				log.Printf("FAILED UNDO MOVE %d/%d", move[0], move[1])
 				return false
 			}
 			gameMove := gameCopy.Moves[i]
 			if move[0] == gameMove[1] && move[1] == gameMove[0] {
-				log.Printf("UNDO MOV %d/%d", gameMove[0], gameMove[1])
-
 				copy(gameCopy.Board, gameCopy.boardStates[i])
 				gameCopy.boardStates = gameCopy.boardStates[:i]
 
 				gameCopy.Moves = gameCopy.Moves[:i]
-				log.Printf("NEW MOVES %+v", gameCopy.Moves)
 				continue
 			}
-			log.Printf("COMPARE MOV %d/%d %d/%d", gameMove[0], gameMove[1], move[0], move[1])
 		}
-		log.Printf("FAILED UNDO MOVE %d/%d", move[0], move[1])
 		return false
 	}
 
@@ -254,43 +257,53 @@ func (g *Game) LegalMoves() [][]int {
 		useDiceRoll(move[0], move[1])
 	}
 
-	canBearOff := CanBearOff(g.Board, g.Turn)
-
 	var moves [][]int
-	for space := range g.Board {
-		if space == SpaceHomePlayer || space == SpaceHomeOpponent { // No entering from home spaces (until acey-deucey is added).
-			continue
-		}
 
-		checkers := g.Board[space]
-		playerCheckers := PlayerCheckers(checkers, g.Turn)
-		if playerCheckers == 0 {
-			continue
-		}
+	barSpace := SpaceBarPlayer
+	if g.Turn == 2 {
+		barSpace = SpaceBarOpponent
+	}
+	mustEnter := g.Board[barSpace] != 0
 
-		if space == SpaceBarPlayer || space == SpaceBarOpponent {
-			// Enter from bar.
-			from, to := HomeRange(g.Turn)
-			g.iterateSpaces(from, to, func(homeSpace int, spaceCount int) {
-				if haveDiceRoll(space, homeSpace) == 0 {
-					return
+	if mustEnter { // Must enter from bar.
+		from, to := HomeRange(g.opponentPlayer().Number)
+		g.iterateSpaces(from, to, func(homeSpace int, spaceCount int) {
+			available := haveDiceRoll(barSpace, homeSpace)
+			if available == 0 {
+				return
+			}
+			opponentCheckers := OpponentCheckers(g.Board[homeSpace], g.Turn)
+			if opponentCheckers <= 1 {
+				movable := PlayerCheckers(g.Board[barSpace], g.Turn)
+				if movable > available {
+					movable = available
 				}
-				if spaceCount != g.Roll1 && spaceCount != g.Roll2 {
-					return
+				for i := 0; i < movable; i++ {
+					moves = append(moves, []int{barSpace, homeSpace})
 				}
-				opponentCheckers := OpponentCheckers(g.Board[homeSpace], g.Turn)
-				if opponentCheckers <= 1 {
-					moves = append(moves, []int{space, homeSpace})
-				}
-			})
-		} else {
+			}
+		})
+	} else {
+		canBearOff := CanBearOff(g.Board, g.Turn)
+		for space := range g.Board {
+			if space == SpaceBarPlayer || space == SpaceBarOpponent { // Handled above.
+				continue
+			} else if space == SpaceHomePlayer || space == SpaceHomeOpponent { // No entering from home spaces (until acey-deucey is added).
+				continue
+			}
+
+			checkers := g.Board[space]
+			playerCheckers := PlayerCheckers(checkers, g.Turn)
+			if playerCheckers == 0 {
+				continue
+			}
+
 			if canBearOff {
 				homeSpace := SpaceHomePlayer
 				if g.Turn == 2 {
 					homeSpace = SpaceHomeOpponent
 				}
 				available := haveBearOffDiceRoll(SpaceDiff(space, homeSpace))
-				//log.Printf("HAVE BEAR OFF DICE ROLL %d for %d/%d (diff %d)", available, space, homeSpace, SpaceDiff(space, homeSpace))
 				if available > 0 {
 					movable := playerCheckers
 					if movable > available {
@@ -327,9 +340,9 @@ func (g *Game) LegalMoves() [][]int {
 					}
 				}
 			})
-
 		}
 	}
+
 	return moves
 }
 

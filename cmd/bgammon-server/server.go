@@ -617,11 +617,7 @@ COMMANDS:
 				continue
 			}
 
-			nextTurn := 1
-			if clientGame.Turn == 1 {
-				nextTurn = 2
-			}
-			clientGame.Roll1, clientGame.Roll2, clientGame.Moves, clientGame.Turn = 0, 0, nil, nextTurn
+			clientGame.NextTurn()
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
 			})
