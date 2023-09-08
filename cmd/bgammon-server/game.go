@@ -86,6 +86,9 @@ func (g *serverGame) sendBoard(client *serverClient) {
 			}
 		}
 
+		// Sort available moves.
+		bgammon.SortMoves(ev.Available)
+
 		client.sendEvent(ev)
 		return
 	}

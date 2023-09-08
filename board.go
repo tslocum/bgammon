@@ -1,22 +1,22 @@
 package bgammon
 
-// board is stored on server from blacks perspective of 1-24
-// all state sent to white, and input received from white is reversed
-// handle this transparently by translating at the message level rather than each time spaces are used
+import "sort"
 
-// HomePlayer is the real Player1 home, HomeOpponent is the real Player2 home
-// HomeBoardPlayer (Player1) ranges 1-6, HomeBoardOpponent (Player2) ranges 24-19 (visible to them as 1-6)
-
-// 1-24 for 24 spaces, 2 spaces for bar, 2 spaces for home
 const (
-	SpaceHomePlayer   = 0
-	SpaceHomeOpponent = 25
-	SpaceBarPlayer    = 26
-	SpaceBarOpponent  = 27
+	SpaceHomePlayer   = 0  // Current player's home.
+	SpaceHomeOpponent = 25 // Opponent player's home.
+	SpaceBarPlayer    = 26 // Current player's bar.
+	SpaceBarOpponent  = 27 // Opponent player's bar.
 )
 
+// BoardSpaces is the total number of spaces needed to represent a backgammon board.
 const BoardSpaces = 28
 
+// NewBoard returns a new backgammon board represented as integers. Positive
+// integers represent player 1's checkers and negative integers represent
+// player 2's checkers. The board's space numbering is always from the
+// perspective of the current player (i.e. the 1 space will always be in the
+// current player's home board).
 func NewBoard() []int {
 	space := make([]int, BoardSpaces)
 	space[24], space[1] = 2, -2
@@ -26,6 +26,7 @@ func NewBoard() []int {
 	return space
 }
 
+// HomeRange returns the start and end space of the provided player's home board.
 func HomeRange(player int) (from int, to int) {
 	if player == 2 {
 		return 24, 19
@@ -33,6 +34,7 @@ func HomeRange(player int) (from int, to int) {
 	return 1, 6
 }
 
+// RollForMove returns the roll needed to move a checker from the provided spaces.
 func RollForMove(from int, to int, player int) int {
 	if !ValidSpace(from) || !ValidSpace(to) {
 		return 0
@@ -69,6 +71,7 @@ func RollForMove(from int, to int, player int) int {
 	return 0
 }
 
+// CanBearOff returns whether the provided player can bear checkers off of the board.
 func CanBearOff(board []int, player int) bool {
 	homeStart, homeEnd := HomeRange(player)
 	homeStart, homeEnd = minInt(homeStart, homeEnd), maxInt(homeStart, homeEnd)
@@ -84,4 +87,18 @@ func CanBearOff(board []int, player int) bool {
 		ok = false
 	}
 	return ok
+}
+
+func compareMoveFunc(moves [][]int) func(i, j int) bool {
+	return func(i, j int) bool {
+		if moves[j][0] == moves[i][0] {
+			return moves[j][1] < moves[i][1]
+		}
+		return moves[j][0] < moves[i][0]
+	}
+}
+
+// SortMoves sorts moves from highest to lowest.
+func SortMoves(moves [][]int) {
+	sort.Slice(moves, compareMoveFunc(moves))
 }
