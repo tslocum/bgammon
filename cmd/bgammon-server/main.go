@@ -1,5 +1,7 @@
 package main
 
+import "flag"
+
 func main() {
 	/*
 		b := bgammon.NewBoard()
@@ -28,8 +30,11 @@ func main() {
 		}()
 		select {}
 	*/
+	var address string
+	flag.StringVar(&address, "tcp", "localhost:1337", "TCP listen address")
+	flag.Parse()
 
 	s := newServer()
-	s.listen("tcp", "127.0.0.1:1337")
+	s.listen("tcp", address)
 	select {}
 }
