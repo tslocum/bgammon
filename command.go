@@ -41,4 +41,5 @@ const (
 	EventTypeMoved      = "moved"
 	EventTypeFailedMove = "failedmove"
 	EventTypeFailedOk   = "failedok"
+	EventTypeWin        = "win"
 )

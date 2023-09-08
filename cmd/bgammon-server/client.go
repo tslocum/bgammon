@@ -55,6 +55,8 @@ func (c *serverClient) sendEvent(e interface{}) {
 			ev.Type = bgammon.EventTypeFailedMove
 		case *bgammon.EventFailedOk:
 			ev.Type = bgammon.EventTypeFailedOk
+		case *bgammon.EventWin:
+			ev.Type = bgammon.EventTypeWin
 		default:
 			log.Panicf("unknown event type %+v", ev)
 		}
@@ -111,6 +113,8 @@ func (c *serverClient) sendEvent(e interface{}) {
 		c.Write([]byte(fmt.Sprintf("failedmove %d/%d %s", ev.From, ev.To, ev.Reason)))
 	case *bgammon.EventFailedOk:
 		c.Write([]byte(fmt.Sprintf("failedok %s", ev.Reason)))
+	case *bgammon.EventWin:
+		c.Write([]byte(fmt.Sprintf("win %s wins!", ev.Player)))
 	default:
 		log.Panicf("unknown event type %+v", ev)
 	}

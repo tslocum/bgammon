@@ -34,6 +34,10 @@ func newServerGame(id int) *serverGame {
 }
 
 func (g *serverGame) roll(player int) bool {
+	if g.Winner != 0 {
+		return false
+	}
+
 	if g.Turn == 0 {
 		if player == 1 {
 			if g.Roll1 != 0 {

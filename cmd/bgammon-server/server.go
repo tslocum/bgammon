@@ -30,7 +30,7 @@ type server struct {
 	commands     chan serverCommand
 
 	gamesLock   sync.RWMutex
-	clientsLock sync.RWMutex // TODO need RW?
+	clientsLock sync.Mutex
 }
 
 func newServer() *server {
@@ -48,7 +48,7 @@ func newServer() *server {
 }
 
 func (s *server) listen(network string, address string) {
-	log.Printf("Listening for %s connections on %s...", network, address)
+	log.Printf("Listening for %s connections on %s...", strings.ToUpper(network), address)
 	listener, err := net.Listen(network, address)
 	if err != nil {
 		log.Fatalf("failed to listen on %s: %s", address, err)
@@ -468,6 +468,7 @@ COMMANDS:
 				})
 				continue
 			}
+
 			ev := &bgammon.EventRolled{
 				Roll1: clientGame.Roll1,
 				Roll2: clientGame.Roll2,
@@ -522,13 +523,13 @@ COMMANDS:
 					sendUsage()
 					continue COMMANDS
 				}
-				from, err := strconv.Atoi(string(split[0]))
-				if err != nil {
+				from := bgammon.ParseSpace(string(split[0]))
+				if from == -1 {
 					sendUsage()
 					continue COMMANDS
 				}
-				to, err := strconv.Atoi(string(split[1]))
-				if err != nil {
+				to := bgammon.ParseSpace(string(split[1]))
+				if to == -1 {
 					sendUsage()
 					continue COMMANDS
 				}
@@ -557,14 +558,29 @@ COMMANDS:
 				})
 				continue
 			}
+
+			var winEvent *bgammon.EventWin
+			if clientGame.Winner != 0 {
+				winEvent = &bgammon.EventWin{}
+				if clientGame.Winner == 1 {
+					winEvent.Player = clientGame.Player1.Name
+				} else {
+					winEvent.Player = clientGame.Player2.Name
+				}
+			}
+
 			clientGame.eachClient(func(client *serverClient) {
 				ev := &bgammon.EventMoved{
 					Moves: bgammon.FlipMoves(moves, client.playerNumber),
 				}
 				ev.Player = string(cmd.client.name)
-
 				client.sendEvent(ev)
+
 				clientGame.sendBoard(client)
+
+				if winEvent != nil {
+					client.sendEvent(winEvent)
+				}
 			})
 		case bgammon.CommandReset:
 			if clientGame == nil {
@@ -607,12 +623,10 @@ COMMANDS:
 
 			legalMoves := clientGame.LegalMoves()
 			if len(legalMoves) != 0 {
-				playerNumber := 1
-				if clientGame.client2 == cmd.client {
-					playerNumber = 2
-				}
+				available := bgammon.FlipMoves(legalMoves, cmd.client.playerNumber)
+				bgammon.SortMoves(available)
 				cmd.client.sendEvent(&bgammon.EventFailedOk{
-					Reason: fmt.Sprintf("The following legal moves are available: %s", bgammon.FormatAndFlipMoves(legalMoves, playerNumber)),
+					Reason: fmt.Sprintf("The following legal moves are available: %s", bgammon.FormatMoves(available)),
 				})
 				continue
 			}

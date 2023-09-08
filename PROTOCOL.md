@@ -131,6 +131,9 @@ provide clients with the initial game state.
   - Sent after sending `ok` when there are one or more legal moves still available to the player.
   - Players must make moves using all available dice rolls before ending their turn.
 
+- `win <player:text> wins!`
+  - Sent after a player bears their final checker off the board.
+
 - `say <player:text> <message:line>`
   - Chat message from another player.
 

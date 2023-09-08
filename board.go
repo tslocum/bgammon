@@ -1,6 +1,10 @@
 package bgammon
 
-import "sort"
+import (
+	"sort"
+	"strconv"
+	"strings"
+)
 
 const (
 	SpaceHomePlayer   = 0  // Current player's home.
@@ -87,6 +91,20 @@ func CanBearOff(board []int, player int) bool {
 		ok = false
 	}
 	return ok
+}
+
+func ParseSpace(space string) int {
+	i, err := strconv.Atoi(space)
+	if err != nil {
+		switch strings.ToLower(space) {
+		case "bar", "b":
+			return SpaceBarPlayer
+		case "off", "o", "home", "h":
+			return SpaceHomePlayer
+		}
+		return -1
+	}
+	return i
 }
 
 func compareMoveFunc(moves [][]int) func(i, j int) bool {

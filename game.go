@@ -18,6 +18,7 @@ type Game struct {
 	Player1 Player
 	Player2 Player
 	Turn    int
+	Winner  int
 	Roll1   int
 	Roll2   int
 	Moves   [][]int // Pending moves.
@@ -39,6 +40,7 @@ func (g *Game) Copy() *Game {
 		Player1:     g.Player1,
 		Player2:     g.Player2,
 		Turn:        g.Turn,
+		Winner:      g.Winner,
 		Roll1:       g.Roll1,
 		Roll2:       g.Roll2,
 		Moves:       make([][]int, len(g.Moves)),
@@ -51,6 +53,10 @@ func (g *Game) Copy() *Game {
 }
 
 func (g *Game) NextTurn() {
+	if g.Winner != 0 {
+		return
+	}
+
 	nextTurn := 1
 	if g.Turn == 1 {
 		nextTurn = 2
@@ -100,6 +106,10 @@ func (g *Game) iterateSpaces(from int, to int, f func(space int, spaceCount int)
 
 // AddMoves adds moves to the game state.  Adding a backwards move will remove the equivalent existing move.
 func (g *Game) AddMoves(moves [][]int) bool {
+	if g.Winner != 0 {
+		return false
+	}
+
 	delta := 1
 	if g.Turn == 2 {
 		delta = -1
@@ -139,6 +149,7 @@ VALIDATEMOVES:
 		return false
 	}
 
+	var checkWin bool
 ADDMOVES:
 	for _, move := range addMoves {
 		l := gameCopy.LegalMoves()
@@ -163,6 +174,10 @@ ADDMOVES:
 					return false
 				} else {
 					gameCopy.Board[move[1]] += delta
+				}
+
+				if move[1] == SpaceHomePlayer || move[1] == SpaceHomeOpponent {
+					checkWin = true
 				}
 
 				gameCopy.Moves = append(gameCopy.Moves, []int{move[0], move[1]})
@@ -191,11 +206,26 @@ ADDMOVES:
 	g.Board = gameCopy.Board
 	g.Moves = gameCopy.Moves
 	g.boardStates = gameCopy.boardStates
+
+	if checkWin {
+		var foundChecker bool
+		for space := 1; space <= 24; space++ {
+			log.Println(space)
+			if PlayerCheckers(g.Board[space], g.Turn) != 0 {
+				foundChecker = true
+				break
+			}
+		}
+		if !foundChecker {
+			g.Winner = g.Turn
+		}
+	}
+
 	return true
 }
 
 func (g *Game) LegalMoves() [][]int {
-	if g.Roll1 == 0 || g.Roll2 == 0 {
+	if g.Winner != 0 || g.Roll1 == 0 || g.Roll2 == 0 {
 		return nil
 	}
 
@@ -665,13 +695,24 @@ func FlipMoves(moves [][]int, player int) [][]int {
 	return m
 }
 
+func FormatSpace(space int) []byte {
+	if space >= 1 && space <= 24 {
+		return []byte(strconv.Itoa(space))
+	} else if space == SpaceBarPlayer || space == SpaceBarOpponent {
+		return []byte("bar")
+	} else if space == SpaceHomePlayer || space == SpaceHomeOpponent {
+		return []byte("off")
+	}
+	return []byte("?")
+}
+
 func FormatMoves(moves [][]int) []byte {
 	var out bytes.Buffer
 	for i := range moves {
 		if i != 0 {
 			out.WriteByte(' ')
 		}
-		out.Write([]byte(fmt.Sprintf("%d/%d", moves[i][0], moves[i][1])))
+		out.Write([]byte(fmt.Sprintf("%s/%s", FormatSpace(moves[i][0]), FormatSpace(moves[i][1]))))
 	}
 	return out.Bytes()
 }
