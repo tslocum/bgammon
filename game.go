@@ -210,7 +210,6 @@ ADDMOVES:
 	if checkWin {
 		var foundChecker bool
 		for space := 1; space <= 24; space++ {
-			log.Println(space)
 			if PlayerCheckers(g.Board[space], g.Turn) != 0 {
 				foundChecker = true
 				break

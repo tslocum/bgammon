@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 
 	"code.rocket9labs.com/tslocum/bgammon"
 )
@@ -124,4 +125,11 @@ func (c *serverClient) sendNotice(message string) {
 	c.sendEvent(&bgammon.EventNotice{
 		Message: message,
 	})
+}
+
+func (c *serverClient) label() string {
+	if len(c.name) > 0 {
+		return string(c.name)
+	}
+	return strconv.Itoa(c.id)
 }

@@ -116,8 +116,6 @@ func (s *server) handleTerminatedGames() {
 }
 
 func (s *server) handleConnection(conn net.Conn) {
-	log.Printf("new conn %+v", conn)
-
 	const bufferSize = 8
 	commands := make(chan []byte, bufferSize)
 	events := make(chan []byte, bufferSize)
@@ -135,6 +133,8 @@ func (s *server) handleConnection(conn net.Conn) {
 	s.sendHello(c)
 	s.addClient(c)
 
+	log.Printf("Client %s connected", c.label())
+
 	go s.handlePingClient(c)
 	go s.handleClientCommands(c)
 
@@ -142,6 +142,8 @@ func (s *server) handleConnection(conn net.Conn) {
 
 	// Remove client.
 	s.removeClient(c)
+
+	log.Printf("Client %s disconnected", c.label())
 }
 
 func (s *server) handlePingClient(c *serverClient) {
@@ -243,11 +245,7 @@ COMMANDS:
 			continue
 		}
 		keyword = strings.ToLower(keyword)
-
-		log.Printf("server client %+v command %s with keyword %s", cmd.client, cmd.command, keyword)
-
 		params := bytes.Fields(cmd.command[startParameters:])
-		log.Printf("params %+v", params)
 
 		// Require users to send login command first.
 		if cmd.client.account == -1 {
@@ -281,7 +279,7 @@ COMMANDS:
 					Games:      len(s.games),
 				})
 
-				log.Printf("login as %s - %s", username, password)
+				log.Printf("Client %d logged in as %s", cmd.client.id, cmd.client.name)
 				continue
 			} else {
 				cmd.client.Terminate("You must login before using other commands.")
@@ -543,10 +541,7 @@ COMMANDS:
 					continue COMMANDS
 				}
 
-				originalFrom, originalTo := from, to
 				from, to = bgammon.FlipSpace(from, cmd.client.playerNumber), bgammon.FlipSpace(to, cmd.client.playerNumber)
-				log.Printf("translated player %d %d-%d as %d-%d", cmd.client.playerNumber, originalFrom, originalTo, from, to)
-
 				moves = append(moves, []int{from, to})
 			}
 
@@ -663,7 +658,7 @@ COMMANDS:
 				clientGame.sendBoard(client)
 			})
 		default:
-			log.Printf("unknown command %s", keyword)
+			log.Printf("Received unknown command from client %s: %s", cmd.client.label(), cmd.command)
 		}
 	}
 }

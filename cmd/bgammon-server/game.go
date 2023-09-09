@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"log"
 	"math/rand"
 	"time"
 
@@ -71,8 +70,6 @@ func (g *serverGame) sendBoard(client *serverClient) {
 
 		// Reverse spaces for white.
 		if client.playerNumber == 2 {
-			log.Println(g.Game.Board)
-
 			ev.GameState.Game = ev.GameState.Copy()
 
 			// Flip board.
