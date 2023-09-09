@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,6 +16,8 @@ import (
 )
 
 const clientTimeout = 10 * time.Minute
+
+var onlyNumbers = regexp.MustCompile(`^[0-9]+$`)
 
 type serverCommand struct {
 	client  *serverClient
@@ -275,7 +278,10 @@ COMMANDS:
 				var password []byte
 				readUsername := func() bool {
 					username = params[0]
-					if !s.nameAvailable(username) {
+					if onlyNumbers.Match(username) {
+						cmd.client.Terminate("Invalid username: must contain at least one non-numeric character.")
+						return false
+					} else if !s.nameAvailable(username) {
 						cmd.client.Terminate("Username unavailable.")
 						return false
 					}
