@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
 )
@@ -19,6 +20,7 @@ type serverClient struct {
 	lastPing     int64
 	commands     <-chan []byte
 	playerNumber int
+	terminating  bool
 	bgammon.Client
 }
 
@@ -132,4 +134,22 @@ func (c *serverClient) label() string {
 		return string(c.name)
 	}
 	return strconv.Itoa(c.id)
+}
+
+func (c *serverClient) Terminate(reason string) {
+	if c.Terminated() || c.terminating {
+		return
+	}
+	c.terminating = true
+
+	var extra string
+	if reason != "" {
+		extra = ": " + reason
+	}
+	c.sendNotice("Connection terminated" + extra)
+
+	go func() {
+		time.Sleep(time.Second)
+		c.Client.Terminate(reason)
+	}()
 }

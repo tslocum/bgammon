@@ -67,6 +67,16 @@ func (s *server) handleListener(listener net.Listener) {
 	}
 }
 
+func (s *server) nameAvailable(username []byte) bool {
+	lower := bytes.ToLower(username)
+	for _, c := range s.clients {
+		if bytes.Equal(bytes.ToLower(c.name), lower) {
+			return false
+		}
+	}
+	return true
+}
+
 func (s *server) addClient(c *serverClient) {
 	s.clientsLock.Lock()
 	defer s.clientsLock.Unlock()
@@ -197,9 +207,14 @@ func (s *server) handleNewClientIDs() {
 }
 
 func (s *server) randomUsername() []byte {
-	// TODO check if username is available
-	i := 100 + rand.Intn(900)
-	return []byte(fmt.Sprintf("Guest%d", i))
+	for {
+		i := 100 + rand.Intn(900)
+		name := []byte(fmt.Sprintf("Guest%d", i))
+
+		if s.nameAvailable(name) {
+			return name
+		}
+	}
 }
 
 func (s *server) sendHello(c *serverClient) {
@@ -250,17 +265,39 @@ COMMANDS:
 		// Require users to send login command first.
 		if cmd.client.account == -1 {
 			if keyword == bgammon.CommandLogin || keyword == bgammon.CommandLoginJSON || keyword == "l" || keyword == "lj" {
+				if keyword == bgammon.CommandLoginJSON || keyword == "lj" {
+					cmd.client.json = true
+				}
+
+				s.clientsLock.Lock()
+
 				var username []byte
 				var password []byte
+				readUsername := func() bool {
+					username = params[0]
+					if !s.nameAvailable(username) {
+						cmd.client.Terminate("Username unavailable.")
+						return false
+					}
+					return true
+				}
 				switch len(params) {
 				case 0:
 					username = s.randomUsername()
 				case 1:
-					username = params[0]
+					if !readUsername() {
+						s.clientsLock.Unlock()
+						continue
+					}
 				default:
-					username = params[0]
+					if !readUsername() {
+						s.clientsLock.Unlock()
+						continue
+					}
 					password = bytes.Join(params[1:], []byte(" "))
 				}
+
+				s.clientsLock.Unlock()
 
 				if len(password) > 0 {
 					cmd.client.account = 1
@@ -268,10 +305,6 @@ COMMANDS:
 					cmd.client.account = 0
 				}
 				cmd.client.name = username
-
-				if keyword == bgammon.CommandLoginJSON || keyword == "lj" {
-					cmd.client.json = true
-				}
 
 				cmd.client.sendEvent(&bgammon.EventWelcome{
 					PlayerName: string(cmd.client.name),
@@ -281,10 +314,10 @@ COMMANDS:
 
 				log.Printf("Client %d logged in as %s", cmd.client.id, cmd.client.name)
 				continue
-			} else {
-				cmd.client.Terminate("You must login before using other commands.")
-				continue
 			}
+
+			cmd.client.Terminate("You must login before using other commands.")
+			continue
 		}
 
 		clientGame := s.gameByClient(cmd.client)
