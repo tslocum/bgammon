@@ -452,10 +452,38 @@ COMMANDS:
 				sendUsage()
 				continue
 			}
-			gameID, err := strconv.Atoi(string(params[0]))
-			if err != nil || gameID < 1 {
-				sendUsage()
-				continue
+
+			var joinGameID int
+			if onlyNumbers.Match(params[0]) {
+				gameID, err := strconv.Atoi(string(params[0]))
+				if err == nil && gameID > 0 {
+					joinGameID = gameID
+				}
+
+				if joinGameID == 0 {
+					sendUsage()
+					continue
+				}
+			} else {
+				paramLower := bytes.ToLower(params[0])
+				s.clientsLock.Lock()
+				for _, sc := range s.clients {
+					if bytes.Equal(paramLower, bytes.ToLower(sc.name)) {
+						g := s.gameByClient(sc)
+						if g != nil {
+							joinGameID = g.id
+						}
+						break
+					}
+				}
+				s.clientsLock.Unlock()
+
+				if joinGameID == 0 {
+					cmd.client.sendEvent(&bgammon.EventFailedJoin{
+						Reason: "Game not found.",
+					})
+					continue
+				}
 			}
 
 			s.gamesLock.Lock()
@@ -463,7 +491,7 @@ COMMANDS:
 				if g.terminated() {
 					continue
 				}
-				if g.id == gameID {
+				if g.id == joinGameID {
 					if len(g.password) != 0 && (len(params) < 2 || !bytes.Equal(g.password, bytes.Join(params[2:], []byte(" ")))) {
 						cmd.client.sendEvent(&bgammon.EventFailedJoin{
 							Reason: "Invalid password.",
@@ -482,6 +510,10 @@ COMMANDS:
 				}
 			}
 			s.gamesLock.Unlock()
+
+			cmd.client.sendEvent(&bgammon.EventFailedJoin{
+				Reason: "Game not found.",
+			})
 		case bgammon.CommandLeave, "l":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedLeave{

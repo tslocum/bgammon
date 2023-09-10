@@ -15,6 +15,7 @@ All commands and events are separated by newlines.
 - `login [username] [password]`
   - Log in to bgammon. A random username is assigned when none is provided.
   - This must be the first command sent when a client connects to bgammon.
+  - Usernames must contain at least one non-numeric character.
   - *Aliases:* `l`
 
 - `loginjson [username] [password]`
@@ -38,8 +39,8 @@ formatted responses are more easily parsed by computers.
   - List all games.
   - *Aliases:* `c`
 
-- `join <id> [password]`
-  - Join game.
+- `join <id>/<username> [password]`
+  - Join game by game ID or by player.
   - *Aliases:* `j`
 
 - `roll`
