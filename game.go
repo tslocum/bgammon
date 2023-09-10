@@ -137,6 +137,47 @@ func (g *Game) addMove(move []int) bool {
 	return true
 }
 
+func (g *Game) ExpandMove(move []int, currentSpace int, moves [][]int) ([][]int, bool) {
+	l := g.LegalMoves()
+	var hitMoves [][]int
+	for _, m := range l {
+		if OpponentCheckers(g.Board[m[1]], g.Turn) == 1 {
+			hitMoves = append(hitMoves, m)
+		}
+	}
+	for i := 0; i < 2; i++ {
+		var checkMoves [][]int
+		if i == 0 { // Try moves that will hit an opponent's checker first.
+			checkMoves = hitMoves
+		} else {
+			checkMoves = l
+		}
+		for _, lm := range checkMoves {
+			if lm[0] != currentSpace {
+				continue
+			}
+
+			newMoves := make([][]int, len(moves))
+			copy(newMoves, moves)
+			newMoves = append(newMoves, []int{lm[0], lm[1]})
+
+			if lm[1] == move[1] {
+				return newMoves, true
+			}
+
+			currentSpace = lm[1]
+
+			gc := g.Copy()
+			gc.addMove(lm)
+			m, ok := gc.ExpandMove(move, currentSpace, newMoves)
+			if ok {
+				return m, ok
+			}
+		}
+	}
+	return nil, false
+}
+
 // AddMoves adds moves to the game state.  Adding a backwards move will remove the equivalent existing move.
 func (g *Game) AddMoves(moves [][]int) bool {
 	if g.Player1.Name == "" || g.Player2.Name == "" || g.Winner != 0 {
@@ -158,6 +199,7 @@ VALIDATEMOVES:
 				continue VALIDATEMOVES
 			}
 		}
+
 		if len(gameCopy.Moves) > 0 {
 			i := len(gameCopy.Moves) - 1 - validateOffset
 			if i < 0 {
@@ -170,6 +212,15 @@ VALIDATEMOVES:
 				continue VALIDATEMOVES
 			}
 		}
+
+		expandedMoves, ok := g.ExpandMove(move, move[0], nil)
+		if ok {
+			for _, expanded := range expandedMoves {
+				addMoves = append(addMoves, []int{expanded[0], expanded[1]})
+			}
+			continue VALIDATEMOVES
+		}
+
 		return false
 	}
 
