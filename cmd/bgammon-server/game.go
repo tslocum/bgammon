@@ -10,14 +10,15 @@ import (
 )
 
 type serverGame struct {
-	id         int
-	created    int64
-	lastActive int64
-	name       []byte
-	password   []byte
-	client1    *serverClient
-	client2    *serverClient
-	r          *rand.Rand
+	id             int
+	created        int64
+	lastActive     int64
+	name           []byte
+	password       []byte
+	client1        *serverClient
+	client2        *serverClient
+	r              *rand.Rand
+	allowedPlayers [][]byte // Only matching player names are allowed to join.
 	*bgammon.Game
 }
 
@@ -33,7 +34,7 @@ func newServerGame(id int) *serverGame {
 }
 
 func (g *serverGame) roll(player int) bool {
-	if g.Winner != 0 {
+	if g.client1 == nil || g.client2 == nil || g.Winner != 0 {
 		return false
 	}
 
@@ -43,17 +44,26 @@ func (g *serverGame) roll(player int) bool {
 				return false
 			}
 			g.Roll1 = g.r.Intn(6) + 1
+
+			if len(g.allowedPlayers) == 0 {
+				g.allowedPlayers = [][]byte{g.client1.name, g.client2.name}
+			}
 			return true
 		} else {
 			if g.Roll2 != 0 {
 				return false
 			}
 			g.Roll2 = g.r.Intn(6) + 1
+
+			if len(g.allowedPlayers) == 0 {
+				g.allowedPlayers = [][]byte{g.client1.name, g.client2.name}
+			}
 			return true
 		}
 	} else if player != g.Turn || g.Roll1 != 0 || g.Roll2 != 0 {
 		return false
 	}
+
 	g.Roll1, g.Roll2 = g.r.Intn(6)+1, g.r.Intn(6)+1
 	return true
 }
@@ -120,7 +130,20 @@ func (g *serverGame) eachClient(f func(client *serverClient)) {
 	}
 }
 
-func (g *serverGame) addClient(client *serverClient) bool {
+func (g *serverGame) addClient(client *serverClient) (bool, string) {
+	if len(g.allowedPlayers) > 0 {
+		var found bool
+		for _, allowed := range g.allowedPlayers {
+			if bytes.Equal(client.name, allowed) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false, "Game has already started."
+		}
+	}
+
 	var playerNumber int
 	defer func() {
 		if playerNumber == 0 {
@@ -171,12 +194,16 @@ func (g *serverGame) addClient(client *serverClient) bool {
 			playerNumber = 2
 		}
 	}
-	return playerNumber != 0
+
+	ok := playerNumber != 0
+	var reason string
+	if !ok {
+		reason = "Game is full."
+	}
+	return ok, reason
 }
 
 func (g *serverGame) removeClient(client *serverClient) {
-	// TODO game is considered paused when only one player is present
-	// once started, only the same player may join and continue the game
 	var playerNumber int
 	defer func() {
 		if playerNumber == 0 {

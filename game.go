@@ -104,15 +104,43 @@ func (g *Game) iterateSpaces(from int, to int, f func(space int, spaceCount int)
 	}
 }
 
-// AddMoves adds moves to the game state.  Adding a backwards move will remove the equivalent existing move.
-func (g *Game) AddMoves(moves [][]int) bool {
-	if g.Winner != 0 {
+func (g *Game) addMove(move []int) bool {
+	opponentCheckers := OpponentCheckers(g.Board[move[1]], g.Turn)
+	if opponentCheckers > 1 {
 		return false
 	}
 
 	delta := 1
 	if g.Turn == 2 {
 		delta = -1
+	}
+
+	boardState := make([]int, len(g.Board))
+	copy(boardState, g.Board)
+	g.boardStates = append(g.boardStates, boardState)
+
+	g.Board[move[0]] -= delta
+	if opponentCheckers == 1 { // Hit checker.
+		g.Board[move[1]] = delta
+
+		// Move opponent checker to bar.
+		barSpace := SpaceBarOpponent
+		if g.Turn == 2 {
+			barSpace = SpaceBarPlayer
+		}
+		g.Board[barSpace] += delta * -1
+	} else {
+		g.Board[move[1]] += delta
+	}
+
+	g.Moves = append(g.Moves, []int{move[0], move[1]})
+	return true
+}
+
+// AddMoves adds moves to the game state.  Adding a backwards move will remove the equivalent existing move.
+func (g *Game) AddMoves(moves [][]int) bool {
+	if g.Player1.Name == "" || g.Player2.Name == "" || g.Winner != 0 {
+		return false
 	}
 
 	var addMoves [][]int
@@ -155,32 +183,13 @@ ADDMOVES:
 		l := gameCopy.LegalMoves()
 		for _, lm := range l {
 			if lm[0] == move[0] && lm[1] == move[1] {
-				boardState := make([]int, len(gameCopy.Board))
-				copy(boardState, gameCopy.Board)
-				gameCopy.boardStates = append(gameCopy.boardStates, boardState)
-
-				gameCopy.Board[move[0]] -= delta
-				opponentCheckers := OpponentCheckers(gameCopy.Board[lm[1]], gameCopy.Turn)
-				if opponentCheckers == 1 { // Hit checker.
-					gameCopy.Board[move[1]] = delta
-
-					// Move opponent checker to bar.
-					barSpace := SpaceBarOpponent
-					if g.Turn == 2 {
-						barSpace = SpaceBarPlayer
-					}
-					gameCopy.Board[barSpace] += delta * -1
-				} else if opponentCheckers != 0 {
+				if !gameCopy.addMove(move) {
 					return false
-				} else {
-					gameCopy.Board[move[1]] += delta
 				}
 
 				if move[1] == SpaceHomePlayer || move[1] == SpaceHomeOpponent {
 					checkWin = true
 				}
-
-				gameCopy.Moves = append(gameCopy.Moves, []int{move[0], move[1]})
 				continue ADDMOVES
 			}
 		}
@@ -370,6 +379,43 @@ func (g *Game) LegalMoves() [][]int {
 				}
 			})
 		}
+	}
+
+	// totalMoves tries all legal moves in a game and returns the maximum total number of moves that a player may consecutively make.
+	var totalMoves func(in *Game, move []int) int
+	totalMoves = func(in *Game, move []int) int {
+		gc := in.Copy()
+		if !gc.addMove(move) {
+			log.Panicf("failed to add move %+v to game %+v", move, in)
+		}
+
+		maxTotal := 1
+		for _, m := range gc.LegalMoves() {
+			total := totalMoves(gc, m)
+			if total+1 > maxTotal {
+				maxTotal = total + 1
+			}
+		}
+		return maxTotal
+	}
+
+	// Simulate all possible moves to their final value and only allow moves that will achieve the maximum total moves.
+	var maxMoves int
+	moveCounts := make([]int, len(moves))
+	for i, move := range moves {
+		moveCounts[i] = totalMoves(g, move)
+		if moveCounts[i] > maxMoves {
+			maxMoves = moveCounts[i]
+		}
+	}
+	if maxMoves > 1 {
+		var newMoves [][]int
+		for i, move := range moves {
+			if moveCounts[i] >= maxMoves {
+				newMoves = append(newMoves, move)
+			}
+		}
+		moves = newMoves
 	}
 
 	return moves
@@ -706,6 +752,10 @@ func FormatSpace(space int) []byte {
 }
 
 func FormatMoves(moves [][]int) []byte {
+	if len(moves) == 0 {
+		return []byte("none")
+	}
+
 	var out bytes.Buffer
 	for i := range moves {
 		if i != 0 {

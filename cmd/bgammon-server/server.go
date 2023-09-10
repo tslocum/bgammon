@@ -359,12 +359,12 @@ COMMANDS:
 				continue
 			}
 			if clientGame == nil {
-				cmd.client.sendNotice("Message not sent. You are not currently in a game.")
+				cmd.client.sendNotice("Message not sent: You are not currently in a game.")
 				continue
 			}
 			opponent := clientGame.opponent(cmd.client)
 			if opponent == nil {
-				cmd.client.sendNotice("Message not sent. There is no one else in the game.")
+				cmd.client.sendNotice("Message not sent: There is no one else in the game.")
 				continue
 			}
 			ev := &bgammon.EventSay{
@@ -429,8 +429,9 @@ COMMANDS:
 			g := newServerGame(<-s.newGameIDs)
 			g.name = gameName
 			g.password = gamePassword
-			if !g.addClient(cmd.client) {
-				log.Panicf("failed to add client to newly created game %+v %+v", g, cmd.client)
+			ok, reason := g.addClient(cmd.client)
+			if !ok {
+				log.Panicf("failed to add client to newly created game %+v %+v: %s", g, cmd.client, reason)
 			}
 
 			s.gamesLock.Lock()
@@ -500,9 +501,10 @@ COMMANDS:
 						continue COMMANDS
 					}
 
-					if !g.addClient(cmd.client) {
+					ok, reason := g.addClient(cmd.client)
+					if !ok {
 						cmd.client.sendEvent(&bgammon.EventFailedJoin{
-							Reason: "Game is full.",
+							Reason: reason,
 						})
 					}
 					s.gamesLock.Unlock()
