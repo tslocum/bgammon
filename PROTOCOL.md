@@ -16,58 +16,62 @@ All commands and events are separated by newlines.
   - Log in to bgammon. A random username is assigned when none is provided.
   - This must be the first command sent when a client connects to bgammon.
   - Usernames must contain at least one non-numeric character.
-  - *Aliases:* `l`
+  - Aliases: `l`
 
 - `loginjson [username] [password]`
   - Log in to bgammon and enable JSON formatted responses.
   - All client applications should use the `loginjson` command to log in, as JSON 
 formatted responses are more easily parsed by computers.
-  - *Aliases:* `lj`
+  - Aliases: `lj`
 
 - `json <on/off>`
   - Turn JSON formatted messages on or off. JSON messages are not sent by default.
 
 - `help [command]`
   - Request help for all commands, or optionally a specific command.
-  - *Aliases:* `h`
+  - Aliases: `h`
 
 - `list`
   - List all games.
-  - *Aliases:* `ls`
+  - Aliases: `ls`
 
 - `create <public/private> [password]`
   - List all games.
-  - *Aliases:* `c`
+  - Aliases: `c`
 
 - `join <id>/<username> [password]`
   - Join game by game ID or by player.
-  - *Aliases:* `j`
+  - Aliases: `j`
 
 - `roll`
   - Roll dice.
-  - *Aliases:* `r`
+  - Aliases: `r`
 
 - `move <from-to> [from-to]...`
   - Move checkers.
-  - *Aliases:* `m`, `mv`
+  - Aliases: `m`, `mv`
 
 - `reset`
   - Reset pending checker movement.
-  - *Aliases:* `r`
+  - Aliases: `r`
 
 - `ok`
   - Confirm checker movement and pass turn to next player.
-  - *Aliases:* `k`
+  - Aliases: `k`
+
+- `rematch`
+  - Request (or accept) a rematch after a match has been finished.
+  - Aliases: `rm`
 
 - `say <message>`
   - Send a chat message.
   - This command can only be used after creating or joining a game.
-  - *Aliases:* `s`
+  - Aliases: `s`
 
 - `board`
   - Print current game state in human-readable form.
   - This command is not normally used, as the game state is provided in JSON format.
-  - *Aliases:* `b`
+  - Aliases: `b`
 
 - `pong <message>`
   - Sent in response to server `ping` event to prevent the connection from timing out.

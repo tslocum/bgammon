@@ -18,6 +18,7 @@ const (
 	CommandMove       = "move"       // Move checkers.
 	CommandReset      = "reset"      // Reset checker movement.
 	CommandOk         = "ok"         // Confirm checker movement and pass turn to next player.
+	CommandRematch    = "rematch"    // Confirm checker movement and pass turn to next player.
 	CommandBoard      = "board"      // Print current board state in human-readable form.
 	CommandPong       = "pong"       // Response to server ping.
 	CommandDisconnect = "disconnect" // Disconnect from server.

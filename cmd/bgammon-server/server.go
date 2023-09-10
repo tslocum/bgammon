@@ -224,9 +224,6 @@ func (s *server) sendHello(c *serverClient) {
 	c.Write([]byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!"))
 }
 
-func (s *server) sendWelcome(c *serverClient) {
-}
-
 func (s *server) gameByClient(c *serverClient) *serverGame {
 	s.gamesLock.RLock()
 	defer s.gamesLock.RUnlock()
@@ -703,6 +700,60 @@ COMMANDS:
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
 			})
+		case bgammon.CommandRematch, "rm":
+			if clientGame == nil {
+				cmd.client.sendNotice("You are not currently in a game.")
+				continue
+			} else if clientGame.Winner == 0 {
+				cmd.client.sendNotice("The game you are in is still in progress.")
+				continue
+			} else if clientGame.rematch == cmd.client.playerNumber {
+				cmd.client.sendNotice("You have already requested a rematch.")
+				continue
+			} else if clientGame.client1 == nil || clientGame.client2 == nil {
+				cmd.client.sendNotice("Your opponent left the game.")
+				continue
+			} else if clientGame.rematch != 0 && clientGame.rematch != cmd.client.playerNumber {
+				s.gamesLock.Lock()
+
+				newGame := newServerGame(<-s.newGameIDs)
+				newGame.name = clientGame.name
+				newGame.password = clientGame.password
+				newGame.client1 = clientGame.client1
+				newGame.client2 = clientGame.client2
+				newGame.Player1 = clientGame.Player1
+				newGame.Player2 = clientGame.Player2
+				s.games = append(s.games, newGame)
+
+				clientGame.client1 = nil
+				clientGame.client2 = nil
+
+				s.gamesLock.Unlock()
+
+				ev1 := &bgammon.EventJoined{
+					GameID:       newGame.id,
+					PlayerNumber: 1,
+				}
+				ev1.Player = newGame.Player1.Name
+
+				ev2 := &bgammon.EventJoined{
+					GameID:       newGame.id,
+					PlayerNumber: 2,
+				}
+				ev2.Player = newGame.Player2.Name
+
+				newGame.eachClient(func(client *serverClient) {
+					client.sendEvent(ev1)
+					client.sendEvent(ev2)
+					newGame.sendBoard(client)
+				})
+			} else {
+				clientGame.rematch = cmd.client.playerNumber
+
+				clientGame.opponent(cmd.client).sendNotice("Your opponent would like to play again. Type /rematch to accept.")
+				cmd.client.sendNotice("Rematch offer sent.")
+				continue
+			}
 		case bgammon.CommandBoard, "b":
 			if clientGame == nil {
 				cmd.client.sendNotice("You are not currently in a game.")
@@ -725,7 +776,10 @@ COMMANDS:
 				continue
 			}
 
-			clientGame.Board = []int{0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -5, 0, 0, 0}
+			clientGame.Turn = 1
+			clientGame.Roll1 = 1
+			clientGame.Roll2 = 2
+			clientGame.Board = []int{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)

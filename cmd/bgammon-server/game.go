@@ -19,6 +19,7 @@ type serverGame struct {
 	client2        *serverClient
 	r              *rand.Rand
 	allowedPlayers [][]byte // Only matching player names are allowed to join.
+	rematch        int
 	*bgammon.Game
 }
 
