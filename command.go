@@ -10,10 +10,10 @@ const (
 	CommandHelp       = "help"       // Print help information.
 	CommandJSON       = "json"       // Enable or disable JSON formatted messages.
 	CommandSay        = "say"        // Send chat message.
-	CommandList       = "list"       // List available games.
-	CommandCreate     = "create"     // Create game.
-	CommandJoin       = "join"       // Join game.
-	CommandLeave      = "leave"      // Leave game.
+	CommandList       = "list"       // List available matches.
+	CommandCreate     = "create"     // Create match.
+	CommandJoin       = "join"       // Join match.
+	CommandLeave      = "leave"      // Leave match.
 	CommandRoll       = "roll"       // Roll dice.
 	CommandMove       = "move"       // Move checkers.
 	CommandReset      = "reset"      // Reset checker movement.

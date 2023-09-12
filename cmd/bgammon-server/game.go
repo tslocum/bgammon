@@ -141,7 +141,7 @@ func (g *serverGame) addClient(client *serverClient) (bool, string) {
 			}
 		}
 		if !found {
-			return false, "Game has already started."
+			return false, "Match has already started."
 		}
 	}
 
@@ -199,7 +199,7 @@ func (g *serverGame) addClient(client *serverClient) (bool, string) {
 	ok := playerNumber != 0
 	var reason string
 	if !ok {
-		reason = "Game is full."
+		reason = "Match is full."
 	}
 	return ok, reason
 }

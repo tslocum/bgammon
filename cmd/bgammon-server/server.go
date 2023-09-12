@@ -356,12 +356,12 @@ COMMANDS:
 				continue
 			}
 			if clientGame == nil {
-				cmd.client.sendNotice("Message not sent: You are not currently in a game.")
+				cmd.client.sendNotice("Message not sent: You are not currently in a match.")
 				continue
 			}
 			opponent := clientGame.opponent(cmd.client)
 			if opponent == nil {
-				cmd.client.sendNotice("Message not sent: There is no one else in the game.")
+				cmd.client.sendNotice("Message not sent: There is no one else in the match.")
 				continue
 			}
 			ev := &bgammon.EventSay{
@@ -389,7 +389,7 @@ COMMANDS:
 			cmd.client.sendEvent(ev)
 		case bgammon.CommandCreate, "c":
 			sendUsage := func() {
-				cmd.client.sendNotice("To create a public game specify whether it is public or private. When creating a private game, a password must also be provided.")
+				cmd.client.sendNotice("To create a public match please specify whether it is public or private. When creating a private match, a password must also be provided.")
 			}
 			if len(params) == 0 {
 				sendUsage()
@@ -420,7 +420,7 @@ COMMANDS:
 				if lastLetter == 's' || lastLetter == 'S' {
 					abbr = "'"
 				}
-				gameName = []byte(fmt.Sprintf("%s%s game", cmd.client.name, abbr))
+				gameName = []byte(fmt.Sprintf("%s%s match", cmd.client.name, abbr))
 			}
 
 			g := newServerGame(<-s.newGameIDs)
@@ -437,13 +437,13 @@ COMMANDS:
 		case bgammon.CommandJoin, "j":
 			if clientGame != nil {
 				cmd.client.sendEvent(&bgammon.EventFailedJoin{
-					Reason: "Please leave the game you are in before joining another game.",
+					Reason: "Please leave the match you are in before joining another.",
 				})
 				continue
 			}
 
 			sendUsage := func() {
-				cmd.client.sendNotice("To join a public game specify its game ID. To join a private game, a password must also be specified.")
+				cmd.client.sendNotice("To join a match please specify its ID or the name of a player in the match. To join a private match, a password must also be specified.")
 			}
 
 			if len(params) == 0 {
@@ -478,7 +478,7 @@ COMMANDS:
 
 				if joinGameID == 0 {
 					cmd.client.sendEvent(&bgammon.EventFailedJoin{
-						Reason: "Game not found.",
+						Reason: "Match not found.",
 					})
 					continue
 				}
@@ -511,12 +511,12 @@ COMMANDS:
 			s.gamesLock.Unlock()
 
 			cmd.client.sendEvent(&bgammon.EventFailedJoin{
-				Reason: "Game not found.",
+				Reason: "Match not found.",
 			})
 		case bgammon.CommandLeave, "l":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedLeave{
-					Reason: "You are not currently in a game.",
+					Reason: "You are not currently in a match.",
 				})
 				continue
 			}
@@ -525,7 +525,7 @@ COMMANDS:
 		case bgammon.CommandRoll, "r":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedRoll{
-					Reason: "You are not currently in a game.",
+					Reason: "You are not currently in a match.",
 				})
 				continue
 			}
@@ -561,7 +561,7 @@ COMMANDS:
 		case bgammon.CommandMove, "m", "mv":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
-					Reason: "You are not currently in a game.",
+					Reason: "You are not currently in a match.",
 				})
 				continue
 			}
@@ -649,7 +649,7 @@ COMMANDS:
 			})
 		case bgammon.CommandReset:
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a game.")
+				cmd.client.sendNotice("You are not currently in a match.")
 				continue
 			}
 
@@ -682,7 +682,7 @@ COMMANDS:
 			}
 		case bgammon.CommandOk, "k":
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a game.")
+				cmd.client.sendNotice("You are not currently in a match.")
 				continue
 			}
 
@@ -702,16 +702,16 @@ COMMANDS:
 			})
 		case bgammon.CommandRematch, "rm":
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a game.")
+				cmd.client.sendNotice("You are not currently in a match.")
 				continue
 			} else if clientGame.Winner == 0 {
-				cmd.client.sendNotice("The game you are in is still in progress.")
+				cmd.client.sendNotice("The match you are in is still in progress.")
 				continue
 			} else if clientGame.rematch == cmd.client.playerNumber {
 				cmd.client.sendNotice("You have already requested a rematch.")
 				continue
 			} else if clientGame.client1 == nil || clientGame.client2 == nil {
-				cmd.client.sendNotice("Your opponent left the game.")
+				cmd.client.sendNotice("Your opponent left the match.")
 				continue
 			} else if clientGame.rematch != 0 && clientGame.rematch != cmd.client.playerNumber {
 				s.gamesLock.Lock()
@@ -756,7 +756,7 @@ COMMANDS:
 			}
 		case bgammon.CommandBoard, "b":
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a game.")
+				cmd.client.sendNotice("You are not currently in a match.")
 				continue
 			}
 
@@ -772,7 +772,7 @@ COMMANDS:
 			// TODO remove
 		case "endgame":
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a game.")
+				cmd.client.sendNotice("You are not currently in a match.")
 				continue
 			}
 
