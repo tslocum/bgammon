@@ -66,8 +66,6 @@ type EventFailedJoin struct {
 
 type EventLeft struct {
 	Event
-	GameID       int
-	PlayerNumber int
 }
 
 type EventFailedLeave struct {

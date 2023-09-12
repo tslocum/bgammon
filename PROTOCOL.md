@@ -14,8 +14,8 @@ All commands and events are separated by newlines.
 
 - `login [username] [password]`
   - Log in to bgammon. A random username is assigned when none is provided.
-  - This must be the first command sent when a client connects to bgammon.
   - Usernames must contain at least one non-numeric character.
+  - This (or `loginjson`) must be the first command sent when a client connects to bgammon.
   - Aliases: `l`
 
 - `loginjson [username] [password]`
@@ -32,15 +32,15 @@ formatted responses are more easily parsed by computers.
   - Aliases: `h`
 
 - `list`
-  - List all games.
+  - List all matches.
   - Aliases: `ls`
 
 - `create <public/private> [password]`
-  - List all games.
+  - Create a match.
   - Aliases: `c`
 
 - `join <id>/<username> [password]`
-  - Join game by game ID or by player.
+  - Join match by match ID or by player.
   - Aliases: `j`
 
 - `roll`
@@ -65,12 +65,12 @@ formatted responses are more easily parsed by computers.
 
 - `say <message>`
   - Send a chat message.
-  - This command can only be used after creating or joining a game.
+  - This command can only be used after creating or joining a match.
   - Aliases: `s`
 
 - `board`
-  - Print current game state in human-readable form.
-  - This command is not normally used, as the game state is provided in JSON format.
+  - Print current match state in human-readable form.
+  - This command is not normally used, as the match state is provided in JSON format.
   - Aliases: `b`
 
 - `pong <message>`
@@ -101,32 +101,32 @@ This document lists events in human-readable format.
   - Initial welcome message sent by the server. It provides instructions on how to log in.
   - This message does not normally need to be displayed when using a graphical client.
 
-- `welcome <name:text> there are <clients:integer> clients playing <games:integer> games.`
+- `welcome <name:text> there are <clients:integer> clients playing <games:integer> matches.`
   - Initial message sent by the server.
 
 - `notice <message:line>`
   - Server message. This should always be displayed to the user.
 
-- `liststart Games list:`
-  - Start of games list.
+- `liststart Matches list:`
+  - Start of matches list.
 
 - `game <id:integer> <password:boolean> <players:integer> <name:line>`
-  - Game description.
+  - Match description.
 
-- `listend End of games list.`
-  - End of games list.
+- `listend End of matches list.`
+  - End of matches list.
 
 - `joined <id:integer> <playerNumber:integer> <playerName:text>`
-  - Sent after successfully creating or joining a game, and when another player
-joins a game you are in.
+  - Sent after successfully creating or joining a match, and when another player
+joins a match you are in.
   - The server will always send a `board` event immediately after `joined` to
-provide clients with the initial game state.
+provide clients with the initial match state.
 
 - `failedjoin <message:line>`
-  - Sent after failing to join a game.
+  - Sent after failing to join a match.
 
-- `parted <gameID:integer> <gameID:integer>`
-  - Sent after leaving a game.
+- `left <username:text>`
+  - Sent after leaving a match.
 
 - `json <message:line>`
   - Server confirmation of client requested JSON formatting.

@@ -211,10 +211,7 @@ func (g *serverGame) removeClient(client *serverClient) {
 			return
 		}
 
-		ev := &bgammon.EventLeft{
-			GameID:       g.id,
-			PlayerNumber: client.playerNumber,
-		}
+		ev := &bgammon.EventLeft{}
 		ev.Player = string(client.name)
 
 		client.sendEvent(ev)

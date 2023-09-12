@@ -75,7 +75,7 @@ func (c *serverClient) sendEvent(e interface{}) {
 	// Human-readable messages.
 	switch ev := e.(type) {
 	case *bgammon.EventWelcome:
-		c.Write([]byte(fmt.Sprintf("welcome %s there are %d clients playing %d games.", ev.PlayerName, ev.Clients, ev.Games)))
+		c.Write([]byte(fmt.Sprintf("welcome %s there are %d clients playing %d matches.", ev.PlayerName, ev.Clients, ev.Games)))
 	case *bgammon.EventHelp:
 		c.Write([]byte("helpstart Help text:"))
 		c.Write([]byte(fmt.Sprintf("help %s", ev.Message)))
@@ -87,25 +87,25 @@ func (c *serverClient) sendEvent(e interface{}) {
 	case *bgammon.EventSay:
 		c.Write([]byte(fmt.Sprintf("say %s %s", ev.Player, ev.Message)))
 	case *bgammon.EventList:
-		c.Write([]byte("liststart Games list:"))
+		c.Write([]byte("liststart Matches list:"))
 		for _, g := range ev.Games {
 			password := 0
 			if g.Password {
 				password = 1
 			}
-			name := "Game"
+			name := "(No name)"
 			if g.Name != "" {
 				name = g.Name
 			}
 			c.Write([]byte(fmt.Sprintf("game %d %d %d %s", g.ID, password, g.Players, name)))
 		}
-		c.Write([]byte("listend End of games list."))
+		c.Write([]byte("listend End of matches list."))
 	case *bgammon.EventJoined:
 		c.Write([]byte(fmt.Sprintf("joined %d %d %s", ev.GameID, ev.PlayerNumber, ev.Player)))
 	case *bgammon.EventFailedJoin:
 		c.Write([]byte(fmt.Sprintf("failedjoin %s", ev.Reason)))
 	case *bgammon.EventLeft:
-		c.Write([]byte(fmt.Sprintf("left %d %d %s", ev.GameID, ev.PlayerNumber, ev.Player)))
+		c.Write([]byte(fmt.Sprintf("left %s", ev.Player)))
 	case *bgammon.EventRolled:
 		c.Write([]byte(fmt.Sprintf("rolled %s %d %d", ev.Player, ev.Roll1, ev.Roll2)))
 	case *bgammon.EventFailedRoll:
