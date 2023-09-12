@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -50,7 +51,41 @@ func newServer() *server {
 	return s
 }
 
+func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	const bufferSize = 8
+	commands := make(chan []byte, bufferSize)
+	events := make(chan []byte, bufferSize)
+
+	wsClient := newWebSocketClient(r, w, commands, events)
+	if wsClient == nil {
+		return
+	}
+
+	now := time.Now().Unix()
+
+	c := &serverClient{
+		id:         <-s.newClientIDs,
+		account:    -1,
+		connected:  now,
+		lastActive: now,
+		commands:   commands,
+		Client:     wsClient,
+	}
+	s.handleClient(c)
+}
+
+func (s *server) listenWebSocket(address string) {
+	log.Printf("Listening for WebSocket connections on %s...", address)
+	err := http.ListenAndServe(address, http.HandlerFunc(s.handleWebSocket))
+	log.Fatalf("failed to listen on %s: %s", address, err)
+}
+
 func (s *server) listen(network string, address string) {
+	if strings.ToLower(network) == "ws" {
+		go s.listenWebSocket(address)
+		return
+	}
+
 	log.Printf("Listening for %s connections on %s...", strings.ToUpper(network), address)
 	listener, err := net.Listen(network, address)
 	if err != nil {
@@ -128,6 +163,22 @@ func (s *server) handleTerminatedGames() {
 	}
 }
 
+func (s *server) handleClient(c *serverClient) {
+	s.addClient(c)
+
+	log.Printf("Client %s connected", c.label())
+
+	go s.handlePingClient(c)
+	go s.handleClientCommands(c)
+
+	c.HandleReadWrite()
+
+	// Remove client.
+	s.removeClient(c)
+
+	log.Printf("Client %s disconnected", c.label())
+}
+
 func (s *server) handleConnection(conn net.Conn) {
 	const bufferSize = 8
 	commands := make(chan []byte, bufferSize)
@@ -144,19 +195,7 @@ func (s *server) handleConnection(conn net.Conn) {
 		Client:     newSocketClient(conn, commands, events),
 	}
 	s.sendHello(c)
-	s.addClient(c)
-
-	log.Printf("Client %s connected", c.label())
-
-	go s.handlePingClient(c)
-	go s.handleClientCommands(c)
-
-	c.HandleReadWrite()
-
-	// Remove client.
-	s.removeClient(c)
-
-	log.Printf("Client %s disconnected", c.label())
+	s.handleClient(c)
 }
 
 func (s *server) handlePingClient(c *serverClient) {
