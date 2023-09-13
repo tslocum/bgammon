@@ -28,12 +28,11 @@ func newWebSocketClient(r *http.Request, w http.ResponseWriter, commands chan<- 
 		return nil
 	}
 
-	c := &webSocketClient{
+	return &webSocketClient{
 		conn:     conn,
 		events:   events,
 		commands: commands,
 	}
-	return c
 }
 
 func (c *webSocketClient) HandleReadWrite() {

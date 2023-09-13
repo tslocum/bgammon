@@ -21,12 +21,11 @@ type socketClient struct {
 }
 
 func newSocketClient(conn net.Conn, commands chan<- []byte, events chan []byte) *socketClient {
-	c := &socketClient{
+	return &socketClient{
 		conn:     conn,
 		events:   events,
 		commands: commands,
 	}
-	return c
 }
 
 func (c *socketClient) HandleReadWrite() {
