@@ -80,7 +80,7 @@ func (c *webSocketClient) readCommands() {
 		copy(buf, msg)
 		c.commands <- buf
 
-		log.Printf("<- %s", msg)
+		logClientRead(msg)
 		setTimeout()
 	}
 }

@@ -71,7 +71,7 @@ func (c *socketClient) readCommands() {
 		copy(buf, scanner.Bytes())
 		c.commands <- buf
 
-		log.Printf("<- %s", scanner.Bytes())
+		logClientRead(scanner.Bytes())
 		setTimeout()
 	}
 }

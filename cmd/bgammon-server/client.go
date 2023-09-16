@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -152,4 +153,23 @@ func (c *serverClient) Terminate(reason string) {
 		time.Sleep(time.Second)
 		c.Client.Terminate(reason)
 	}()
+}
+
+func logClientRead(msg []byte) {
+	msgLower := bytes.ToLower(msg)
+	if bytes.HasPrefix(msgLower, []byte("login ")) || bytes.HasPrefix(msgLower, []byte("l ")) || bytes.HasPrefix(msgLower, []byte("loginjson ")) || bytes.HasPrefix(msgLower, []byte("lj ")) {
+		split := bytes.Split(msg, []byte(" "))
+		var username []byte
+		var password []byte
+		l := len(split)
+		if l > 1 {
+			username = split[1]
+			if l > 2 {
+				password = []byte("*******")
+			}
+		}
+		log.Printf("<- %s %s %s", split[0], username, password)
+	} else {
+		log.Printf("<- %s", msg)
+	}
 }
