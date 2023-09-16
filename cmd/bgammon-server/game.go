@@ -163,9 +163,7 @@ func (g *serverGame) addClient(client *serverClient) (bool, string) {
 		opponent := g.opponent(client)
 		if opponent != nil {
 			opponent.sendEvent(ev)
-			if !opponent.json {
-				g.sendBoard(opponent)
-			}
+			g.sendBoard(opponent)
 		}
 	}()
 	switch {
