@@ -56,7 +56,8 @@ func (g *GameState) SpaceAt(x int, y int) int {
 	return space
 }
 
-func (g *GameState) NeedRoll() bool {
+// MayRoll returns whether the player may send the 'roll' command.
+func (g *GameState) MayRoll() bool {
 	switch g.Turn {
 	case 0:
 		if g.PlayerNumber == 1 {
@@ -75,6 +76,12 @@ func (g *GameState) NeedRoll() bool {
 	}
 }
 
-func (g *GameState) NeedOk() bool {
+// MayOK returns whether the player may send the 'ok' command.
+func (g *GameState) MayOK() bool {
 	return g.Turn != 0 && g.Turn == g.PlayerNumber && len(g.Available) == 0
+}
+
+// MayReset returns whether the player may send the 'reset' command.
+func (g *GameState) MayReset() bool {
+	return g.Turn != 0 && g.Turn == g.PlayerNumber && len(g.Moves) > 0
 }
