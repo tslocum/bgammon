@@ -348,12 +348,15 @@ func (g *Game) LegalMoves() [][]int {
 
 	var moves [][]int
 
-	barSpace := SpaceBarPlayer
-	if g.Turn == 2 {
+	var mustEnter bool
+	var barSpace int
+	if PlayerCheckers(g.Board[SpaceBarPlayer], g.Turn) > 0 {
+		mustEnter = true
+		barSpace = SpaceBarPlayer
+	} else if PlayerCheckers(g.Board[SpaceBarOpponent], g.Turn) > 0 {
+		mustEnter = true
 		barSpace = SpaceBarOpponent
 	}
-	mustEnter := g.Board[barSpace] != 0
-
 	if mustEnter { // Must enter from bar.
 		from, to := HomeRange(g.opponentPlayer().Number)
 		g.iterateSpaces(from, to, func(homeSpace int, spaceCount int) {
