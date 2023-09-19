@@ -5,21 +5,17 @@
 
 ## Play
 
-### Browser
+### Graphical client
 
-[Click here to play](https://play.bgammon.org)
+[**Click here to play**](https://play.bgammon.org)
 
-### Terminal (SSH)
+Source code available [here](https://code.rocketnine.space/tslocum/boxcars).
+
+### Terminal client
 
 `ssh bgammon.org -p 5000`
 
-### Terminal (local)
-
-See [bgammon-cli](https://code.rocket9labs.com/tslocum/bgammon-cli)
-
-### GUI
-
-*Coming soon*
+Source code available [here](https://code.rocketnine.space/tslocum/bgammon-cli).
 
 ## Support
 
