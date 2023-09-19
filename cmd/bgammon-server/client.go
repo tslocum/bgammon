@@ -147,9 +147,10 @@ func (c *serverClient) Terminate(reason string) {
 	if reason != "" {
 		extra = ": " + reason
 	}
-	c.sendNotice("Connection terminated" + extra)
 
 	go func() {
+		c.sendNotice("Connection terminated" + extra)
+
 		time.Sleep(time.Second)
 		c.Client.Terminate(reason)
 	}()

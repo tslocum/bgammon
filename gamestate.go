@@ -78,7 +78,7 @@ func (g *GameState) MayRoll() bool {
 
 // MayOK returns whether the player may send the 'ok' command.
 func (g *GameState) MayOK() bool {
-	return g.Turn != 0 && g.Turn == g.PlayerNumber && len(g.Available) == 0
+	return g.Turn != 0 && g.Turn == g.PlayerNumber && g.Roll1 != 0 && len(g.Available) == 0
 }
 
 // MayReset returns whether the player may send the 'reset' command.
