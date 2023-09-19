@@ -427,6 +427,11 @@ COMMANDS:
 
 			cmd.client.sendEvent(ev)
 		case bgammon.CommandCreate, "c":
+			if clientGame != nil {
+				cmd.client.sendNotice("Failed to create match: Please leave the match you are in before creating another.")
+				continue
+			}
+
 			sendUsage := func() {
 				cmd.client.sendNotice("To create a public match please specify whether it is public or private. When creating a private match, a password must also be provided.")
 			}
@@ -434,6 +439,7 @@ COMMANDS:
 				sendUsage()
 				continue
 			}
+
 			var gamePassword []byte
 			gameType := bytes.ToLower(params[0])
 			var gameName []byte
