@@ -473,6 +473,8 @@ COMMANDS:
 			s.gamesLock.Lock()
 			s.games = append(s.games, g)
 			s.gamesLock.Unlock()
+
+			cmd.client.sendNotice(fmt.Sprintf("Created match: %s", g.name))
 		case bgammon.CommandJoin, "j":
 			if clientGame != nil {
 				cmd.client.sendEvent(&bgammon.EventFailedJoin{
@@ -529,7 +531,7 @@ COMMANDS:
 					continue
 				}
 				if g.id == joinGameID {
-					if len(g.password) != 0 && (len(params) < 2 || !bytes.Equal(g.password, bytes.Join(params[2:], []byte(" ")))) {
+					if len(g.password) != 0 && (len(params) < 2 || !bytes.Equal(g.password, bytes.Join(params[1:], []byte(" ")))) {
 						cmd.client.sendEvent(&bgammon.EventFailedJoin{
 							Reason: "Invalid password.",
 						})
@@ -544,6 +546,7 @@ COMMANDS:
 						})
 					}
 					s.gamesLock.Unlock()
+					cmd.client.sendNotice(fmt.Sprintf("Joined match: %s", g.name))
 					continue COMMANDS
 				}
 			}
