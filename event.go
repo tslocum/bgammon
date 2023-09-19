@@ -137,6 +137,8 @@ func DecodeEvent(message []byte) (interface{}, error) {
 		ev = &EventFailedJoin{}
 	case EventTypeLeft:
 		ev = &EventLeft{}
+	case EventTypeFailedLeave:
+		ev = &EventFailedLeave{}
 	case EventTypeBoard:
 		ev = &EventBoard{}
 	case EventTypeRolled:

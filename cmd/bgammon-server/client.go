@@ -47,6 +47,8 @@ func (c *serverClient) sendEvent(e interface{}) {
 			ev.Type = bgammon.EventTypeFailedJoin
 		case *bgammon.EventLeft:
 			ev.Type = bgammon.EventTypeLeft
+		case *bgammon.EventFailedLeave:
+			ev.Type = bgammon.EventTypeFailedLeave
 		case *bgammon.EventBoard:
 			ev.Type = bgammon.EventTypeBoard
 		case *bgammon.EventRolled:
