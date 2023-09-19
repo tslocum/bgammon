@@ -654,7 +654,8 @@ COMMANDS:
 				moves = append(moves, []int{from, to})
 			}
 
-			if !clientGame.AddMoves(moves) {
+			ok, expandedMoves := clientGame.AddMoves(moves)
+			if !ok {
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
 					From:   0,
 					To:     0,
@@ -675,7 +676,7 @@ COMMANDS:
 
 			clientGame.eachClient(func(client *serverClient) {
 				ev := &bgammon.EventMoved{
-					Moves: bgammon.FlipMoves(moves, client.playerNumber),
+					Moves: bgammon.FlipMoves(expandedMoves, client.playerNumber),
 				}
 				ev.Player = string(cmd.client.name)
 				client.sendEvent(ev)
@@ -706,7 +707,8 @@ COMMANDS:
 			for i, move := range clientGame.Moves {
 				undoMoves[l-1-i] = []int{move[1], move[0]}
 			}
-			if !clientGame.AddMoves(undoMoves) {
+			ok, _ := clientGame.AddMoves(undoMoves)
+			if !ok {
 				cmd.client.sendNotice("Failed to undo move: invalid move.")
 			} else {
 				clientGame.eachClient(func(client *serverClient) {

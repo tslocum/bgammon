@@ -179,9 +179,9 @@ func (g *Game) ExpandMove(move []int, currentSpace int, moves [][]int) ([][]int,
 }
 
 // AddMoves adds moves to the game state.  Adding a backwards move will remove the equivalent existing move.
-func (g *Game) AddMoves(moves [][]int) bool {
+func (g *Game) AddMoves(moves [][]int) (bool, [][]int) {
 	if g.Player1.Name == "" || g.Player2.Name == "" || g.Winner != 0 {
-		return false
+		return false, nil
 	}
 
 	var addMoves [][]int
@@ -203,7 +203,7 @@ VALIDATEMOVES:
 		if len(gameCopy.Moves) > 0 {
 			i := len(gameCopy.Moves) - 1 - validateOffset
 			if i < 0 {
-				return false
+				return false, nil
 			}
 			gameMove := gameCopy.Moves[i]
 			if move[0] == gameMove[1] && move[1] == gameMove[0] {
@@ -221,11 +221,11 @@ VALIDATEMOVES:
 			continue VALIDATEMOVES
 		}
 
-		return false
+		return false, nil
 	}
 
 	if len(addMoves) != 0 && len(undoMoves) != 0 {
-		return false
+		return false, nil
 	}
 
 	var checkWin bool
@@ -235,7 +235,7 @@ ADDMOVES:
 		for _, lm := range l {
 			if lm[0] == move[0] && lm[1] == move[1] {
 				if !gameCopy.addMove(move) {
-					return false
+					return false, nil
 				}
 
 				if move[1] == SpaceHomePlayer || move[1] == SpaceHomeOpponent {
@@ -249,7 +249,7 @@ ADDMOVES:
 		if len(gameCopy.Moves) > 0 {
 			i := len(gameCopy.Moves) - 1
 			if i < 0 {
-				return false
+				return false, nil
 			}
 			gameMove := gameCopy.Moves[i]
 			if move[0] == gameMove[1] && move[1] == gameMove[0] {
@@ -260,7 +260,7 @@ ADDMOVES:
 				continue
 			}
 		}
-		return false
+		return false, nil
 	}
 
 	g.Board = gameCopy.Board
@@ -280,7 +280,11 @@ ADDMOVES:
 		}
 	}
 
-	return true
+	if len(addMoves) > 0 {
+		return true, addMoves
+	} else {
+		return true, undoMoves
+	}
 }
 
 func (g *Game) LegalMoves() [][]int {
