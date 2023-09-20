@@ -281,6 +281,8 @@ COMMANDS:
 	for cmd = range s.commands {
 		if cmd.client == nil {
 			log.Panicf("nil client with command %s", cmd.command)
+		} else if cmd.client.terminating || cmd.client.Terminated() {
+			continue
 		}
 
 		cmd.command = bytes.TrimSpace(cmd.command)
@@ -355,6 +357,26 @@ COMMANDS:
 				})
 
 				log.Printf("Client %d logged in as %s", cmd.client.id, cmd.client.name)
+
+				// Rejoin match in progress.
+				s.gamesLock.RLock()
+				for _, g := range s.games {
+					if g.terminated() || g.Winner != 0 {
+						continue
+					}
+
+					var rejoin bool
+					if bytes.Equal(cmd.client.name, g.allowed1) {
+						rejoin = g.rejoin1
+					} else if bytes.Equal(cmd.client.name, g.allowed2) {
+						rejoin = g.rejoin2
+					}
+					if rejoin {
+						g.addClient(cmd.client)
+						cmd.client.sendNotice(fmt.Sprintf("Rejoined match: %s", g.name))
+					}
+				}
+				s.gamesLock.RUnlock()
 				continue
 			}
 
@@ -567,6 +589,12 @@ COMMANDS:
 					Reason: "You are not currently in a match.",
 				})
 				continue
+			}
+
+			if cmd.client.playerNumber == 1 {
+				clientGame.rejoin1 = false
+			} else {
+				clientGame.rejoin2 = false
 			}
 
 			clientGame.removeClient(cmd.client)

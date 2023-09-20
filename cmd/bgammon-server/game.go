@@ -10,16 +10,19 @@ import (
 )
 
 type serverGame struct {
-	id             int
-	created        int64
-	lastActive     int64
-	name           []byte
-	password       []byte
-	client1        *serverClient
-	client2        *serverClient
-	r              *rand.Rand
-	allowedPlayers [][]byte // Only matching player names are allowed to join.
-	rematch        int
+	id         int
+	created    int64
+	lastActive int64
+	name       []byte
+	password   []byte
+	client1    *serverClient
+	client2    *serverClient
+	allowed1   []byte
+	allowed2   []byte
+	rematch    int
+	rejoin1    bool
+	rejoin2    bool
+	r          *rand.Rand
 	*bgammon.Game
 }
 
@@ -45,22 +48,18 @@ func (g *serverGame) roll(player int) bool {
 				return false
 			}
 			g.Roll1 = g.r.Intn(6) + 1
-
-			if len(g.allowedPlayers) == 0 {
-				g.allowedPlayers = [][]byte{g.client1.name, g.client2.name}
-			}
-			return true
 		} else {
 			if g.Roll2 != 0 {
 				return false
 			}
 			g.Roll2 = g.r.Intn(6) + 1
-
-			if len(g.allowedPlayers) == 0 {
-				g.allowedPlayers = [][]byte{g.client1.name, g.client2.name}
-			}
-			return true
 		}
+
+		// Only allow the same players to rejoin the game.
+		if g.allowed1 == nil {
+			g.allowed1, g.allowed2 = g.client1.name, g.client2.name
+		}
+		return true
 	} else if player != g.Turn || g.Roll1 != 0 || g.Roll2 != 0 {
 		return false
 	}
@@ -132,17 +131,8 @@ func (g *serverGame) eachClient(f func(client *serverClient)) {
 }
 
 func (g *serverGame) addClient(client *serverClient) (bool, string) {
-	if len(g.allowedPlayers) > 0 {
-		var found bool
-		for _, allowed := range g.allowedPlayers {
-			if bytes.Equal(client.name, allowed) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false, "Match has already started."
-		}
+	if g.allowed1 != nil && !bytes.Equal(client.name, g.allowed1) && !bytes.Equal(client.name, g.allowed2) {
+		return false, "Match has already started."
 	}
 
 	var playerNumber int
@@ -164,6 +154,12 @@ func (g *serverGame) addClient(client *serverClient) (bool, string) {
 		if opponent != nil {
 			opponent.sendEvent(ev)
 			g.sendBoard(opponent)
+		}
+
+		if playerNumber == 1 {
+			g.rejoin1 = true
+		} else {
+			g.rejoin2 = true
 		}
 	}()
 	switch {
