@@ -4,6 +4,8 @@ Connect to `bgammon.org:1337` via TCP.
 
 All commands and events are separated by newlines.
 
+When sending a password to the server, replace spaces with underscores.
+
 ## User commands
 
 ### Format
@@ -35,7 +37,7 @@ formatted responses are more easily parsed by computers.
   - List all matches.
   - Aliases: `ls`
 
-- `create <public/private> [password]`
+- `create <public>/<private [password]> [name]`
   - Create a match.
   - Aliases: `c`
 

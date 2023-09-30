@@ -338,7 +338,7 @@ COMMANDS:
 						s.clientsLock.Unlock()
 						continue
 					}
-					password = bytes.Join(params[1:], []byte(" "))
+					password = bytes.ReplaceAll(bytes.Join(params[1:], []byte(" ")), []byte("_"), []byte(" "))
 				}
 
 				s.clientsLock.Unlock()
@@ -473,7 +473,7 @@ COMMANDS:
 					sendUsage()
 					continue
 				}
-				gamePassword = params[1]
+				gamePassword = bytes.ReplaceAll(params[1], []byte("_"), []byte(" "))
 				gameName = bytes.Join(params[2:], []byte(" "))
 			default:
 				sendUsage()
@@ -559,7 +559,8 @@ COMMANDS:
 					continue
 				}
 				if g.id == joinGameID {
-					if len(g.password) != 0 && (len(params) < 2 || !bytes.Equal(g.password, bytes.Join(params[1:], []byte(" ")))) {
+					providedPassword := bytes.ReplaceAll(bytes.Join(params[1:], []byte(" ")), []byte("_"), []byte(" "))
+					if len(g.password) != 0 && (len(params) < 2 || !bytes.Equal(g.password, providedPassword)) {
 						cmd.client.sendEvent(&bgammon.EventFailedJoin{
 							Reason: "Invalid password.",
 						})
@@ -857,7 +858,7 @@ COMMANDS:
 			clientGame.Turn = 1
 			clientGame.Roll1 = 1
 			clientGame.Roll2 = 2
-			clientGame.Board = []int{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0}
+			clientGame.Board = []int{0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
