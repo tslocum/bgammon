@@ -417,14 +417,12 @@ func (g *Game) LegalMoves() [][]int {
 			}
 
 			// Move normally.
-			dir := -1
 			lastSpace := 1
 			if g.Turn == 2 {
-				dir = 1
 				lastSpace = 24
 			}
 
-			g.iterateSpaces(space+dir, lastSpace, func(to int, spaceCount int) {
+			g.iterateSpaces(space, lastSpace, func(to int, spaceCount int) {
 				available := haveDiceRoll(space, to)
 				if available == 0 {
 					return
