@@ -137,6 +137,12 @@ func (g *Game) addMove(move []int) bool {
 	return true
 }
 
+// AddLocalMove adds a move without performing any validation. This is useful when
+// adding a move locally while waiting for an EventBoard response from the server.
+func (g *Game) AddLocalMove(move []int) bool {
+	return g.addMove(move)
+}
+
 func (g *Game) ExpandMove(move []int, currentSpace int, moves [][]int) ([][]int, bool) {
 	l := g.LegalMoves()
 	var hitMoves [][]int
@@ -301,7 +307,6 @@ func (g *Game) LegalMoves() [][]int {
 	}
 
 	haveDiceRoll := func(from, to int) int {
-		// TODO diff needs to account for bar and home special spaces
 		diff := SpaceDiff(from, to)
 		var c int
 		for _, roll := range rolls {
@@ -412,11 +417,11 @@ func (g *Game) LegalMoves() [][]int {
 			}
 
 			// Move normally.
-			lastSpace := 1
 			dir := -1
+			lastSpace := 1
 			if g.Turn == 2 {
-				lastSpace = 24
 				dir = 1
+				lastSpace = 24
 			}
 
 			g.iterateSpaces(space+dir, lastSpace, func(to int, spaceCount int) {

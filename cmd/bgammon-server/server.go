@@ -372,8 +372,10 @@ COMMANDS:
 						rejoin = g.rejoin2
 					}
 					if rejoin {
-						g.addClient(cmd.client)
-						cmd.client.sendNotice(fmt.Sprintf("Rejoined match: %s", g.name))
+						ok, _ := g.addClient(cmd.client)
+						if ok {
+							cmd.client.sendNotice(fmt.Sprintf("Rejoined match: %s", g.name))
+						}
 					}
 				}
 				s.gamesLock.RUnlock()
@@ -567,15 +569,16 @@ COMMANDS:
 						s.gamesLock.Unlock()
 						continue COMMANDS
 					}
-
 					ok, reason := g.addClient(cmd.client)
+					s.gamesLock.Unlock()
+
 					if !ok {
 						cmd.client.sendEvent(&bgammon.EventFailedJoin{
 							Reason: reason,
 						})
+					} else {
+						cmd.client.sendNotice(fmt.Sprintf("Joined match: %s", g.name))
 					}
-					s.gamesLock.Unlock()
-					cmd.client.sendNotice(fmt.Sprintf("Joined match: %s", g.name))
 					continue COMMANDS
 				}
 			}
