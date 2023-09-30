@@ -172,7 +172,7 @@ func logClientRead(msg []byte) {
 			}
 		}
 		log.Printf("<- %s %s %s", split[0], username, password)
-	} else {
+	} else if !bytes.HasPrefix(msgLower, []byte("list")) && !bytes.HasPrefix(msgLower, []byte("ls")) && !bytes.HasPrefix(msgLower, []byte("pong")) {
 		log.Printf("<- %s", msg)
 	}
 }

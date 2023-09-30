@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"log"
 	"net"
 	"sync"
@@ -100,7 +101,9 @@ func (c *socketClient) writeEvents() {
 			continue
 		}
 
-		log.Printf("-> %s", event)
+		if !bytes.HasPrefix(event, []byte(`{"Type":"ping"`)) && !bytes.HasPrefix(event, []byte(`{"Type":"list"`)) {
+			log.Printf("-> %s", event)
+		}
 		c.wgEvents.Done()
 	}
 }

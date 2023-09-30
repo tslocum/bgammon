@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"log"
 	"net"
 	"net/http"
@@ -109,7 +110,9 @@ func (c *webSocketClient) writeEvents() {
 			continue
 		}
 
-		log.Printf("-> %s", event)
+		if !bytes.HasPrefix(event, []byte(`{"Type":"ping"`)) && !bytes.HasPrefix(event, []byte(`{"Type":"list"`)) {
+			log.Printf("-> %s", event)
+		}
 		c.wgEvents.Done()
 	}
 }
