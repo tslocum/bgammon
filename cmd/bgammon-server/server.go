@@ -442,6 +442,7 @@ COMMANDS:
 				}
 				ev.Games = append(ev.Games, bgammon.GameListing{
 					ID:       g.id,
+					Points:   g.Points,
 					Password: len(g.password) != 0,
 					Players:  g.playerCount(),
 					Name:     string(g.name),
@@ -457,9 +458,9 @@ COMMANDS:
 			}
 
 			sendUsage := func() {
-				cmd.client.sendNotice("To create a public match please specify whether it is public or private. When creating a private match, a password must also be provided.")
+				cmd.client.sendNotice("To create a public match please specify whether it is public or private, and also specify how many points are needed to win the match. When creating a private match, a password must also be provided.")
 			}
-			if len(params) == 0 {
+			if len(params) < 2 {
 				sendUsage()
 				continue
 			}
@@ -467,17 +468,30 @@ COMMANDS:
 			var gamePassword []byte
 			gameType := bytes.ToLower(params[0])
 			var gameName []byte
+			var gamePoints []byte
 			switch {
 			case bytes.Equal(gameType, []byte("public")):
-				gameName = bytes.Join(params[1:], []byte(" "))
+				gamePoints = params[1]
+				if len(params) > 2 {
+					gameName = bytes.Join(params[2:], []byte(" "))
+				}
 			case bytes.Equal(gameType, []byte("private")):
-				if len(params) < 2 {
+				if len(params) < 3 {
 					sendUsage()
 					continue
 				}
 				gamePassword = bytes.ReplaceAll(params[1], []byte("_"), []byte(" "))
-				gameName = bytes.Join(params[2:], []byte(" "))
+				gamePoints = params[2]
+				if len(params) > 3 {
+					gameName = bytes.Join(params[3:], []byte(" "))
+				}
 			default:
+				sendUsage()
+				continue
+			}
+
+			points, err := strconv.Atoi(string(gamePoints))
+			if err != nil || points < 1 || points > 99 {
 				sendUsage()
 				continue
 			}
@@ -494,6 +508,7 @@ COMMANDS:
 
 			g := newServerGame(<-s.newGameIDs)
 			g.name = gameName
+			g.Points = points
 			g.password = gamePassword
 			ok, reason := g.addClient(cmd.client)
 			if !ok {

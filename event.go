@@ -44,6 +44,7 @@ type GameListing struct {
 	Event
 	ID       int
 	Password bool
+	Points   int
 	Players  int
 	Name     string
 }

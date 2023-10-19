@@ -37,7 +37,7 @@ formatted responses are more easily parsed by computers.
   - List all matches.
   - Aliases: `ls`
 
-- `create <public>/<private [password]> [name]`
+- `create <public>/<private [password]> <points> [name]`
   - Create a match.
   - Aliases: `c`
 
@@ -112,7 +112,7 @@ This document lists events in human-readable format.
 - `liststart Matches list:`
   - Start of matches list.
 
-- `game <id:integer> <password:boolean> <players:integer> <name:line>`
+- `game <id:integer> <password:boolean> <points:integer> <players:integer> <name:line>`
   - Match description.
 
 - `listend End of matches list.`

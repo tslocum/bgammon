@@ -22,6 +22,7 @@ type Game struct {
 	Roll1   int
 	Roll2   int
 	Moves   [][]int // Pending moves.
+	Points  int
 
 	boardStates [][]int // One board state for each move to allow undoing a move.
 }

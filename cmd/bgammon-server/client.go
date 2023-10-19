@@ -100,7 +100,7 @@ func (c *serverClient) sendEvent(e interface{}) {
 			if g.Name != "" {
 				name = g.Name
 			}
-			c.Write([]byte(fmt.Sprintf("game %d %d %d %s", g.ID, password, g.Players, name)))
+			c.Write([]byte(fmt.Sprintf("game %d %d %d %d %s", g.ID, password, g.Points, g.Players, name)))
 		}
 		c.Write([]byte("listend End of matches list."))
 	case *bgammon.EventJoined:
