@@ -638,6 +638,11 @@ COMMANDS:
 				continue
 			}
 
+			if clientGame.DoublePlayer != 0 && clientGame.DoublePlayer != cmd.client.playerNumber {
+				cmd.client.sendNotice("You do not currently hold the doubling cube.")
+				continue
+			}
+
 			clientGame.DoubleOffered = true
 
 			cmd.client.sendNotice(fmt.Sprintf("Double offered to opponent (%d points).", clientGame.Points*2))
@@ -667,16 +672,15 @@ COMMANDS:
 			cmd.client.sendNotice("Declined double offer")
 			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf("%s declined double offer.", cmd.client.name))
 
-			log.Println("RESIGN VALUE: ", clientGame.DoubleValue) // TODO
 			if cmd.client.playerNumber == 1 {
-				clientGame.Player2.Points += clientGame.DoubleValue
+				clientGame.Player2.Points = clientGame.Player2.Points + clientGame.DoubleValue
 				if clientGame.Player2.Points >= clientGame.Points {
 					clientGame.Winner = 2
 				} else {
 					clientGame.Reset()
 				}
 			} else {
-				clientGame.Player1.Points += clientGame.DoubleValue
+				clientGame.Player1.Points = clientGame.Player2.Points + clientGame.DoubleValue
 				if clientGame.Player1.Points >= clientGame.Points {
 					clientGame.Winner = 1
 				} else {
@@ -873,10 +877,15 @@ COMMANDS:
 				}
 
 				clientGame.DoubleOffered = false
-				clientGame.DoubleValue *= 2
-				clientGame.DoublePlayer = opponent.playerNumber
+				clientGame.DoubleValue = clientGame.DoubleValue * 2
+				clientGame.DoublePlayer = cmd.client.playerNumber
+
 				cmd.client.sendNotice("Accepted double.")
 				opponent.sendNotice(fmt.Sprintf("%s accepted double.", cmd.client.name))
+
+				clientGame.eachClient(func(client *serverClient) {
+					clientGame.sendBoard(client)
+				})
 				continue
 			}
 

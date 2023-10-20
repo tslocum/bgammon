@@ -43,18 +43,19 @@ func NewGame() *Game {
 
 func (g *Game) Copy() *Game {
 	newGame := &Game{
-		Board:        make([]int, len(g.Board)),
-		Player1:      g.Player1,
-		Player2:      g.Player2,
-		Turn:         g.Turn,
-		Winner:       g.Winner,
-		Roll1:        g.Roll1,
-		Roll2:        g.Roll2,
-		Moves:        make([][]int, len(g.Moves)),
-		Points:       g.Points,
-		DoubleValue:  g.DoubleValue,
-		DoublePlayer: g.DoublePlayer,
-		boardStates:  make([][]int, len(g.boardStates)),
+		Board:         make([]int, len(g.Board)),
+		Player1:       g.Player1,
+		Player2:       g.Player2,
+		Turn:          g.Turn,
+		Winner:        g.Winner,
+		Roll1:         g.Roll1,
+		Roll2:         g.Roll2,
+		Moves:         make([][]int, len(g.Moves)),
+		Points:        g.Points,
+		DoubleValue:   g.DoubleValue,
+		DoublePlayer:  g.DoublePlayer,
+		DoubleOffered: g.DoubleOffered,
+		boardStates:   make([][]int, len(g.boardStates)),
 	}
 	copy(newGame.Board, g.Board)
 	copy(newGame.Moves, g.Moves)
