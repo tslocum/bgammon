@@ -645,8 +645,8 @@ COMMANDS:
 
 			clientGame.DoubleOffered = true
 
-			cmd.client.sendNotice(fmt.Sprintf("Double offered to opponent (%d points).", clientGame.Points*2))
-			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf("%s offers a double (%d points).", cmd.client.name, clientGame.Points*2))
+			cmd.client.sendNotice(fmt.Sprintf("Double offered to opponent (%d points).", clientGame.DoubleValue*2))
+			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf("%s offers a double (%d points).", cmd.client.name, clientGame.DoubleValue*2))
 
 			clientGame.eachClient(func(client *serverClient) {
 				if client.json {
@@ -690,7 +690,9 @@ COMMANDS:
 
 			var winEvent *bgammon.EventWin
 			if clientGame.Winner != 0 {
-				winEvent = &bgammon.EventWin{}
+				winEvent = &bgammon.EventWin{
+					Points: clientGame.DoubleValue,
+				}
 				if clientGame.Winner == 1 {
 					winEvent.Player = clientGame.Player1.Name
 				} else {
@@ -808,11 +810,35 @@ COMMANDS:
 
 			var winEvent *bgammon.EventWin
 			if clientGame.Winner != 0 {
-				winEvent = &bgammon.EventWin{}
+				opponent := 1
+				opponentHome := bgammon.SpaceHomePlayer
+				if clientGame.Winner == 1 {
+					opponent = 2
+					opponentHome = bgammon.SpaceHomeOpponent
+				}
+
+				winPoints := 1
+				if !bgammon.CanBearOff(clientGame.Board, opponent) {
+					winPoints = 3 // Award backgammon.
+				} else if clientGame.Board[opponentHome] == 0 {
+					winPoints = 2 // Award gammon.
+				}
+
+				winEvent = &bgammon.EventWin{
+					Points: winPoints * clientGame.DoubleValue,
+				}
 				if clientGame.Winner == 1 {
 					winEvent.Player = clientGame.Player1.Name
+					clientGame.Player1.Points = clientGame.Player1.Points + winPoints*clientGame.DoubleValue
+					if clientGame.Player1.Points < clientGame.Points {
+						clientGame.Reset()
+					}
 				} else {
 					winEvent.Player = clientGame.Player2.Name
+					clientGame.Player2.Points = clientGame.Player2.Points + winPoints*clientGame.DoubleValue
+					if clientGame.Player2.Points < clientGame.Points {
+						clientGame.Reset()
+					}
 				}
 			}
 
@@ -823,11 +849,11 @@ COMMANDS:
 				ev.Player = string(cmd.client.name)
 				client.sendEvent(ev)
 
-				clientGame.sendBoard(client)
-
 				if winEvent != nil {
 					client.sendEvent(winEvent)
 				}
+
+				clientGame.sendBoard(client)
 			})
 		case bgammon.CommandReset:
 			if clientGame == nil {

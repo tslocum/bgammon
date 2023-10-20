@@ -120,7 +120,11 @@ func (c *serverClient) sendEvent(e interface{}) {
 	case *bgammon.EventFailedOk:
 		c.Write([]byte(fmt.Sprintf("failedok %s", ev.Reason)))
 	case *bgammon.EventWin:
-		c.Write([]byte(fmt.Sprintf("win %s wins!", ev.Player)))
+		if ev.Points != 0 {
+			c.Write([]byte(fmt.Sprintf("win %s wins %d points!", ev.Player, ev.Points)))
+		} else {
+			c.Write([]byte(fmt.Sprintf("win %s wins!", ev.Player)))
+		}
 	default:
 		log.Panicf("unknown event type %+v", ev)
 	}

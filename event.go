@@ -109,6 +109,7 @@ type EventFailedOk struct {
 
 type EventWin struct {
 	Event
+	Points int
 }
 
 func DecodeEvent(message []byte) (interface{}, error) {
