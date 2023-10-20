@@ -617,6 +617,88 @@ COMMANDS:
 			}
 
 			clientGame.removeClient(cmd.client)
+		case bgammon.CommandDouble, "d":
+			if clientGame == nil {
+				cmd.client.sendNotice("You are not currently in a match.")
+				continue
+			}
+
+			if clientGame.Turn != cmd.client.playerNumber {
+				cmd.client.sendNotice("It is not your turn.")
+				continue
+			}
+
+			gameState := &bgammon.GameState{
+				Game:         clientGame.Game,
+				PlayerNumber: cmd.client.playerNumber,
+				Available:    clientGame.LegalMoves(),
+			}
+			if !gameState.MayDouble() {
+				cmd.client.sendNotice("You may not double at this time.")
+				continue
+			}
+
+			clientGame.DoubleOffered = true
+
+			cmd.client.sendNotice(fmt.Sprintf("Double offered to opponent (%d points).", clientGame.Points*2))
+			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf("%s offers a double (%d points).", cmd.client.name, clientGame.Points*2))
+
+			clientGame.eachClient(func(client *serverClient) {
+				if client.json {
+					clientGame.sendBoard(client)
+				}
+			})
+		case bgammon.CommandResign:
+			if clientGame == nil {
+				cmd.client.sendNotice("You are not currently in a match.")
+				continue
+			}
+
+			gameState := &bgammon.GameState{
+				Game:         clientGame.Game,
+				PlayerNumber: cmd.client.playerNumber,
+				Available:    clientGame.LegalMoves(),
+			}
+			if !gameState.MayResign() {
+				cmd.client.sendNotice("You may not resign at this time.")
+				continue
+			}
+
+			cmd.client.sendNotice("Declined double offer")
+			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf("%s declined double offer.", cmd.client.name))
+
+			log.Println("RESIGN VALUE: ", clientGame.DoubleValue) // TODO
+			if cmd.client.playerNumber == 1 {
+				clientGame.Player2.Points += clientGame.DoubleValue
+				if clientGame.Player2.Points >= clientGame.Points {
+					clientGame.Winner = 2
+				} else {
+					clientGame.Reset()
+				}
+			} else {
+				clientGame.Player1.Points += clientGame.DoubleValue
+				if clientGame.Player1.Points >= clientGame.Points {
+					clientGame.Winner = 1
+				} else {
+					clientGame.Reset()
+				}
+			}
+
+			var winEvent *bgammon.EventWin
+			if clientGame.Winner != 0 {
+				winEvent = &bgammon.EventWin{}
+				if clientGame.Winner == 1 {
+					winEvent.Player = clientGame.Player1.Name
+				} else {
+					winEvent.Player = clientGame.Player2.Name
+				}
+			}
+			clientGame.eachClient(func(client *serverClient) {
+				clientGame.sendBoard(client)
+				if winEvent != nil {
+					client.sendEvent(winEvent)
+				}
+			})
 		case bgammon.CommandRoll, "r":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedRoll{
@@ -780,6 +862,21 @@ COMMANDS:
 		case bgammon.CommandOk, "k":
 			if clientGame == nil {
 				cmd.client.sendNotice("You are not currently in a match.")
+				continue
+			}
+
+			if clientGame.DoubleOffered && clientGame.Turn != cmd.client.playerNumber {
+				opponent := clientGame.opponent(cmd.client)
+				if opponent == nil {
+					cmd.client.sendNotice("You may not accept the double until your opponent rejoins the match.")
+					continue
+				}
+
+				clientGame.DoubleOffered = false
+				clientGame.DoubleValue *= 2
+				clientGame.DoublePlayer = opponent.playerNumber
+				cmd.client.sendNotice("Accepted double.")
+				opponent.sendNotice(fmt.Sprintf("%s accepted double.", cmd.client.name))
 				continue
 			}
 

@@ -14,6 +14,8 @@ const (
 	CommandCreate     = "create"     // Create match.
 	CommandJoin       = "join"       // Join match.
 	CommandLeave      = "leave"      // Leave match.
+	CommandDouble     = "double"     // Offer double to opponent.
+	CommandResign     = "resign"     // Decline double offer and resign game.
 	CommandRoll       = "roll"       // Roll dice.
 	CommandMove       = "move"       // Move checkers.
 	CommandReset      = "reset"      // Reset checker movement.

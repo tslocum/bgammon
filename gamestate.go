@@ -56,8 +56,19 @@ func (g *GameState) SpaceAt(x int, y int) int {
 	return space
 }
 
+// MayDouble returns whether the player may send the 'double' command.
+func (g *GameState) MayDouble() bool {
+	if g.Winner != 0 {
+		return false
+	}
+	return g.Turn != 0 && g.Turn == g.PlayerNumber && g.Roll1 == 0 && !g.DoubleOffered && (g.DoublePlayer == 0 || g.DoublePlayer == g.PlayerNumber)
+}
+
 // MayRoll returns whether the player may send the 'roll' command.
 func (g *GameState) MayRoll() bool {
+	if g.Winner != 0 || g.DoubleOffered {
+		return false
+	}
 	switch g.Turn {
 	case 0:
 		if g.PlayerNumber == 1 {
@@ -78,10 +89,26 @@ func (g *GameState) MayRoll() bool {
 
 // MayOK returns whether the player may send the 'ok' command.
 func (g *GameState) MayOK() bool {
+	if g.Winner != 0 {
+		return false
+	} else if g.Turn != 0 && g.Turn != g.PlayerNumber && g.DoubleOffered {
+		return true
+	}
 	return g.Turn != 0 && g.Turn == g.PlayerNumber && g.Roll1 != 0 && len(g.Available) == 0
+}
+
+// MayResign returns whether the player may send the 'resign' command.
+func (g *GameState) MayResign() bool {
+	if g.Winner != 0 {
+		return false
+	}
+	return g.Turn != 0 && g.Turn != g.PlayerNumber && g.DoubleOffered
 }
 
 // MayReset returns whether the player may send the 'reset' command.
 func (g *GameState) MayReset() bool {
+	if g.Winner != 0 {
+		return false
+	}
 	return g.Turn != 0 && g.Turn == g.PlayerNumber && len(g.Moves) > 0
 }

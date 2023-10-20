@@ -22,30 +22,39 @@ type Game struct {
 	Roll1   int
 	Roll2   int
 	Moves   [][]int // Pending moves.
-	Points  int
+
+	Points        int  // Points required to win the match.
+	DoubleValue   int  // Doubling cube value.
+	DoublePlayer  int  // Player that currently posesses the doubling cube.
+	DoubleOffered bool // Whether the current player is offering a double.
 
 	boardStates [][]int // One board state for each move to allow undoing a move.
 }
 
 func NewGame() *Game {
 	return &Game{
-		Board:   NewBoard(),
-		Player1: NewPlayer(1),
-		Player2: NewPlayer(2),
+		Board:       NewBoard(),
+		Player1:     NewPlayer(1),
+		Player2:     NewPlayer(2),
+		Points:      1,
+		DoubleValue: 1,
 	}
 }
 
 func (g *Game) Copy() *Game {
 	newGame := &Game{
-		Board:       make([]int, len(g.Board)),
-		Player1:     g.Player1,
-		Player2:     g.Player2,
-		Turn:        g.Turn,
-		Winner:      g.Winner,
-		Roll1:       g.Roll1,
-		Roll2:       g.Roll2,
-		Moves:       make([][]int, len(g.Moves)),
-		boardStates: make([][]int, len(g.boardStates)),
+		Board:        make([]int, len(g.Board)),
+		Player1:      g.Player1,
+		Player2:      g.Player2,
+		Turn:         g.Turn,
+		Winner:       g.Winner,
+		Roll1:        g.Roll1,
+		Roll2:        g.Roll2,
+		Moves:        make([][]int, len(g.Moves)),
+		Points:       g.Points,
+		DoubleValue:  g.DoubleValue,
+		DoublePlayer: g.DoublePlayer,
+		boardStates:  make([][]int, len(g.boardStates)),
 	}
 	copy(newGame.Board, g.Board)
 	copy(newGame.Moves, g.Moves)
@@ -66,6 +75,18 @@ func (g *Game) NextTurn() {
 	g.Turn = nextTurn
 	g.Moves = g.Moves[:0]
 	g.boardStates = g.boardStates[:0]
+}
+
+func (g *Game) Reset() {
+	g.Board = NewBoard()
+	g.Turn = 0
+	g.Roll1 = 0
+	g.Roll2 = 0
+	g.Moves = nil
+	g.DoubleValue = 1
+	g.DoublePlayer = 0
+	g.DoubleOffered = false
+	g.boardStates = nil
 }
 
 func (g *Game) turnPlayer() Player {

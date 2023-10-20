@@ -45,6 +45,13 @@ formatted responses are more easily parsed by computers.
   - Join match by match ID or by player.
   - Aliases: `j`
 
+- `double`
+  - Offer double to opponent.
+  - Aliases: `d`
+
+- `resign`
+  - Decline double offer and resign game.
+
 - `roll`
   - Roll dice.
   - Aliases: `r`
@@ -58,7 +65,7 @@ formatted responses are more easily parsed by computers.
   - Aliases: `r`
 
 - `ok`
-  - Confirm checker movement and pass turn to next player.
+  - Accept double offer or confirm checker movement and pass turn to next player.
   - Aliases: `k`
 
 - `rematch`
