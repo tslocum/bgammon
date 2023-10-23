@@ -5,22 +5,24 @@
 
 ## Play
 
-### Graphical client
+Two official clients are available.
+
+### Graphical interface (boxcars)
 
 [**Click here to play**](https://play.bgammon.org)
 
-Source code available [here](https://code.rocketnine.space/tslocum/boxcars).
+Source code is available [here](https://code.rocket9labs.com/tslocum/boxcars).
 
-### Terminal client
+### Terminal interface (bgammon-cli)
 
 `ssh bgammon.org -p 5000`
 
-Source code available [here](https://code.rocketnine.space/tslocum/bgammon-cli).
+Source code is available [here](https://code.rocket9labs.com/tslocum/bgammon-cli).
 
 ## Support
 
 Please share issues and suggestions [here](https://code.rocket9labs.com/tslocum/bgammon/issues).
 
-The bgammon protocol is specified in [PROTOCOL.md](https://code.rocket9labs.com/tslocum/bgammon/src/branch/main/PROTOCOL.md). 
+The bgammon protocol is specified in [PROTOCOL.md](https://code.rocket9labs.com/tslocum/bgammon/src/branch/main/PROTOCOL.md).
 
-For information on how to play backgammon visit https://bkgm.com/rules.html
+Information on how to play backgammon is available [here](https://bkgm.com/rules.html).
