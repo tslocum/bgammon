@@ -20,10 +20,11 @@ When sending a password to the server, replace spaces with underscores.
   - This (or `loginjson`) must be the first command sent when a client connects to bgammon.
   - Aliases: `l`
 
-- `loginjson [username] [password]`
+- `loginjson <client name> [username] [password]`
   - Log in to bgammon and enable JSON formatted responses.
   - All client applications should use the `loginjson` command to log in, as JSON 
 formatted responses are more easily parsed by computers.
+  - The name of the client must be specified.
   - Aliases: `lj`
 
 - `json <on/off>`

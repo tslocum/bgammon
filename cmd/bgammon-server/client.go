@@ -164,18 +164,36 @@ func (c *serverClient) Terminate(reason string) {
 
 func logClientRead(msg []byte) {
 	msgLower := bytes.ToLower(msg)
-	if bytes.HasPrefix(msgLower, []byte("login ")) || bytes.HasPrefix(msgLower, []byte("l ")) || bytes.HasPrefix(msgLower, []byte("loginjson ")) || bytes.HasPrefix(msgLower, []byte("lj ")) {
+	loginJSON := bytes.HasPrefix(msgLower, []byte("loginjson ")) || bytes.HasPrefix(msgLower, []byte("lj "))
+	if bytes.HasPrefix(msgLower, []byte("login ")) || bytes.HasPrefix(msgLower, []byte("l ")) || loginJSON {
 		split := bytes.Split(msg, []byte(" "))
+		var clientName []byte
 		var username []byte
 		var password []byte
 		l := len(split)
 		if l > 1 {
-			username = split[1]
+			if loginJSON {
+				clientName = split[1]
+			} else {
+				username = split[1]
+			}
 			if l > 2 {
-				password = []byte("*******")
+				if loginJSON {
+					username = split[2]
+				} else {
+					password = []byte("*******")
+				}
+				if l > 3 {
+					if loginJSON {
+						password = []byte("*******")
+					}
+				}
 			}
 		}
-		log.Printf("<- %s %s %s", split[0], username, password)
+		if len(clientName) == 0 {
+			clientName = []byte("unspecified")
+		}
+		log.Printf("<- %s %s %s %s", split[0], clientName, username, password)
 	} else if !bytes.HasPrefix(msgLower, []byte("list")) && !bytes.HasPrefix(msgLower, []byte("ls")) && !bytes.HasPrefix(msgLower, []byte("pong")) {
 		log.Printf("<- %s", msg)
 	}

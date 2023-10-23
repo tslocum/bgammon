@@ -315,7 +315,18 @@ COMMANDS:
 				var username []byte
 				var password []byte
 				readUsername := func() bool {
-					username = params[0]
+					if cmd.client.json {
+						if len(params) > 1 {
+							username = params[1]
+						}
+					} else {
+						if len(params) > 0 {
+							username = params[0]
+						}
+					}
+					if len(bytes.TrimSpace(username)) == 0 {
+						username = s.randomUsername()
+					}
 					if onlyNumbers.Match(username) {
 						cmd.client.Terminate("Invalid username: must contain at least one non-numeric character.")
 						return false
@@ -325,20 +336,12 @@ COMMANDS:
 					}
 					return true
 				}
-				switch len(params) {
-				case 0:
-					username = s.randomUsername()
-				case 1:
-					if !readUsername() {
-						s.clientsLock.Unlock()
-						continue
-					}
-				default:
-					if !readUsername() {
-						s.clientsLock.Unlock()
-						continue
-					}
-					password = bytes.ReplaceAll(bytes.Join(params[1:], []byte(" ")), []byte("_"), []byte(" "))
+				if !readUsername() {
+					s.clientsLock.Unlock()
+					continue
+				}
+				if len(params) > 2 {
+					password = bytes.ReplaceAll(bytes.Join(params[2:], []byte(" ")), []byte("_"), []byte(" "))
 				}
 
 				s.clientsLock.Unlock()
