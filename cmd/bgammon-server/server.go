@@ -16,7 +16,7 @@ import (
 	"code.rocket9labs.com/tslocum/bgammon"
 )
 
-const clientTimeout = 10 * time.Minute
+const clientTimeout = 40 * time.Second
 
 var onlyNumbers = regexp.MustCompile(`^[0-9]+$`)
 
@@ -200,7 +200,7 @@ func (s *server) handleConnection(conn net.Conn) {
 
 func (s *server) handlePingClient(c *serverClient) {
 	// TODO only ping when there is no recent activity
-	t := time.NewTicker(time.Minute * 4)
+	t := time.NewTicker(30 * time.Second)
 	for {
 		<-t.C
 
@@ -210,7 +210,7 @@ func (s *server) handlePingClient(c *serverClient) {
 		}
 
 		if len(c.name) == 0 {
-			c.Terminate("User did not send login command within 2 minutes.")
+			c.Terminate("User did not send login command within 30 seconds.")
 			t.Stop()
 			return
 		}

@@ -86,7 +86,7 @@ formatted responses are more easily parsed by computers.
 - `pong <message>`
   - Sent in response to server `ping` event to prevent the connection from timing out.
   - Whether the client sends a `pong` command, or any other command, clients
-must write some data to the server at least once every ten minutes.
+must write some data to the server at least once every 40 seconds.
 
 - `disconnect`
   - Disconnect from the server.
@@ -155,4 +155,4 @@ provide clients with the initial match state.
 - `ping <message:text>`
   - Sent to clients to prevent their connection from timing out.
   - Whether the client replies with a `pong` command, or any other command,
-clients must write some data to the server at least once every ten minutes.
+clients must write some data to the server at least once every 40 seconds.
