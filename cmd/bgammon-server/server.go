@@ -272,6 +272,9 @@ func (s *server) randomUsername() []byte {
 }
 
 func (s *server) sendHello(c *serverClient) {
+	if c.json {
+		return
+	}
 	c.Write(s.welcome)
 }
 

@@ -100,7 +100,7 @@ func (c *webSocketClient) writeEvents(closeWrite chan struct{}) {
 
 	setTimeout()
 	var event []byte
-	for event = range c.events {
+	for {
 		select {
 		case <-closeWrite:
 			for {
