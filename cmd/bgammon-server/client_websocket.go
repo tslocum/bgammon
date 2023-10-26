@@ -41,8 +41,12 @@ func (c *webSocketClient) HandleReadWrite() {
 		return
 	}
 
-	go c.writeEvents()
+	closeWrite := make(chan struct{}, 1)
+
+	go c.writeEvents(closeWrite)
 	c.readCommands()
+
+	closeWrite <- struct{}{}
 }
 
 func (c *webSocketClient) Write(message []byte) {
@@ -63,12 +67,12 @@ func (c *webSocketClient) readCommands() {
 		}
 	}
 
-	setTimeout()
 	for {
 		if c.terminated {
-			continue // TODO wait group
+			return
 		}
 
+		setTimeout()
 		msg, op, err := wsutil.ReadClientData(c.conn)
 		if err != nil {
 			c.Terminate(err.Error())
@@ -82,11 +86,10 @@ func (c *webSocketClient) readCommands() {
 		c.commands <- buf
 
 		logClientRead(msg)
-		setTimeout()
 	}
 }
 
-func (c *webSocketClient) writeEvents() {
+func (c *webSocketClient) writeEvents(closeWrite chan struct{}) {
 	setTimeout := func() {
 		err := c.conn.SetWriteDeadline(time.Now().Add(clientTimeout))
 		if err != nil {
@@ -98,12 +101,25 @@ func (c *webSocketClient) writeEvents() {
 	setTimeout()
 	var event []byte
 	for event = range c.events {
+		select {
+		case <-closeWrite:
+			for {
+				select {
+				case <-c.events:
+					c.wgEvents.Done()
+				default:
+					return
+				}
+			}
+		case event = <-c.events:
+		}
+
 		if c.terminated {
 			c.wgEvents.Done()
 			continue
 		}
-		setTimeout()
 
+		setTimeout()
 		err := wsutil.WriteServerMessage(c.conn, ws.OpText, event)
 		if err != nil {
 			c.Terminate(err.Error())
@@ -124,6 +140,7 @@ func (c *webSocketClient) Terminate(reason string) {
 	}
 	c.terminated = true
 	c.conn.Close()
+
 	go func() {
 		time.Sleep(5 * time.Second)
 		c.wgEvents.Wait()

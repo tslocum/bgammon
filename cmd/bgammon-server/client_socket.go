@@ -34,8 +34,12 @@ func (c *socketClient) HandleReadWrite() {
 		return
 	}
 
-	go c.writeEvents()
+	closeWrite := make(chan struct{}, 1)
+
+	go c.writeEvents(closeWrite)
 	c.readCommands()
+
+	closeWrite <- struct{}{}
 }
 
 func (c *socketClient) Write(message []byte) {
@@ -60,7 +64,7 @@ func (c *socketClient) readCommands() {
 	var scanner = bufio.NewScanner(c.conn)
 	for scanner.Scan() {
 		if c.terminated {
-			continue // TODO wait group
+			return
 		}
 
 		if scanner.Err() != nil {
@@ -73,11 +77,12 @@ func (c *socketClient) readCommands() {
 		c.commands <- buf
 
 		logClientRead(scanner.Bytes())
+
 		setTimeout()
 	}
 }
 
-func (c *socketClient) writeEvents() {
+func (c *socketClient) writeEvents(closeWrite chan struct{}) {
 	setTimeout := func() {
 		err := c.conn.SetWriteDeadline(time.Now().Add(clientTimeout))
 		if err != nil {
@@ -88,13 +93,26 @@ func (c *socketClient) writeEvents() {
 
 	setTimeout()
 	var event []byte
-	for event = range c.events {
+	for {
+		select {
+		case <-closeWrite:
+			for {
+				select {
+				case <-c.events:
+					c.wgEvents.Done()
+				default:
+					return
+				}
+			}
+		case event = <-c.events:
+		}
+
 		if c.terminated {
 			c.wgEvents.Done()
 			continue
 		}
-		setTimeout()
 
+		setTimeout()
 		_, err := c.conn.Write(append(event, '\n'))
 		if err != nil {
 			c.Terminate(err.Error())
@@ -115,8 +133,8 @@ func (c *socketClient) Terminate(reason string) {
 	}
 	c.terminated = true
 	c.conn.Close()
+
 	go func() {
-		time.Sleep(5 * time.Second)
 		c.wgEvents.Wait()
 		close(c.events)
 		close(c.commands)
