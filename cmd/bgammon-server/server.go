@@ -18,7 +18,12 @@ import (
 
 const clientTimeout = 40 * time.Second
 
-var onlyNumbers = regexp.MustCompile(`^[0-9]+$`)
+const allowDebugCommands = false
+
+var (
+	onlyNumbers = regexp.MustCompile(`^[0-9]+$`)
+	guestName   = regexp.MustCompile(`^guest[0-9]+$`)
+)
 
 type serverCommand struct {
 	client  *serverClient
@@ -32,6 +37,7 @@ type server struct {
 	newGameIDs   chan int
 	newClientIDs chan int
 	commands     chan serverCommand
+	welcome      []byte
 
 	gamesLock   sync.RWMutex
 	clientsLock sync.Mutex
@@ -43,6 +49,7 @@ func newServer() *server {
 		newGameIDs:   make(chan int),
 		newClientIDs: make(chan int),
 		commands:     make(chan serverCommand, bufferSize),
+		welcome:      []byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!"),
 	}
 	go s.handleNewGameIDs()
 	go s.handleNewClientIDs()
@@ -105,14 +112,18 @@ func (s *server) handleListener(listener net.Listener) {
 	}
 }
 
-func (s *server) nameAvailable(username []byte) bool {
+func (s *server) nameAllowed(username []byte) bool {
+	return !guestName.Match(username)
+}
+
+func (s *server) clientByUsername(username []byte) *serverClient {
 	lower := bytes.ToLower(username)
 	for _, c := range s.clients {
 		if bytes.Equal(bytes.ToLower(c.name), lower) {
-			return false
+			return c
 		}
 	}
-	return true
+	return nil
 }
 
 func (s *server) addClient(c *serverClient) {
@@ -248,19 +259,20 @@ func (s *server) handleNewClientIDs() {
 	}
 }
 
+// randomUsername returns a random guest username, and assumes clients are already locked.
 func (s *server) randomUsername() []byte {
 	for {
 		i := 100 + rand.Intn(900)
 		name := []byte(fmt.Sprintf("Guest%d", i))
 
-		if s.nameAvailable(name) {
+		if s.clientByUsername(name) == nil {
 			return name
 		}
 	}
 }
 
 func (s *server) sendHello(c *serverClient) {
-	c.Write([]byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!"))
+	c.Write(s.welcome)
 }
 
 func (s *server) gameByClient(c *serverClient) *serverGame {
@@ -324,13 +336,15 @@ COMMANDS:
 							username = params[0]
 						}
 					}
+					var randomUsername bool
 					if len(bytes.TrimSpace(username)) == 0 {
 						username = s.randomUsername()
+						randomUsername = true
 					}
 					if onlyNumbers.Match(username) {
 						cmd.client.Terminate("Invalid username: must contain at least one non-numeric character.")
 						return false
-					} else if !s.nameAvailable(username) {
+					} else if s.clientByUsername(username) != nil || (!randomUsername && !s.nameAllowed(username)) {
 						cmd.client.Terminate("Username unavailable.")
 						return false
 					}
@@ -1000,9 +1014,12 @@ COMMANDS:
 			cmd.client.Terminate("Client disconnected")
 		case bgammon.CommandPong:
 			// Do nothing.
-
-			// TODO remove
 		case "endgame":
+			if !allowDebugCommands {
+				cmd.client.sendNotice("You are not allowed to use that command.")
+				continue
+			}
+
 			if clientGame == nil {
 				cmd.client.sendNotice("You are not currently in a match.")
 				continue

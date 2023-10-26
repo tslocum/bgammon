@@ -86,6 +86,7 @@ func (c *socketClient) writeEvents() {
 		}
 	}
 
+	setTimeout()
 	var event []byte
 	for event = range c.events {
 		if c.terminated {
