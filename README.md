@@ -7,11 +7,19 @@
 
 Two official clients are available.
 
-### Graphical interface (boxcars)
+### Desktop graphical interface (Boxcars)
 
 [**Click here to play**](https://play.bgammon.org)
 
 Source code is available [here](https://code.rocket9labs.com/tslocum/boxcars).
+
+### Mobile graphical interface (Boxcars for Android)
+
+<a href="https://play.google.com/store/apps/details?id=com.rocket9labs.boxcars"><img width="121" height="36" alt="Google Play" border="0" src="https://rocket9labs.com/static/badge_google_36.png"></a>
+
+Boxcars is available for Android on [Google Play](https://play.google.com/store/apps/details?id=com.rocket9labs.boxcars).
+
+Source code is available [here](https://code.rocket9labs.com/tslocum/boxcars-android).
 
 ### Terminal interface (bgammon-cli)
 
