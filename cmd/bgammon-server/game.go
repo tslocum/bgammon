@@ -74,7 +74,7 @@ func (g *serverGame) sendBoard(client *serverClient) {
 			GameState: bgammon.GameState{
 				Game:         g.Game,
 				PlayerNumber: client.playerNumber,
-				Available:    g.LegalMoves(),
+				Available:    g.LegalMoves(false),
 			},
 		}
 
@@ -91,7 +91,7 @@ func (g *serverGame) sendBoard(client *serverClient) {
 
 			ev.Moves = bgammon.FlipMoves(g.Game.Moves, client.playerNumber)
 
-			legalMoves := g.LegalMoves()
+			legalMoves := g.LegalMoves(false)
 			for i := range ev.GameState.Available {
 				ev.GameState.Available[i][0], ev.GameState.Available[i][1] = bgammon.FlipSpace(legalMoves[i][0], client.playerNumber), bgammon.FlipSpace(legalMoves[i][1], client.playerNumber)
 			}
@@ -104,7 +104,7 @@ func (g *serverGame) sendBoard(client *serverClient) {
 		return
 	}
 
-	scanner := bufio.NewScanner(bytes.NewReader(g.BoardState(client.playerNumber)))
+	scanner := bufio.NewScanner(bytes.NewReader(g.BoardState(client.playerNumber, false)))
 	for scanner.Scan() {
 		client.sendNotice(string(scanner.Bytes()))
 	}

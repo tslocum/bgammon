@@ -651,7 +651,7 @@ COMMANDS:
 			gameState := &bgammon.GameState{
 				Game:         clientGame.Game,
 				PlayerNumber: cmd.client.playerNumber,
-				Available:    clientGame.LegalMoves(),
+				Available:    clientGame.LegalMoves(false),
 			}
 			if !gameState.MayDouble() {
 				cmd.client.sendNotice("You may not double at this time.")
@@ -682,7 +682,7 @@ COMMANDS:
 			gameState := &bgammon.GameState{
 				Game:         clientGame.Game,
 				PlayerNumber: cmd.client.playerNumber,
-				Available:    clientGame.LegalMoves(),
+				Available:    clientGame.LegalMoves(false),
 			}
 			if !gameState.MayResign() {
 				cmd.client.sendNotice("You may not resign at this time.")
@@ -818,7 +818,7 @@ COMMANDS:
 				moves = append(moves, []int{from, to})
 			}
 
-			ok, expandedMoves := clientGame.AddMoves(moves)
+			ok, expandedMoves := clientGame.AddMoves(moves, false)
 			if !ok {
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
 					From:   0,
@@ -838,7 +838,7 @@ COMMANDS:
 				}
 
 				winPoints := 1
-				if !bgammon.CanBearOff(clientGame.Board, opponent) {
+				if !bgammon.CanBearOff(clientGame.Board, opponent, false) {
 					winPoints = 3 // Award backgammon.
 				} else if clientGame.Board[opponentHome] == 0 {
 					winPoints = 2 // Award gammon.
@@ -895,7 +895,7 @@ COMMANDS:
 			for i, move := range clientGame.Moves {
 				undoMoves[l-1-i] = []int{move[1], move[0]}
 			}
-			ok, _ := clientGame.AddMoves(undoMoves)
+			ok, _ := clientGame.AddMoves(undoMoves, false)
 			if !ok {
 				cmd.client.sendNotice("Failed to undo move: invalid move.")
 			} else {
@@ -935,7 +935,7 @@ COMMANDS:
 				continue
 			}
 
-			legalMoves := clientGame.LegalMoves()
+			legalMoves := clientGame.LegalMoves(false)
 			if len(legalMoves) != 0 {
 				available := bgammon.FlipMoves(legalMoves, cmd.client.playerNumber)
 				bgammon.SortMoves(available)

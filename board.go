@@ -76,8 +76,12 @@ func RollForMove(from int, to int, player int) int {
 }
 
 // CanBearOff returns whether the provided player can bear checkers off of the board.
-func CanBearOff(board []int, player int) bool {
-	homeStart, homeEnd := HomeRange(player)
+func CanBearOff(board []int, player int, local bool) bool {
+	homeStart, homeEnd := 1, 6
+	if !local {
+		homeStart, homeEnd = HomeRange(player)
+	}
+
 	homeStart, homeEnd = minInt(homeStart, homeEnd), maxInt(homeStart, homeEnd)
 
 	ok := true

@@ -166,8 +166,8 @@ func (g *Game) AddLocalMove(move []int) bool {
 	return g.addMove(move)
 }
 
-func (g *Game) ExpandMove(move []int, currentSpace int, moves [][]int) ([][]int, bool) {
-	l := g.LegalMoves()
+func (g *Game) ExpandMove(move []int, currentSpace int, moves [][]int, local bool) ([][]int, bool) {
+	l := g.LegalMoves(local)
 	var hitMoves [][]int
 	for _, m := range l {
 		if OpponentCheckers(g.Board[m[1]], g.Turn) == 1 {
@@ -198,7 +198,7 @@ func (g *Game) ExpandMove(move []int, currentSpace int, moves [][]int) ([][]int,
 
 			gc := g.Copy()
 			gc.addMove(lm)
-			m, ok := gc.ExpandMove(move, currentSpace, newMoves)
+			m, ok := gc.ExpandMove(move, currentSpace, newMoves, local)
 			if ok {
 				return m, ok
 			}
@@ -208,7 +208,7 @@ func (g *Game) ExpandMove(move []int, currentSpace int, moves [][]int) ([][]int,
 }
 
 // AddMoves adds moves to the game state.  Adding a backwards move will remove the equivalent existing move.
-func (g *Game) AddMoves(moves [][]int) (bool, [][]int) {
+func (g *Game) AddMoves(moves [][]int, local bool) (bool, [][]int) {
 	if g.Player1.Name == "" || g.Player2.Name == "" || g.Winner != 0 {
 		return false, nil
 	}
@@ -221,7 +221,7 @@ func (g *Game) AddMoves(moves [][]int) (bool, [][]int) {
 	validateOffset := 0
 VALIDATEMOVES:
 	for _, move := range moves {
-		l := gameCopy.LegalMoves()
+		l := gameCopy.LegalMoves(local)
 		for _, lm := range l {
 			if lm[0] == move[0] && lm[1] == move[1] {
 				addMoves = append(addMoves, []int{move[0], move[1]})
@@ -242,7 +242,7 @@ VALIDATEMOVES:
 			}
 		}
 
-		expandedMoves, ok := g.ExpandMove(move, move[0], nil)
+		expandedMoves, ok := g.ExpandMove(move, move[0], nil, local)
 		if ok {
 			for _, expanded := range expandedMoves {
 				addMoves = append(addMoves, []int{expanded[0], expanded[1]})
@@ -260,7 +260,7 @@ VALIDATEMOVES:
 	var checkWin bool
 ADDMOVES:
 	for _, move := range addMoves {
-		l := gameCopy.LegalMoves()
+		l := gameCopy.LegalMoves(local)
 		for _, lm := range l {
 			if lm[0] == move[0] && lm[1] == move[1] {
 				if !gameCopy.addMove(move) {
@@ -316,7 +316,7 @@ ADDMOVES:
 	}
 }
 
-func (g *Game) LegalMoves() [][]int {
+func (g *Game) LegalMoves(local bool) [][]int {
 	if g.Winner != 0 || g.Roll1 == 0 || g.Roll2 == 0 {
 		return nil
 	}
@@ -408,7 +408,7 @@ func (g *Game) LegalMoves() [][]int {
 			}
 		})
 	} else {
-		canBearOff := CanBearOff(g.Board, g.Turn)
+		canBearOff := CanBearOff(g.Board, g.Turn, false)
 		for space := range g.Board {
 			if space == SpaceBarPlayer || space == SpaceBarOpponent { // Handled above.
 				continue
@@ -474,7 +474,7 @@ func (g *Game) LegalMoves() [][]int {
 		}
 
 		maxTotal := 1
-		for _, m := range gc.LegalMoves() {
+		for _, m := range gc.LegalMoves(local) {
 			total := totalMoves(gc, m)
 			if total+1 > maxTotal {
 				maxTotal = total + 1
@@ -580,7 +580,7 @@ func (g *Game) RenderSpace(player int, space int, spaceValue int, legalMoves [][
 	return append(append([]byte(" "), r...), ' ')
 }
 
-func (g *Game) BoardState(player int) []byte {
+func (g *Game) BoardState(player int, local bool) []byte {
 	var t bytes.Buffer
 
 	playerRating := "0"
@@ -622,7 +622,7 @@ func (g *Game) BoardState(player int) []byte {
 	t.WriteString(" ")
 	t.WriteByte('\n')
 
-	legalMoves := g.LegalMoves()
+	legalMoves := g.LegalMoves(local)
 	space := func(row int, col int) []byte {
 		spaceValue := row + 1
 		if row > 5 {
