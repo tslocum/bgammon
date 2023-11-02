@@ -663,6 +663,12 @@ COMMANDS:
 				continue
 			}
 
+			opponent := clientGame.opponent(cmd.client)
+			if opponent == nil {
+				cmd.client.sendNotice("You may not double until your opponent rejoins the match.")
+				continue
+			}
+
 			clientGame.DoubleOffered = true
 
 			cmd.client.sendNotice(fmt.Sprintf("Double offered to opponent (%d points).", clientGame.DoubleValue*2))
@@ -686,6 +692,12 @@ COMMANDS:
 			}
 			if !gameState.MayResign() {
 				cmd.client.sendNotice("You may not resign at this time.")
+				continue
+			}
+
+			opponent := clientGame.opponent(cmd.client)
+			if opponent == nil {
+				cmd.client.sendNotice("You may not resign until your opponent rejoins the match.")
 				continue
 			}
 
@@ -733,6 +745,14 @@ COMMANDS:
 				continue
 			}
 
+			opponent := clientGame.opponent(cmd.client)
+			if opponent == nil {
+				cmd.client.sendEvent(&bgammon.EventFailedRoll{
+					Reason: "You may not roll until your opponent rejoins the match.",
+				})
+				continue
+			}
+
 			if !clientGame.roll(cmd.client.playerNumber) {
 				cmd.client.sendEvent(&bgammon.EventFailedRoll{
 					Reason: "It is not your turn to roll.",
@@ -772,6 +792,14 @@ COMMANDS:
 			if clientGame.Turn != cmd.client.playerNumber {
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
 					Reason: "It is not your turn to move.",
+				})
+				continue
+			}
+
+			opponent := clientGame.opponent(cmd.client)
+			if opponent == nil {
+				cmd.client.sendEvent(&bgammon.EventFailedMove{
+					Reason: "You may not move until your opponent rejoins the match.",
 				})
 				continue
 			}
@@ -915,6 +943,12 @@ COMMANDS:
 				continue
 			}
 
+			opponent := clientGame.opponent(cmd.client)
+			if opponent == nil {
+				cmd.client.sendNotice("You must wait until your opponent rejoins the match before continuing the game.")
+				continue
+			}
+
 			if clientGame.DoubleOffered && clientGame.Turn != cmd.client.playerNumber {
 				opponent := clientGame.opponent(cmd.client)
 				if opponent == nil {
@@ -1031,7 +1065,7 @@ COMMANDS:
 			clientGame.Turn = 1
 			clientGame.Roll1 = 1
 			clientGame.Roll2 = 2
-			clientGame.Board = []int{0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, 0}
+			clientGame.Board = []int{0, 4, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -4, 0, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)

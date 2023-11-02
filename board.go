@@ -80,21 +80,18 @@ func CanBearOff(board []int, player int, local bool) bool {
 	homeStart, homeEnd := 1, 6
 	if !local {
 		homeStart, homeEnd = HomeRange(player)
+		homeStart, homeEnd = minInt(homeStart, homeEnd), maxInt(homeStart, homeEnd)
 	}
 
-	homeStart, homeEnd = minInt(homeStart, homeEnd), maxInt(homeStart, homeEnd)
-
-	ok := true
+	if PlayerCheckers(board[SpaceBarPlayer], player) > 0 || PlayerCheckers(board[SpaceBarOpponent], player) > 0 {
+		return false
+	}
 	for i := 1; i < 24; i++ {
 		if (i < homeStart || i > homeEnd) && PlayerCheckers(board[i], player) > 0 {
-			ok = false
-			break
+			return false
 		}
 	}
-	if ok && (PlayerCheckers(board[SpaceBarPlayer], player) > 0 || PlayerCheckers(board[SpaceBarOpponent], player) > 0) {
-		ok = false
-	}
-	return ok
+	return true
 }
 
 func ParseSpace(space string) int {

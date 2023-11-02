@@ -357,7 +357,13 @@ func (g *Game) LegalMoves(local bool) [][]int {
 				needRoll = 25 - from
 			}
 			for i, roll := range rolls {
-				if roll >= needRoll {
+				if roll == needRoll {
+					rolls = append(rolls[:i], rolls[i+1:]...)
+					return
+				}
+			}
+			for i, roll := range rolls {
+				if roll > needRoll {
 					rolls = append(rolls[:i], rolls[i+1:]...)
 					return
 				}
@@ -429,12 +435,33 @@ func (g *Game) LegalMoves(local bool) [][]int {
 				}
 				available := haveBearOffDiceRoll(SpaceDiff(space, homeSpace))
 				if available > 0 {
-					movable := playerCheckers
-					if movable > available {
-						movable = available
+					ok := true
+					if haveDiceRoll(space, homeSpace) == 0 {
+						_, homeEnd := HomeRange(g.Turn)
+						if g.Turn == 2 {
+							for homeSpace := space - 1; homeSpace >= homeEnd; homeSpace-- {
+								if PlayerCheckers(g.Board[homeSpace], g.Turn) != 0 {
+									ok = false
+									break
+								}
+							}
+						} else {
+							for homeSpace := space + 1; homeSpace <= homeEnd; homeSpace++ {
+								if PlayerCheckers(g.Board[homeSpace], g.Turn) != 0 {
+									ok = false
+									break
+								}
+							}
+						}
 					}
-					for i := 0; i < movable; i++ {
-						moves = append(moves, []int{space, homeSpace})
+					if ok {
+						movable := playerCheckers
+						if movable > available {
+							movable = available
+						}
+						for i := 0; i < movable; i++ {
+							moves = append(moves, []int{space, homeSpace})
+						}
 					}
 				}
 			}
