@@ -385,6 +385,7 @@ func (g *Game) LegalMoves(local bool) [][]int {
 	}
 
 	var moves [][]int
+	var movesFound = make(map[int]bool)
 
 	var mustEnter bool
 	var barSpace int
@@ -398,19 +399,17 @@ func (g *Game) LegalMoves(local bool) [][]int {
 	if mustEnter { // Must enter from bar.
 		from, to := HomeRange(g.opponentPlayer().Number)
 		g.iterateSpaces(from, to, func(homeSpace int, spaceCount int) {
+			if movesFound[barSpace*100+homeSpace] {
+				return
+			}
 			available := haveDiceRoll(barSpace, homeSpace)
 			if available == 0 {
 				return
 			}
 			opponentCheckers := OpponentCheckers(g.Board[homeSpace], g.Turn)
 			if opponentCheckers <= 1 {
-				movable := PlayerCheckers(g.Board[barSpace], g.Turn)
-				if movable > available {
-					movable = available
-				}
-				for i := 0; i < movable; i++ {
-					moves = append(moves, []int{barSpace, homeSpace})
-				}
+				moves = append(moves, []int{barSpace, homeSpace})
+				movesFound[barSpace*100+homeSpace] = true
 			}
 		})
 	} else {
@@ -432,6 +431,9 @@ func (g *Game) LegalMoves(local bool) [][]int {
 				homeSpace := SpaceHomePlayer
 				if g.Turn == 2 {
 					homeSpace = SpaceHomeOpponent
+				}
+				if movesFound[space*100+homeSpace] {
+					continue
 				}
 				available := haveBearOffDiceRoll(SpaceDiff(space, homeSpace))
 				if available > 0 {
@@ -455,13 +457,8 @@ func (g *Game) LegalMoves(local bool) [][]int {
 						}
 					}
 					if ok {
-						movable := playerCheckers
-						if movable > available {
-							movable = available
-						}
-						for i := 0; i < movable; i++ {
-							moves = append(moves, []int{space, homeSpace})
-						}
+						moves = append(moves, []int{space, homeSpace})
+						movesFound[space*100+homeSpace] = true
 					}
 				}
 			}
@@ -473,6 +470,9 @@ func (g *Game) LegalMoves(local bool) [][]int {
 			}
 
 			g.iterateSpaces(space, lastSpace, func(to int, spaceCount int) {
+				if movesFound[space*100+to] {
+					return
+				}
 				available := haveDiceRoll(space, to)
 				if available == 0 {
 					return
@@ -480,13 +480,8 @@ func (g *Game) LegalMoves(local bool) [][]int {
 
 				opponentCheckers := OpponentCheckers(g.Board[to], g.Turn)
 				if opponentCheckers <= 1 {
-					movable := playerCheckers
-					if movable > available {
-						movable = available
-					}
-					for i := 0; i < movable; i++ {
-						moves = append(moves, []int{space, to})
-					}
+					moves = append(moves, []int{space, to})
+					movesFound[space*100+to] = true
 				}
 			})
 		}
