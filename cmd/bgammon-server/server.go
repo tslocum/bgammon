@@ -708,6 +708,7 @@ COMMANDS:
 				clientGame.Player2.Points = clientGame.Player2.Points + clientGame.DoubleValue
 				if clientGame.Player2.Points >= clientGame.Points {
 					clientGame.Winner = 2
+					clientGame.Ended = time.Now()
 				} else {
 					clientGame.Reset()
 				}
@@ -715,6 +716,7 @@ COMMANDS:
 				clientGame.Player1.Points = clientGame.Player2.Points + clientGame.DoubleValue
 				if clientGame.Player1.Points >= clientGame.Points {
 					clientGame.Winner = 1
+					clientGame.Ended = time.Now()
 				} else {
 					clientGame.Reset()
 				}
@@ -880,12 +882,16 @@ COMMANDS:
 					clientGame.Player1.Points = clientGame.Player1.Points + winPoints*clientGame.DoubleValue
 					if clientGame.Player1.Points < clientGame.Points {
 						clientGame.Reset()
+					} else {
+						clientGame.Ended = time.Now()
 					}
 				} else {
 					winEvent.Player = clientGame.Player2.Name
 					clientGame.Player2.Points = clientGame.Player2.Points + winPoints*clientGame.DoubleValue
 					if clientGame.Player2.Points < clientGame.Points {
 						clientGame.Reset()
+					} else {
+						clientGame.Ended = time.Now()
 					}
 				}
 			}

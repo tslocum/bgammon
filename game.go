@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 )
 
 var boardTopBlack = []byte("+13-14-15-16-17-18-+---+19-20-21-22-23-24-+")
@@ -18,6 +19,8 @@ type Game struct {
 	Player1 Player
 	Player2 Player
 	Turn    int
+	Started time.Time
+	Ended   time.Time
 	Winner  int
 	Roll1   int
 	Roll2   int
