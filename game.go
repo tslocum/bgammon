@@ -50,6 +50,8 @@ func (g *Game) Copy() *Game {
 		Player1:       g.Player1,
 		Player2:       g.Player2,
 		Turn:          g.Turn,
+		Started:       g.Started,
+		Ended:         g.Ended,
 		Winner:        g.Winner,
 		Roll1:         g.Roll1,
 		Roll2:         g.Roll2,
