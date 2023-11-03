@@ -2,9 +2,10 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"fmt"
 	"log"
-	"math/rand"
+	"math/big"
 	"net"
 	"net/http"
 	"regexp"
@@ -18,7 +19,7 @@ import (
 
 const clientTimeout = 40 * time.Second
 
-const allowDebugCommands = false
+var allowDebugCommands bool
 
 var (
 	onlyNumbers = regexp.MustCompile(`^[0-9]+$`)
@@ -262,8 +263,7 @@ func (s *server) handleNewClientIDs() {
 // randomUsername returns a random guest username, and assumes clients are already locked.
 func (s *server) randomUsername() []byte {
 	for {
-		i := 100 + rand.Intn(900)
-		name := []byte(fmt.Sprintf("Guest%d", i))
+		name := []byte(fmt.Sprintf("Guest%d", 100+randInt(900)))
 
 		if s.clientByUsername(name) == nil {
 			return name
@@ -1080,4 +1080,12 @@ COMMANDS:
 			log.Printf("Received unknown command from client %s: %s", cmd.client.label(), cmd.command)
 		}
 	}
+}
+
+func randInt(max int) int {
+	i, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
+	if err != nil {
+		panic(err)
+	}
+	return int(i.Int64())
 }

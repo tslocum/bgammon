@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"math/rand"
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
@@ -22,7 +21,6 @@ type serverGame struct {
 	rematch    int
 	rejoin1    bool
 	rejoin2    bool
-	r          *rand.Rand
 	*bgammon.Game
 }
 
@@ -33,7 +31,6 @@ func newServerGame(id int) *serverGame {
 		created:    now,
 		lastActive: now,
 		Game:       bgammon.NewGame(),
-		r:          rand.New(rand.NewSource(time.Now().UnixNano() + rand.Int63n(1000000))),
 	}
 }
 
@@ -50,14 +47,14 @@ func (g *serverGame) roll(player int) bool {
 			} else {
 				secondRoll = true
 			}
-			g.Roll1 = g.r.Intn(6) + 1
+			g.Roll1 = randInt(6) + 1
 		} else {
 			if g.Roll2 != 0 {
 				return false
 			} else {
 				secondRoll = true
 			}
-			g.Roll2 = g.r.Intn(6) + 1
+			g.Roll2 = randInt(6) + 1
 		}
 		if secondRoll && g.Started.IsZero() {
 			g.Started = time.Now()
@@ -72,7 +69,8 @@ func (g *serverGame) roll(player int) bool {
 		return false
 	}
 
-	g.Roll1, g.Roll2 = g.r.Intn(6)+1, g.r.Intn(6)+1
+	g.Roll1 = randInt(6) + 1
+	g.Roll2 = randInt(6) + 1
 	return true
 }
 
@@ -184,8 +182,7 @@ func (g *serverGame) addClient(client *serverClient) (bool, string) {
 		client.playerNumber = 1
 		playerNumber = 1
 	default:
-		i := rand.Intn(2)
-		if i == 0 {
+		if randInt(2) == 0 {
 			g.client1 = client
 			g.Player1.Name = string(client.name)
 			client.playerNumber = 1
