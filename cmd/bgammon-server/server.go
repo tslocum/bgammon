@@ -348,7 +348,7 @@ COMMANDS:
 						cmd.client.Terminate("Invalid username: must contain at least one non-numeric character.")
 						return false
 					} else if s.clientByUsername(username) != nil || (!randomUsername && !s.nameAllowed(username)) {
-						cmd.client.Terminate("Username unavailable.")
+						cmd.client.Terminate("That username is already in use.")
 						return false
 					}
 					return true
@@ -862,13 +862,25 @@ COMMANDS:
 			if clientGame.Winner != 0 {
 				opponent := 1
 				opponentHome := bgammon.SpaceHomePlayer
+				playerBar := bgammon.SpaceBarPlayer
 				if clientGame.Winner == 1 {
 					opponent = 2
 					opponentHome = bgammon.SpaceHomeOpponent
+					playerBar = bgammon.SpaceBarOpponent
+				}
+
+				backgammon := bgammon.PlayerCheckers(clientGame.Board[playerBar], opponent) != 0
+				if !backgammon {
+					homeStart, homeEnd := bgammon.HomeRange(clientGame.Winner)
+					bgammon.IterateSpaces(homeStart, homeEnd, func(space, spaceCount int) {
+						if bgammon.PlayerCheckers(clientGame.Board[space], opponent) != 0 {
+							backgammon = true
+						}
+					})
 				}
 
 				winPoints := 1
-				if !bgammon.CanBearOff(clientGame.Board, opponent, false) {
+				if backgammon {
 					winPoints = 3 // Award backgammon.
 				} else if clientGame.Board[opponentHome] == 0 {
 					winPoints = 2 // Award gammon.
@@ -903,11 +915,11 @@ COMMANDS:
 				ev.Player = string(cmd.client.name)
 				client.sendEvent(ev)
 
+				clientGame.sendBoard(client)
+
 				if winEvent != nil {
 					client.sendEvent(winEvent)
 				}
-
-				clientGame.sendBoard(client)
 			})
 		case bgammon.CommandReset:
 			if clientGame == nil {
@@ -1071,7 +1083,7 @@ COMMANDS:
 			clientGame.Turn = 1
 			clientGame.Roll1 = 1
 			clientGame.Roll2 = 2
-			clientGame.Board = []int{0, 4, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -4, 0, 0, 0}
+			clientGame.Board = []int{0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -1}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)

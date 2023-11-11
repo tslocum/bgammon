@@ -40,23 +40,19 @@ func (g *serverGame) roll(player int) bool {
 	}
 
 	if g.Turn == 0 {
-		var secondRoll bool
 		if player == 1 {
 			if g.Roll1 != 0 {
 				return false
-			} else {
-				secondRoll = true
 			}
 			g.Roll1 = randInt(6) + 1
 		} else {
 			if g.Roll2 != 0 {
 				return false
-			} else {
-				secondRoll = true
 			}
 			g.Roll2 = randInt(6) + 1
 		}
-		if secondRoll && g.Started.IsZero() {
+
+		if g.Started.IsZero() {
 			g.Started = time.Now()
 		}
 

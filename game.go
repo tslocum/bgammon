@@ -113,25 +113,6 @@ func (g *Game) opponentPlayer() Player {
 	}
 }
 
-func (g *Game) iterateSpaces(from int, to int, f func(space int, spaceCount int)) {
-	if from == to || from < 1 || from > 24 || to < 1 || to > 24 {
-		return
-	}
-
-	i := 1
-	if to > from {
-		for space := from; space <= to; space++ {
-			f(space, i)
-			i++
-		}
-	} else {
-		for space := from; space >= to; space-- {
-			f(space, i)
-			i++
-		}
-	}
-}
-
 func (g *Game) addMove(move []int) bool {
 	opponentCheckers := OpponentCheckers(g.Board[move[1]], g.Turn)
 	if opponentCheckers > 1 {
@@ -403,7 +384,7 @@ func (g *Game) LegalMoves(local bool) [][]int {
 	}
 	if mustEnter { // Must enter from bar.
 		from, to := HomeRange(g.opponentPlayer().Number)
-		g.iterateSpaces(from, to, func(homeSpace int, spaceCount int) {
+		IterateSpaces(from, to, func(homeSpace int, spaceCount int) {
 			if movesFound[barSpace*100+homeSpace] {
 				return
 			}
@@ -474,7 +455,7 @@ func (g *Game) LegalMoves(local bool) [][]int {
 				lastSpace = 24
 			}
 
-			g.iterateSpaces(space, lastSpace, func(to int, spaceCount int) {
+			IterateSpaces(space, lastSpace, func(to int, spaceCount int) {
 				if movesFound[space*100+to] {
 					return
 				}
@@ -792,6 +773,25 @@ func SpaceDiff(from int, to int) int {
 		return diff * -1
 	}
 	return diff
+}
+
+func IterateSpaces(from int, to int, f func(space int, spaceCount int)) {
+	if from == to || from < 1 || from > 24 || to < 1 || to > 24 {
+		return
+	}
+
+	i := 1
+	if to > from {
+		for space := from; space <= to; space++ {
+			f(space, i)
+			i++
+		}
+	} else {
+		for space := from; space >= to; space-- {
+			f(space, i)
+			i++
+		}
+	}
 }
 
 func PlayerCheckers(checkers int, player int) int {
