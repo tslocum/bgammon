@@ -61,7 +61,7 @@ func (g *GameState) MayDouble() bool {
 	if g.Winner != 0 {
 		return false
 	}
-	return g.Turn != 0 && g.Turn == g.PlayerNumber && g.Roll1 == 0 && !g.DoubleOffered && (g.DoublePlayer == 0 || g.DoublePlayer == g.PlayerNumber)
+	return g.Points != 1 && g.Turn != 0 && g.Turn == g.PlayerNumber && g.Roll1 == 0 && !g.DoubleOffered && (g.DoublePlayer == 0 || g.DoublePlayer == g.PlayerNumber)
 }
 
 // MayRoll returns whether the player may send the 'roll' command.
