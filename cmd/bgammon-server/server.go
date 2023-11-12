@@ -540,6 +540,10 @@ COMMANDS:
 			s.gamesLock.Unlock()
 
 			cmd.client.sendNotice(fmt.Sprintf("Created match: %s", g.name))
+
+			if len(g.password) == 0 {
+				cmd.client.sendNotice("Note: Please be patient as you wait for another player to join the match. A chime will sound when another player joins.")
+			}
 		case bgammon.CommandJoin, "j":
 			if clientGame != nil {
 				cmd.client.sendEvent(&bgammon.EventFailedJoin{
