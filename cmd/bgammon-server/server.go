@@ -542,7 +542,7 @@ COMMANDS:
 			cmd.client.sendNotice(fmt.Sprintf("Created match: %s", g.name))
 
 			if len(g.password) == 0 {
-				cmd.client.sendNotice("Note: Please be patient as you wait for another player to join the match. A chime will sound when another player joins.")
+				cmd.client.sendNotice("Note: Please be patient as you wait for another player to join the match. A chime will sound when another player joins. While you wait, why not join the bgammon.org community? See the 'Community' page for information on how to join via Discord, Matrix or IRC.")
 			}
 		case bgammon.CommandJoin, "j":
 			if clientGame != nil {
