@@ -456,15 +456,21 @@ COMMANDS:
 			ev := &bgammon.EventList{}
 
 			s.gamesLock.RLock()
+			var playerCount int
 			for _, g := range s.games {
 				if g.terminated() {
 					continue
+				}
+				if len(g.allowed1) != 0 && !bytes.Equal(g.allowed1, cmd.client.name) && !bytes.Equal(g.allowed2, cmd.client.name) {
+					playerCount = 2
+				} else {
+					playerCount = g.playerCount()
 				}
 				ev.Games = append(ev.Games, bgammon.GameListing{
 					ID:       g.id,
 					Points:   g.Points,
 					Password: len(g.password) != 0,
-					Players:  g.playerCount(),
+					Players:  playerCount,
 					Name:     string(g.name),
 				})
 			}
