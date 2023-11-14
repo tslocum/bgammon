@@ -1029,11 +1029,14 @@ COMMANDS:
 
 				newGame := newServerGame(<-s.newGameIDs)
 				newGame.name = clientGame.name
+				newGame.Points = clientGame.Points
 				newGame.password = clientGame.password
 				newGame.client1 = clientGame.client1
 				newGame.client2 = clientGame.client2
 				newGame.Player1 = clientGame.Player1
 				newGame.Player2 = clientGame.Player2
+				newGame.allowed1 = clientGame.allowed1
+				newGame.allowed2 = clientGame.allowed2
 				s.games = append(s.games, newGame)
 
 				clientGame.client1 = nil
