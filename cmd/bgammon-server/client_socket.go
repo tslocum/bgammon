@@ -133,12 +133,6 @@ func (c *socketClient) Terminate(reason string) {
 	}
 	c.terminated = true
 	c.conn.Close()
-
-	go func() {
-		c.wgEvents.Wait()
-		close(c.events)
-		close(c.commands)
-	}()
 }
 
 func (c *socketClient) Terminated() bool {

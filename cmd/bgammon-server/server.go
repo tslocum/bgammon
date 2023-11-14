@@ -135,13 +135,13 @@ func (s *server) addClient(c *serverClient) {
 }
 
 func (s *server) removeClient(c *serverClient) {
-	go func() {
-		g := s.gameByClient(c)
-		if g != nil {
-			g.removeClient(c)
-		}
-		c.Terminate("")
-	}()
+	g := s.gameByClient(c)
+	if g != nil {
+		g.removeClient(c)
+	}
+	c.Terminate("")
+
+	close(c.commands)
 
 	s.clientsLock.Lock()
 	defer s.clientsLock.Unlock()

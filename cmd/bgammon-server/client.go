@@ -19,7 +19,7 @@ type serverClient struct {
 	connected    int64
 	lastActive   int64
 	lastPing     int64
-	commands     <-chan []byte
+	commands     chan []byte
 	playerNumber int
 	terminating  bool
 	bgammon.Client
@@ -153,10 +153,9 @@ func (c *serverClient) Terminate(reason string) {
 	if reason != "" {
 		extra = ": " + reason
 	}
+	c.sendNotice("Connection terminated" + extra)
 
 	go func() {
-		c.sendNotice("Connection terminated" + extra)
-
 		time.Sleep(time.Second)
 		c.Client.Terminate(reason)
 	}()
