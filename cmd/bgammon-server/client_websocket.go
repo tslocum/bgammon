@@ -140,13 +140,6 @@ func (c *webSocketClient) Terminate(reason string) {
 	}
 	c.terminated = true
 	c.conn.Close()
-
-	go func() {
-		time.Sleep(5 * time.Second)
-		c.wgEvents.Wait()
-		close(c.events)
-		close(c.commands)
-	}()
 }
 
 func (c *webSocketClient) Terminated() bool {
