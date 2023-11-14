@@ -56,6 +56,23 @@ func (g *GameState) SpaceAt(x int, y int) int {
 	return space
 }
 
+// Pips returns the pip count for the specified player.
+func (g *GameState) Pips(player int) int {
+	var pips int
+	var spaceValue int
+	pips += PlayerCheckers(g.Board[SpaceBarPlayer], player) * 25
+	pips += PlayerCheckers(g.Board[SpaceBarOpponent], player) * 25
+	for i := 1; i < 25; i++ {
+		if player == g.PlayerNumber {
+			spaceValue = i
+		} else {
+			spaceValue = 25 - i
+		}
+		pips += PlayerCheckers(g.Board[i], player) * spaceValue
+	}
+	return pips
+}
+
 // MayDouble returns whether the player may send the 'double' command.
 func (g *GameState) MayDouble() bool {
 	if g.Winner != 0 {
