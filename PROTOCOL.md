@@ -1,10 +1,10 @@
 # Specification of bgammon.org protocol
 
-Connect to `bgammon.org:1337` via TCP.
+Connect via `bgammon.org:1337` (TCP) or `wss://ws.bgammon.org` (WebSocket).
 
-All commands and events are separated by newlines.
+Replace spaces with underscores when sending a password to the server.
 
-When sending a password to the server, replace spaces with underscores.
+When connected via TCP, commands and events are separated by newlines.
 
 ## User commands
 
@@ -108,7 +108,7 @@ This document lists events in human-readable format.
 ### Events
 
 - `hello <message:line>`
-  - Initial welcome message sent by the server. It provides instructions on how to log in.
+  - Initial welcome message sent only to clients connected via TCP. It provides instructions on how to log in.
   - This message does not normally need to be displayed when using a graphical client.
 
 - `welcome <name:text> there are <clients:integer> clients playing <games:integer> matches.`
