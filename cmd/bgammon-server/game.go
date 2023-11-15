@@ -84,12 +84,42 @@ func (g *serverGame) sendBoard(client *serverClient) {
 		if client.playerNumber == 2 {
 			ev.GameState.Game = ev.GameState.Copy()
 
+			ev.GameState.PlayerNumber = 1
+			ev.GameState.Player1, ev.GameState.Player2 = ev.GameState.Player2, ev.GameState.Player1
+			ev.GameState.Player1.Number = 1
+			ev.GameState.Player2.Number = 2
+
+			switch ev.GameState.Turn {
+			case 1:
+				ev.GameState.Turn = 2
+			case 2:
+				ev.GameState.Turn = 1
+			}
+
+			switch ev.GameState.DoublePlayer {
+			case 1:
+				ev.GameState.DoublePlayer = 2
+			case 2:
+				ev.GameState.DoublePlayer = 1
+			}
+
+			switch ev.GameState.Winner {
+			case 1:
+				ev.GameState.Winner = 2
+			case 2:
+				ev.GameState.Winner = 1
+			}
+
+			if ev.GameState.Roll1 == 0 || ev.GameState.Roll2 == 0 {
+				ev.GameState.Roll1, ev.GameState.Roll2 = ev.GameState.Roll2, ev.GameState.Roll1
+			}
+
 			// Flip board.
 			for space := 1; space <= 24; space++ {
-				ev.Board[space] = g.Game.Board[bgammon.FlipSpace(space, client.playerNumber)]
+				ev.Board[space] = g.Game.Board[bgammon.FlipSpace(space, client.playerNumber)] * -1
 			}
-			ev.Board[bgammon.SpaceHomePlayer], ev.Board[bgammon.SpaceHomeOpponent] = ev.Board[bgammon.SpaceHomeOpponent], ev.Board[bgammon.SpaceHomePlayer]
-			ev.Board[bgammon.SpaceBarPlayer], ev.Board[bgammon.SpaceBarOpponent] = ev.Board[bgammon.SpaceBarOpponent], ev.Board[bgammon.SpaceBarPlayer]
+			ev.Board[bgammon.SpaceHomePlayer], ev.Board[bgammon.SpaceHomeOpponent] = ev.Board[bgammon.SpaceHomeOpponent]*-1, ev.Board[bgammon.SpaceHomePlayer]*-1
+			ev.Board[bgammon.SpaceBarPlayer], ev.Board[bgammon.SpaceBarOpponent] = ev.Board[bgammon.SpaceBarOpponent]*-1, ev.Board[bgammon.SpaceBarPlayer]*-1
 
 			ev.Moves = bgammon.FlipMoves(g.Game.Moves, client.playerNumber)
 

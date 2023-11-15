@@ -772,11 +772,6 @@ COMMANDS:
 				continue
 			}
 
-			ev := &bgammon.EventRolled{
-				Roll1: clientGame.Roll1,
-				Roll2: clientGame.Roll2,
-			}
-			ev.Player = string(cmd.client.name)
 			if clientGame.Turn == 0 && clientGame.Roll1 != 0 && clientGame.Roll2 != 0 {
 				if clientGame.Roll1 > clientGame.Roll2 {
 					clientGame.Turn = 1
@@ -788,6 +783,14 @@ COMMANDS:
 				}
 			}
 			clientGame.eachClient(func(client *serverClient) {
+				ev := &bgammon.EventRolled{
+					Roll1: clientGame.Roll1,
+					Roll2: clientGame.Roll2,
+				}
+				ev.Player = string(cmd.client.name)
+				if client.playerNumber == 2 {
+					ev.Roll1, ev.Roll2 = ev.Roll2, ev.Roll1
+				}
 				client.sendEvent(ev)
 				if clientGame.Turn != 0 || !client.json {
 					clientGame.sendBoard(client)
@@ -1052,7 +1055,7 @@ COMMANDS:
 
 				ev2 := &bgammon.EventJoined{
 					GameID:       newGame.id,
-					PlayerNumber: 2,
+					PlayerNumber: 1,
 				}
 				ev2.Player = newGame.Player2.Name
 

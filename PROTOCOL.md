@@ -6,6 +6,8 @@ Replace spaces with underscores when sending a password to the server.
 
 When connected via TCP, commands and events are separated by newlines.
 
+Players always perceive games from the perspective of player number 1 (black).
+
 ## User commands
 
 ### Format
