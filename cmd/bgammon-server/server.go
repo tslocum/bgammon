@@ -1047,23 +1047,37 @@ COMMANDS:
 
 				s.gamesLock.Unlock()
 
-				ev1 := &bgammon.EventJoined{
-					GameID:       newGame.id,
-					PlayerNumber: 1,
+				{
+					ev1 := &bgammon.EventJoined{
+						GameID:       newGame.id,
+						PlayerNumber: 1,
+					}
+					ev1.Player = newGame.Player1.Name
+					ev2 := &bgammon.EventJoined{
+						GameID:       newGame.id,
+						PlayerNumber: 2,
+					}
+					ev2.Player = newGame.Player2.Name
+					newGame.client1.sendEvent(ev1)
+					newGame.client1.sendEvent(ev2)
+					newGame.sendBoard(newGame.client1)
 				}
-				ev1.Player = newGame.Player1.Name
 
-				ev2 := &bgammon.EventJoined{
-					GameID:       newGame.id,
-					PlayerNumber: 1,
+				{
+					ev1 := &bgammon.EventJoined{
+						GameID:       newGame.id,
+						PlayerNumber: 1,
+					}
+					ev1.Player = newGame.Player2.Name
+					ev2 := &bgammon.EventJoined{
+						GameID:       newGame.id,
+						PlayerNumber: 2,
+					}
+					ev2.Player = newGame.Player1.Name
+					newGame.client2.sendEvent(ev1)
+					newGame.client2.sendEvent(ev2)
+					newGame.sendBoard(newGame.client2)
 				}
-				ev2.Player = newGame.Player2.Name
-
-				newGame.eachClient(func(client *serverClient) {
-					client.sendEvent(ev1)
-					client.sendEvent(ev2)
-					newGame.sendBoard(client)
-				})
 			} else {
 				clientGame.rematch = cmd.client.playerNumber
 

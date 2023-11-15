@@ -173,17 +173,23 @@ func (g *serverGame) addClient(client *serverClient) (bool, string) {
 			return
 		}
 
-		ev := &bgammon.EventJoined{
-			GameID:       g.id,
-			PlayerNumber: playerNumber,
+		{
+			ev := &bgammon.EventJoined{
+				GameID:       g.id,
+				PlayerNumber: 1,
+			}
+			ev.Player = string(client.name)
+			client.sendEvent(ev)
+			g.sendBoard(client)
 		}
-		ev.Player = string(client.name)
-
-		client.sendEvent(ev)
-		g.sendBoard(client)
 
 		opponent := g.opponent(client)
 		if opponent != nil {
+			ev := &bgammon.EventJoined{
+				GameID:       g.id,
+				PlayerNumber: 2,
+			}
+			ev.Player = string(client.name)
 			opponent.sendEvent(ev)
 			g.sendBoard(opponent)
 		}
