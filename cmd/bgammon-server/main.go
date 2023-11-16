@@ -13,11 +13,13 @@ func main() {
 		tcpAddress     string
 		wsAddress      string
 		debug          int
+		debugCommands  bool
 		rollStatistics bool
 	)
 	flag.StringVar(&tcpAddress, "tcp", "localhost:1337", "TCP listen address")
 	flag.StringVar(&wsAddress, "ws", "localhost:1338", "WebSocket listen address")
 	flag.IntVar(&debug, "debug", 0, "print debug information and serve pprof on specified port")
+	flag.BoolVar(&debugCommands, "debug-commands", false, "allow players to use restricted commands")
 	flag.BoolVar(&rollStatistics, "statistics", false, "print dice roll statistics and exit")
 	flag.Parse()
 
@@ -34,6 +36,10 @@ func main() {
 		go func() {
 			log.Fatal(http.ListenAndServe(fmt.Sprintf("localhost:%d", debug), nil))
 		}()
+	}
+
+	if debugCommands {
+		allowDebugCommands = debugCommands
 	}
 
 	s := newServer()

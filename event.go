@@ -41,7 +41,6 @@ type EventSay struct {
 }
 
 type GameListing struct {
-	Event
 	ID       int
 	Password bool
 	Points   int

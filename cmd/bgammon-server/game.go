@@ -288,6 +288,26 @@ func (g *serverGame) opponent(client *serverClient) *serverClient {
 	return nil
 }
 
+func (g *serverGame) listing(playerName []byte) *bgammon.GameListing {
+	if g.terminated() {
+		return nil
+	}
+
+	var playerCount int
+	if len(g.allowed1) != 0 && (len(playerName) == 0 || (!bytes.Equal(g.allowed1, playerName) && !bytes.Equal(g.allowed2, playerName))) {
+		playerCount = 2
+	} else {
+		playerCount = g.playerCount()
+	}
+	return &bgammon.GameListing{
+		ID:       g.id,
+		Points:   g.Points,
+		Password: len(g.password) != 0,
+		Players:  playerCount,
+		Name:     string(g.name),
+	}
+}
+
 func (g *serverGame) terminated() bool {
 	return g.client1 == nil && g.client2 == nil
 }

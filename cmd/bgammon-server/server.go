@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -42,6 +43,10 @@ type server struct {
 
 	gamesLock   sync.RWMutex
 	clientsLock sync.Mutex
+
+	gamesCache     []byte
+	gamesCacheTime time.Time
+	gamesCacheLock sync.Mutex
 }
 
 func newServer() *server {
@@ -57,6 +62,44 @@ func newServer() *server {
 	go s.handleCommands()
 	go s.handleTerminatedGames()
 	return s
+}
+
+func (s *server) cachedMatches() []byte {
+	s.gamesCacheLock.Lock()
+	defer s.gamesCacheLock.Unlock()
+
+	if time.Since(s.gamesCacheTime) < 5*time.Second {
+		return s.gamesCache
+	}
+
+	s.gamesLock.Lock()
+	defer s.gamesLock.Unlock()
+
+	var games []*bgammon.GameListing
+	for _, g := range s.games {
+		listing := g.listing(nil)
+		if listing == nil || listing.Password || listing.Players == 2 {
+			continue
+		}
+		games = append(games, listing)
+	}
+
+	s.gamesCacheTime = time.Now()
+	if len(games) == 0 {
+		s.gamesCache = []byte("[]")
+		return s.gamesCache
+	}
+	var err error
+	s.gamesCache, err = json.Marshal(games)
+	if err != nil {
+		log.Fatalf("failed to marshal %+v: %s", games, err)
+	}
+	return s.gamesCache
+}
+
+func (s *server) handleListMatches(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(s.cachedMatches())
 }
 
 func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +127,12 @@ func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) listenWebSocket(address string) {
 	log.Printf("Listening for WebSocket connections on %s...", address)
-	err := http.ListenAndServe(address, http.HandlerFunc(s.handleWebSocket))
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/matches", s.handleListMatches)
+	mux.HandleFunc("/", s.handleWebSocket)
+
+	err := http.ListenAndServe(address, mux)
 	log.Fatalf("failed to listen on %s: %s", address, err)
 }
 
@@ -456,23 +504,12 @@ COMMANDS:
 			ev := &bgammon.EventList{}
 
 			s.gamesLock.RLock()
-			var playerCount int
 			for _, g := range s.games {
-				if g.terminated() {
+				listing := g.listing(cmd.client.name)
+				if listing == nil {
 					continue
 				}
-				if len(g.allowed1) != 0 && !bytes.Equal(g.allowed1, cmd.client.name) && !bytes.Equal(g.allowed2, cmd.client.name) {
-					playerCount = 2
-				} else {
-					playerCount = g.playerCount()
-				}
-				ev.Games = append(ev.Games, bgammon.GameListing{
-					ID:       g.id,
-					Points:   g.Points,
-					Password: len(g.password) != 0,
-					Players:  playerCount,
-					Name:     string(g.name),
-				})
+				ev.Games = append(ev.Games, *listing)
 			}
 			s.gamesLock.RUnlock()
 
