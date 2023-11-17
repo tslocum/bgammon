@@ -8,6 +8,7 @@ type GameState struct {
 	*Game
 	PlayerNumber int
 	Available    [][]int // Legal moves.
+	Spectating   bool
 }
 
 func (g *GameState) OpponentPlayer() Player {
@@ -75,7 +76,7 @@ func (g *GameState) Pips(player int) int {
 
 // MayDouble returns whether the player may send the 'double' command.
 func (g *GameState) MayDouble() bool {
-	if g.Winner != 0 {
+	if g.Spectating || g.Winner != 0 {
 		return false
 	}
 	return g.Points != 1 && g.Turn != 0 && g.Turn == g.PlayerNumber && g.Roll1 == 0 && !g.DoubleOffered && (g.DoublePlayer == 0 || g.DoublePlayer == g.PlayerNumber)
@@ -83,7 +84,7 @@ func (g *GameState) MayDouble() bool {
 
 // MayRoll returns whether the player may send the 'roll' command.
 func (g *GameState) MayRoll() bool {
-	if g.Winner != 0 || g.DoubleOffered {
+	if g.Spectating || g.Winner != 0 || g.DoubleOffered {
 		return false
 	}
 	switch g.Turn {
@@ -106,7 +107,7 @@ func (g *GameState) MayRoll() bool {
 
 // MayOK returns whether the player may send the 'ok' command.
 func (g *GameState) MayOK() bool {
-	if g.Winner != 0 {
+	if g.Spectating || g.Winner != 0 {
 		return false
 	} else if g.Turn != 0 && g.Turn != g.PlayerNumber && g.DoubleOffered {
 		return true
@@ -116,7 +117,7 @@ func (g *GameState) MayOK() bool {
 
 // MayResign returns whether the player may send the 'resign' command.
 func (g *GameState) MayResign() bool {
-	if g.Winner != 0 {
+	if g.Spectating || g.Winner != 0 {
 		return false
 	}
 	return g.Turn != 0 && g.Turn != g.PlayerNumber && g.DoubleOffered
@@ -124,7 +125,7 @@ func (g *GameState) MayResign() bool {
 
 // MayReset returns whether the player may send the 'reset' command.
 func (g *GameState) MayReset() bool {
-	if g.Winner != 0 {
+	if g.Spectating || g.Winner != 0 {
 		return false
 	}
 	return g.Turn != 0 && g.Turn == g.PlayerNumber && len(g.Moves) > 0

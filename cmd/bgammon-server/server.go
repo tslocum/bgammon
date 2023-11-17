@@ -334,6 +334,11 @@ func (s *server) gameByClient(c *serverClient) *serverGame {
 		if g.client1 == c || g.client2 == c {
 			return g
 		}
+		for _, spec := range g.spectators {
+			if spec == c {
+				return g
+			}
+		}
 	}
 	return nil
 }
@@ -440,10 +445,8 @@ COMMANDS:
 						rejoin = g.rejoin2
 					}
 					if rejoin {
-						ok, _ := g.addClient(cmd.client)
-						if ok {
-							cmd.client.sendNotice(fmt.Sprintf("Rejoined match: %s", g.name))
-						}
+						g.addClient(cmd.client)
+						cmd.client.sendNotice(fmt.Sprintf("Rejoined match: %s", g.name))
 					}
 				}
 				s.gamesLock.RUnlock()
@@ -455,6 +458,15 @@ COMMANDS:
 		}
 
 		clientGame := s.gameByClient(cmd.client)
+		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
+			switch keyword {
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandDisconnect, bgammon.CommandPong:
+				// These commands are allowed to be used by spectators.
+			default:
+				cmd.client.sendNotice("Command ignored: You are spectating this match.")
+				continue
+			}
+		}
 
 		switch keyword {
 		case bgammon.CommandHelp, "h":
@@ -573,10 +585,7 @@ COMMANDS:
 			g.name = gameName
 			g.Points = points
 			g.password = gamePassword
-			ok, reason := g.addClient(cmd.client)
-			if !ok {
-				log.Panicf("failed to add client to newly created game %+v %+v: %s", g, cmd.client, reason)
-			}
+			g.addClient(cmd.client)
 
 			s.gamesLock.Lock()
 			s.games = append(s.games, g)
@@ -651,15 +660,11 @@ COMMANDS:
 						s.gamesLock.Unlock()
 						continue COMMANDS
 					}
-					ok, reason := g.addClient(cmd.client)
+					spectator := g.addClient(cmd.client)
 					s.gamesLock.Unlock()
-
-					if !ok {
-						cmd.client.sendEvent(&bgammon.EventFailedJoin{
-							Reason: reason,
-						})
-					} else {
-						cmd.client.sendNotice(fmt.Sprintf("Joined match: %s", g.name))
+					cmd.client.sendNotice(fmt.Sprintf("Joined match: %s", g.name))
+					if spectator {
+						cmd.client.sendNotice("You are spectating this match. Chat messages are not relayed.")
 					}
 					continue COMMANDS
 				}

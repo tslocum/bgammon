@@ -16,6 +16,7 @@ type serverGame struct {
 	password   []byte
 	client1    *serverClient
 	client2    *serverClient
+	spectators []*serverClient
 	allowed1   []byte
 	allowed2   []byte
 	rematch    int
@@ -78,6 +79,9 @@ func (g *serverGame) sendBoard(client *serverClient) {
 				PlayerNumber: client.playerNumber,
 				Available:    g.LegalMoves(false),
 			},
+		}
+		if g.client1 != client && g.client2 != client {
+			ev.Spectating = true
 		}
 
 		// Reverse spaces for white.
@@ -160,11 +164,33 @@ func (g *serverGame) eachClient(f func(client *serverClient)) {
 	if g.client2 != nil {
 		f(g.client2)
 	}
+	for _, spectator := range g.spectators {
+		f(spectator)
+	}
 }
 
-func (g *serverGame) addClient(client *serverClient) (bool, string) {
+func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 	if g.allowed1 != nil && !bytes.Equal(client.name, g.allowed1) && !bytes.Equal(client.name, g.allowed2) {
-		return false, "Match has already started."
+		spectator = true
+	} else if g.client1 != nil && g.client2 != nil {
+		spectator = true
+	}
+	if spectator {
+		for _, spec := range g.spectators {
+			if spec == client {
+				return true
+			}
+		}
+		client.playerNumber = 1
+		g.spectators = append(g.spectators, client)
+		ev := &bgammon.EventJoined{
+			GameID:       g.id,
+			PlayerNumber: 1,
+		}
+		ev.Player = string(client.name)
+		client.sendEvent(ev)
+		g.sendBoard(client)
+		return spectator
 	}
 
 	var playerNumber int
@@ -201,8 +227,6 @@ func (g *serverGame) addClient(client *serverClient) (bool, string) {
 		}
 	}()
 	switch {
-	case g.client1 != nil && g.client2 != nil:
-		// Do not assign player number.
 	case g.client1 != nil:
 		g.client2 = client
 		g.Player2.Name = string(client.name)
@@ -226,13 +250,7 @@ func (g *serverGame) addClient(client *serverClient) (bool, string) {
 			playerNumber = 2
 		}
 	}
-
-	ok := playerNumber != 0
-	var reason string
-	if !ok {
-		reason = "Match is full."
-	}
-	return ok, reason
+	return spectator
 }
 
 func (g *serverGame) removeClient(client *serverClient) {
@@ -275,6 +293,22 @@ func (g *serverGame) removeClient(client *serverClient) {
 		g.Player2.Name = ""
 		playerNumber = 2
 	default:
+		for i, spectator := range g.spectators {
+			if spectator == client {
+				g.spectators = append(g.spectators[:i], g.spectators[i+1:]...)
+
+				ev := &bgammon.EventLeft{}
+				ev.Player = string(client.name)
+
+				client.sendEvent(ev)
+				if !client.json {
+					g.sendBoard(client)
+				}
+
+				client.playerNumber = 0
+				return
+			}
+		}
 		return
 	}
 }
