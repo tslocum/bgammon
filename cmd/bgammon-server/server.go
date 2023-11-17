@@ -1082,6 +1082,7 @@ COMMANDS:
 				newGame.Player2 = clientGame.Player2
 				newGame.allowed1 = clientGame.allowed1
 				newGame.allowed2 = clientGame.allowed2
+				copy(newGame.spectators, clientGame.spectators)
 				s.games = append(s.games, newGame)
 
 				clientGame.client1 = nil
@@ -1119,6 +1120,10 @@ COMMANDS:
 					newGame.client2.sendEvent(ev1)
 					newGame.client2.sendEvent(ev2)
 					newGame.sendBoard(newGame.client2)
+				}
+
+				for _, spectator := range newGame.spectators {
+					newGame.sendBoard(spectator)
 				}
 			} else {
 				clientGame.rematch = cmd.client.playerNumber
