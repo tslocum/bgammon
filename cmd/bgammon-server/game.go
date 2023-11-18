@@ -195,18 +195,16 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 
 	var playerNumber int
 	defer func() {
+		ev := &bgammon.EventJoined{
+			GameID:       g.id,
+			PlayerNumber: 1,
+		}
+		ev.Player = string(client.name)
+		client.sendEvent(ev)
+		g.sendBoard(client)
+
 		if playerNumber == 0 {
 			return
-		}
-
-		{
-			ev := &bgammon.EventJoined{
-				GameID:       g.id,
-				PlayerNumber: 1,
-			}
-			ev.Player = string(client.name)
-			client.sendEvent(ev)
-			g.sendBoard(client)
 		}
 
 		opponent := g.opponent(client)
@@ -218,6 +216,18 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 			ev.Player = string(client.name)
 			opponent.sendEvent(ev)
 			g.sendBoard(opponent)
+		}
+
+		{
+			ev := &bgammon.EventJoined{
+				GameID:       g.id,
+				PlayerNumber: client.playerNumber,
+			}
+			ev.Player = string(client.name)
+			for _, spectator := range g.spectators {
+				spectator.sendEvent(ev)
+				g.sendBoard(spectator)
+			}
 		}
 
 		if playerNumber == 1 {
@@ -278,6 +288,13 @@ func (g *serverGame) removeClient(client *serverClient) {
 			opponent.sendEvent(ev)
 			if !opponent.json {
 				g.sendBoard(opponent)
+			}
+		}
+
+		for _, spectator := range g.spectators {
+			spectator.sendEvent(ev)
+			if !spectator.json {
+				g.sendBoard(spectator)
 			}
 		}
 
