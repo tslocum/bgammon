@@ -1163,13 +1163,14 @@ COMMANDS:
 			clientGame.Turn = 1
 			clientGame.Roll1 = 1
 			clientGame.Roll2 = 2
-			clientGame.Board = []int{0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -1}
+			clientGame.Board = []int{12, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -3, -12, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
 			})
 		default:
 			log.Printf("Received unknown command from client %s: %s", cmd.client.label(), cmd.command)
+			cmd.client.sendNotice(fmt.Sprintf("Unknown command: %s", cmd.command))
 		}
 	}
 }
