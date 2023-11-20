@@ -86,7 +86,7 @@ func CanBearOff(board []int, player int, local bool) bool {
 		homeStart, homeEnd = HomeRange(player)
 		homeStart, homeEnd = minInt(homeStart, homeEnd), maxInt(homeStart, homeEnd)
 	}
-	for i := 1; i < 24; i++ {
+	for i := 1; i <= 24; i++ {
 		if (i < homeStart || i > homeEnd) && PlayerCheckers(board[i], player) > 0 {
 			return false
 		}

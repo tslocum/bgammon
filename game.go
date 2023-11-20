@@ -278,7 +278,7 @@ ADDMOVES:
 		return false, nil
 	}
 
-	g.Board = gameCopy.Board
+	g.Board = append(g.Board[:0], gameCopy.Board...)
 	g.Moves = gameCopy.Moves
 	g.boardStates = gameCopy.boardStates
 
