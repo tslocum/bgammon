@@ -1025,23 +1025,25 @@ COMMANDS:
 				continue
 			}
 
-			if clientGame.DoubleOffered && clientGame.Turn != cmd.client.playerNumber {
-				opponent := clientGame.opponent(cmd.client)
-				if opponent == nil {
-					cmd.client.sendNotice("You may not accept the double until your opponent rejoins the match.")
-					continue
+			if clientGame.Turn != cmd.client.playerNumber {
+				if clientGame.DoubleOffered {
+					opponent := clientGame.opponent(cmd.client)
+					if opponent == nil {
+						cmd.client.sendNotice("You may not accept the double until your opponent rejoins the match.")
+						continue
+					}
+
+					clientGame.DoubleOffered = false
+					clientGame.DoubleValue = clientGame.DoubleValue * 2
+					clientGame.DoublePlayer = cmd.client.playerNumber
+
+					cmd.client.sendNotice("Accepted double.")
+					opponent.sendNotice(fmt.Sprintf("%s accepted double.", cmd.client.name))
+
+					clientGame.eachClient(func(client *serverClient) {
+						clientGame.sendBoard(client)
+					})
 				}
-
-				clientGame.DoubleOffered = false
-				clientGame.DoubleValue = clientGame.DoubleValue * 2
-				clientGame.DoublePlayer = cmd.client.playerNumber
-
-				cmd.client.sendNotice("Accepted double.")
-				opponent.sendNotice(fmt.Sprintf("%s accepted double.", cmd.client.name))
-
-				clientGame.eachClient(func(client *serverClient) {
-					clientGame.sendBoard(client)
-				})
 				continue
 			}
 
