@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 )
 
 func main() {
@@ -24,6 +25,10 @@ func main() {
 	flag.BoolVar(&debugCommands, "debug-commands", false, "allow players to use restricted commands")
 	flag.BoolVar(&rollStatistics, "statistics", false, "print dice roll statistics and exit")
 	flag.Parse()
+
+	if dataSource == "" {
+		dataSource = os.Getenv("BGAMMON_DB")
+	}
 
 	if rollStatistics {
 		printRollStatistics()
