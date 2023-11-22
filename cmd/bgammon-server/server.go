@@ -49,16 +49,28 @@ type server struct {
 	gamesCacheTime time.Time
 	gamesCacheLock sync.Mutex
 
+	tz *time.Location
+
 	db *pgx.Conn
 }
 
-func newServer(dataSource string) *server {
+func newServer(tz string, dataSource string) *server {
 	const bufferSize = 10
 	s := &server{
 		newGameIDs:   make(chan int),
 		newClientIDs: make(chan int),
 		commands:     make(chan serverCommand, bufferSize),
 		welcome:      []byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!"),
+	}
+
+	if tz != "" {
+		var err error
+		s.tz, err = time.LoadLocation(tz)
+		if err != nil {
+			log.Fatalf("failed to parse timezone %s: %s", tz, err)
+		}
+	} else {
+		s.tz = time.UTC
 	}
 
 	if dataSource != "" {
@@ -123,6 +135,23 @@ func (s *server) handleListMatches(w http.ResponseWriter, r *http.Request) {
 	w.Write(s.cachedMatches())
 }
 
+func (s *server) handlePrintStats(w http.ResponseWriter, r *http.Request) {
+	if s.db == nil {
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	stats, err := serverStats(s.db, s.tz)
+	if err != nil {
+		log.Fatalf("failed to fetch server statistics: %s", err)
+	}
+	buf, err := json.Marshal(stats)
+	if err != nil {
+		log.Fatalf("failed to fetch serialize statistics: %s", err)
+	}
+	w.Write(buf)
+}
+
 func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	const bufferSize = 8
 	commands := make(chan []byte, bufferSize)
@@ -151,6 +180,7 @@ func (s *server) listenWebSocket(address string) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/matches", s.handleListMatches)
+	mux.HandleFunc("/stats", s.handlePrintStats)
 	mux.HandleFunc("/", s.handleWebSocket)
 
 	err := http.ListenAndServe(address, mux)

@@ -13,6 +13,7 @@ func main() {
 	var (
 		tcpAddress     string
 		wsAddress      string
+		tz             string
 		dataSource     string
 		debug          int
 		debugCommands  bool
@@ -20,6 +21,7 @@ func main() {
 	)
 	flag.StringVar(&tcpAddress, "tcp", "localhost:1337", "TCP listen address")
 	flag.StringVar(&wsAddress, "ws", "localhost:1338", "WebSocket listen address")
+	flag.StringVar(&tz, "tz", "", "Time zone used when calculating statistics")
 	flag.StringVar(&dataSource, "db", "", "Database data source (postgres://username:password@localhost:5432/database_name")
 	flag.IntVar(&debug, "debug", 0, "print debug information and serve pprof on specified port")
 	flag.BoolVar(&debugCommands, "debug-commands", false, "allow players to use restricted commands")
@@ -49,7 +51,7 @@ func main() {
 		allowDebugCommands = debugCommands
 	}
 
-	s := newServer(dataSource)
+	s := newServer(tz, dataSource)
 	if tcpAddress != "" {
 		s.listen("tcp", tcpAddress)
 	}

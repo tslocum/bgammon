@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
 	"github.com/jackc/pgx/v5"
@@ -81,4 +82,72 @@ func recordGameResult(conn *pgx.Conn, g bgammon.Game) error {
 
 	_, err = tx.Exec(context.Background(), "INSERT INTO game (started, ended, winner, player1, player2) VALUES ($1, $2, $3, $4, $5)", g.Started.Unix(), g.Ended.Unix(), g.Winner, g.Player1.Name, g.Player2.Name)
 	return err
+}
+
+type serverStatsEntry struct {
+	Date  string
+	Games int
+}
+
+type serverStatsResult struct {
+	History []*serverStatsEntry
+}
+
+func serverStats(conn *pgx.Conn, tz *time.Location) (*serverStatsResult, error) {
+	tx, err := begin(conn)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	var earliestGame int64
+	rows, err := tx.Query(context.Background(), "SELECT started FROM game ORDER BY started ASC LIMIT 1")
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		if err != nil {
+			continue
+		}
+		err = rows.Scan(&earliestGame)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	result := &serverStatsResult{}
+	earliest := midnight(time.Unix(earliestGame, 0).In(tz))
+	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 0, 1).Unix()
+	var count int
+	for {
+		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2", rangeStart, rangeEnd)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			if err != nil {
+				continue
+			}
+			err = rows.Scan(&count)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		result.History = append(result.History, &serverStatsEntry{
+			Date:  earliest.Format("2006-01-02"),
+			Games: count,
+		})
+
+		earliest = earliest.AddDate(0, 0, 1)
+		rangeStart, rangeEnd = rangeEnd, earliest.AddDate(0, 0, 1).Unix()
+		if rangeStart >= time.Now().Unix() {
+			break
+		}
+	}
+	return result, nil
+}
+
+func midnight(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }
