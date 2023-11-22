@@ -12,12 +12,14 @@ func main() {
 	var (
 		tcpAddress     string
 		wsAddress      string
+		dataSource     string
 		debug          int
 		debugCommands  bool
 		rollStatistics bool
 	)
 	flag.StringVar(&tcpAddress, "tcp", "localhost:1337", "TCP listen address")
 	flag.StringVar(&wsAddress, "ws", "localhost:1338", "WebSocket listen address")
+	flag.StringVar(&dataSource, "db", "", "Database data source (postgres://username:password@localhost:5432/database_name")
 	flag.IntVar(&debug, "debug", 0, "print debug information and serve pprof on specified port")
 	flag.BoolVar(&debugCommands, "debug-commands", false, "allow players to use restricted commands")
 	flag.BoolVar(&rollStatistics, "statistics", false, "print dice roll statistics and exit")
@@ -42,7 +44,7 @@ func main() {
 		allowDebugCommands = debugCommands
 	}
 
-	s := newServer()
+	s := newServer(dataSource)
 	if tcpAddress != "" {
 		s.listen("tcp", tcpAddress)
 	}

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
+	"github.com/jackc/pgx/v5"
 )
 
 const clientTimeout = 40 * time.Second
@@ -47,9 +48,11 @@ type server struct {
 	gamesCache     []byte
 	gamesCacheTime time.Time
 	gamesCacheLock sync.Mutex
+
+	db *pgx.Conn
 }
 
-func newServer() *server {
+func newServer(dataSource string) *server {
 	const bufferSize = 10
 	s := &server{
 		newGameIDs:   make(chan int),
@@ -57,6 +60,24 @@ func newServer() *server {
 		commands:     make(chan serverCommand, bufferSize),
 		welcome:      []byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!"),
 	}
+
+	if dataSource != "" {
+		var err error
+		s.db, err = connectDB(dataSource)
+		if err != nil {
+			log.Fatalf("failed to connect to database: %s", err)
+		}
+
+		err = testDBConnection(s.db)
+		if err != nil {
+			log.Fatalf("failed to test database connection: %s", err)
+		}
+
+		initDB(s.db)
+
+		log.Println("Connected to database successfully")
+	}
+
 	go s.handleNewGameIDs()
 	go s.handleNewClientIDs()
 	go s.handleCommands()
@@ -784,6 +805,10 @@ COMMANDS:
 				} else {
 					winEvent.Player = clientGame.Player2.Name
 				}
+
+				if s.db != nil {
+					recordGameResult(s.db, *clientGame.Game)
+				}
 			}
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
@@ -963,6 +988,10 @@ COMMANDS:
 					} else {
 						clientGame.Ended = time.Now()
 					}
+				}
+
+				if s.db != nil {
+					recordGameResult(s.db, *clientGame.Game)
 				}
 			}
 
