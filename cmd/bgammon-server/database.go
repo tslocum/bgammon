@@ -148,6 +148,91 @@ func serverStats(conn *pgx.Conn, tz *time.Location) (*serverStatsResult, error) 
 	return result, nil
 }
 
+type wildBGStatsEntry struct {
+	Date    string
+	Percent float64
+	Wins    int
+	Losses  int
+}
+
+type wildBGStatsResult struct {
+	History []*wildBGStatsEntry
+}
+
+func wildBGStats(conn *pgx.Conn, tz *time.Location) (*wildBGStatsResult, error) {
+	tx, err := begin(conn)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	var earliestGame int64
+	rows, err := tx.Query(context.Background(), "SELECT started FROM game WHERE player1 = 'BOT_wildbg' OR player2 = 'BOT_wildbg' ORDER BY started ASC LIMIT 1")
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		if err != nil {
+			continue
+		}
+		err = rows.Scan(&earliestGame)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	result := &wildBGStatsResult{}
+	earliest := midnight(time.Unix(earliestGame, 0).In(tz))
+	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 0, 1).Unix()
+	var winCount, lossCount int
+	for {
+		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2 AND (player1 = 'BOT_wildbg' OR player2 = 'BOT_wildbg')", rangeStart, rangeEnd)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			if err != nil {
+				continue
+			}
+			err = rows.Scan(&lossCount)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		rows, err = tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2 AND ((player1 = 'BOT_wildbg' AND winner = 1) OR (player2 = 'BOT_wildbg' AND winner = 2))", rangeStart, rangeEnd)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			if err != nil {
+				continue
+			}
+			err = rows.Scan(&winCount)
+		}
+		if err != nil {
+			return nil, err
+		}
+		lossCount -= winCount
+
+		if winCount != 0 || lossCount != 0 {
+			result.History = append(result.History, &wildBGStatsEntry{
+				Date:    earliest.Format("2006-01-02"),
+				Percent: (float64(winCount) / float64(winCount+lossCount)),
+				Wins:    winCount,
+				Losses:  lossCount,
+			})
+		}
+
+		earliest = earliest.AddDate(0, 0, 1)
+		rangeStart, rangeEnd = rangeEnd, earliest.AddDate(0, 0, 1).Unix()
+		if rangeStart >= time.Now().Unix() {
+			break
+		}
+	}
+	return result, nil
+}
+
 func midnight(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }

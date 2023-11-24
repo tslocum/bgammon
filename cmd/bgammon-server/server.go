@@ -147,7 +147,24 @@ func (s *server) handlePrintStats(w http.ResponseWriter, r *http.Request) {
 	}
 	buf, err := json.Marshal(stats)
 	if err != nil {
-		log.Fatalf("failed to fetch serialize statistics: %s", err)
+		log.Fatalf("failed to fetch serialize server statistics: %s", err)
+	}
+	w.Write(buf)
+}
+
+func (s *server) handlePrintWildBGStats(w http.ResponseWriter, r *http.Request) {
+	if s.db == nil {
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	stats, err := wildBGStats(s.db, s.tz)
+	if err != nil {
+		log.Fatalf("failed to fetch wildbg statistics: %s", err)
+	}
+	buf, err := json.Marshal(stats)
+	if err != nil {
+		log.Fatalf("failed to fetch serialize wildbg statistics: %s", err)
 	}
 	w.Write(buf)
 }
@@ -181,6 +198,7 @@ func (s *server) listenWebSocket(address string) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/matches", s.handleListMatches)
 	mux.HandleFunc("/stats", s.handlePrintStats)
+	mux.HandleFunc("/stats-wildbg", s.handlePrintWildBGStats)
 	mux.HandleFunc("/", s.handleWebSocket)
 
 	err := http.ListenAndServe(address, mux)
