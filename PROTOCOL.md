@@ -67,8 +67,10 @@ formatted responses are more easily parsed by computers.
   - Reset pending checker movement.
   - Aliases: `r`
 
-- `ok`
-  - Accept double offer or confirm checker movement and pass turn to next player.
+- `ok [1-6]`
+  - Accept double offer or confirm checker movement. The parameter for this command only applies in acey-deucey games.
+  - In normal games, confirming checker movement passes the turn to the next player.
+  - In acey-deucey games, when confirming moves after rolling an acey-deucey, the double roll the player chooses must be specified.
   - Aliases: `k`
 
 - `rematch`

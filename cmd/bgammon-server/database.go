@@ -12,6 +12,7 @@ import (
 const databaseSchema = `
 CREATE TABLE game (
 	id      serial PRIMARY KEY,
+	acey    integer NOT NULL,
 	started bigint NOT NULL,
 	ended   bigint NOT NULL,
 	winner  integer NOT NULL,
@@ -80,7 +81,11 @@ func recordGameResult(conn *pgx.Conn, g bgammon.Game) error {
 	}
 	defer tx.Commit(context.Background())
 
-	_, err = tx.Exec(context.Background(), "INSERT INTO game (started, ended, winner, player1, player2) VALUES ($1, $2, $3, $4, $5)", g.Started.Unix(), g.Ended.Unix(), g.Winner, g.Player1.Name, g.Player2.Name)
+	acey := 0
+	if g.Acey {
+		acey = 1
+	}
+	_, err = tx.Exec(context.Background(), "INSERT INTO game (acey, started, ended, winner, player1, player2) VALUES ($1, $2, $3, $4, $5, $6)", acey, g.Started.Unix(), g.Ended.Unix(), g.Winner, g.Player1.Name, g.Player2.Name)
 	return err
 }
 

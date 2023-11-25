@@ -21,12 +21,16 @@ const BoardSpaces = 28
 // player 2's checkers. The board's space numbering is always from the
 // perspective of the current player (i.e. the 1 space will always be in the
 // current player's home board).
-func NewBoard() []int {
+func NewBoard(acey bool) []int {
 	space := make([]int, BoardSpaces)
-	space[24], space[1] = 2, -2
-	space[19], space[6] = -5, 5
-	space[17], space[8] = -3, 3
-	space[13], space[12] = 5, -5
+	if acey {
+		space[SpaceHomePlayer], space[SpaceHomeOpponent] = 15, -15
+	} else {
+		space[24], space[1] = 2, -2
+		space[19], space[6] = -5, 5
+		space[17], space[8] = -3, 3
+		space[13], space[12] = 5, -5
+	}
 	return space
 }
 
@@ -39,14 +43,14 @@ func HomeRange(player int) (from int, to int) {
 }
 
 // RollForMove returns the roll needed to move a checker from the provided spaces.
-func RollForMove(from int, to int, player int) int {
+func RollForMove(from int, to int, player int, acey bool) int {
 	if !ValidSpace(from) || !ValidSpace(to) {
 		return 0
 	}
 
 	// Handle standard moves.
 	if from >= 1 && from <= 24 && to >= 1 && to <= 24 {
-		return SpaceDiff(from, to)
+		return SpaceDiff(from, to, acey)
 	}
 
 	playerHome := SpaceHomePlayer

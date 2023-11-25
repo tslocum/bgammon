@@ -634,6 +634,16 @@ COMMANDS:
 				continue
 			}
 
+			var acey bool
+
+			// Backwards-compatible acey-deucey parameter. Added in v1.1.5.
+			noAcey := bytes.HasPrefix(gameName, []byte("0 "))
+			yesAcey := bytes.HasPrefix(gameName, []byte("1 "))
+			if noAcey || yesAcey {
+				acey = yesAcey
+				gameName = gameName[2:]
+			}
+
 			points, err := strconv.Atoi(string(gamePoints))
 			if err != nil || points < 1 || points > 99 {
 				sendUsage()
@@ -650,7 +660,7 @@ COMMANDS:
 				gameName = []byte(fmt.Sprintf("%s%s match", cmd.client.name, abbr))
 			}
 
-			g := newServerGame(<-s.newGameIDs)
+			g := newServerGame(<-s.newGameIDs, acey)
 			g.name = gameName
 			g.Points = points
 			g.password = gamePassword
@@ -1003,7 +1013,7 @@ COMMANDS:
 				backgammon := bgammon.PlayerCheckers(clientGame.Board[playerBar], opponent) != 0
 				if !backgammon {
 					homeStart, homeEnd := bgammon.HomeRange(clientGame.Winner)
-					bgammon.IterateSpaces(homeStart, homeEnd, func(space, spaceCount int) {
+					bgammon.IterateSpaces(homeStart, homeEnd, clientGame.Acey, func(space, spaceCount int) {
 						if bgammon.PlayerCheckers(clientGame.Board[space], opponent) != 0 {
 							backgammon = true
 						}
@@ -1134,7 +1144,44 @@ COMMANDS:
 				continue
 			}
 
-			clientGame.NextTurn()
+			if clientGame.Acey && ((clientGame.Roll1 == 1 && clientGame.Roll2 == 2) || (clientGame.Roll1 == 2 && clientGame.Roll2 == 1)) && len(clientGame.Moves) == 2 {
+				var doubles int
+				if len(params) > 0 {
+					doubles, _ = strconv.Atoi(string(params[0]))
+				}
+				if doubles < 1 || doubles > 6 {
+					cmd.client.sendEvent(&bgammon.EventFailedOk{
+						Reason: "Choose which doubles you want for your acey-deucey.",
+					})
+					continue
+				}
+
+				clientGame.NextTurn(true)
+				clientGame.Roll1, clientGame.Roll2 = doubles, doubles
+				clientGame.Reroll = true
+			} else if clientGame.Acey && clientGame.Reroll {
+				clientGame.NextTurn(true)
+				clientGame.Roll1, clientGame.Roll2 = 0, 0
+				if !clientGame.roll(cmd.client.playerNumber) {
+					cmd.client.Terminate("Server error")
+					opponent.Terminate("Server error")
+					continue
+				}
+				clientGame.Reroll = false
+
+				clientGame.eachClient(func(client *serverClient) {
+					ev := &bgammon.EventRolled{
+						Roll1: clientGame.Roll1,
+						Roll2: clientGame.Roll2,
+					}
+					ev.Player = string(cmd.client.name)
+					client.sendEvent(ev)
+					clientGame.sendBoard(client)
+				})
+			} else {
+				clientGame.NextTurn(false)
+			}
+
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
 			})
@@ -1154,7 +1201,7 @@ COMMANDS:
 			} else if clientGame.rematch != 0 && clientGame.rematch != cmd.client.playerNumber {
 				s.gamesLock.Lock()
 
-				newGame := newServerGame(<-s.newGameIDs)
+				newGame := newServerGame(<-s.newGameIDs, clientGame.Acey)
 				newGame.name = clientGame.name
 				newGame.Points = clientGame.Points
 				newGame.password = clientGame.password

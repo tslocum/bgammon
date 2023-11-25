@@ -25,13 +25,13 @@ type serverGame struct {
 	*bgammon.Game
 }
 
-func newServerGame(id int) *serverGame {
+func newServerGame(id int, acey bool) *serverGame {
 	now := time.Now().Unix()
 	return &serverGame{
 		id:         id,
 		created:    now,
 		lastActive: now,
-		Game:       bgammon.NewGame(),
+		Game:       bgammon.NewGame(acey),
 	}
 }
 
