@@ -1112,8 +1112,8 @@ COMMANDS:
 				continue
 			}
 
-			if clientGame.Turn != cmd.client.playerNumber {
-				if clientGame.DoubleOffered {
+			if clientGame.DoubleOffered {
+				if clientGame.Turn != cmd.client.playerNumber {
 					opponent := clientGame.opponent(cmd.client)
 					if opponent == nil {
 						cmd.client.sendNotice("You may not accept the double until your opponent rejoins the match.")
@@ -1130,6 +1130,8 @@ COMMANDS:
 					clientGame.eachClient(func(client *serverClient) {
 						clientGame.sendBoard(client)
 					})
+				} else {
+					cmd.client.sendNotice("Waiting for response from opponent.")
 				}
 				continue
 			}

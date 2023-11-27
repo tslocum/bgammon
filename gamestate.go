@@ -109,7 +109,7 @@ func (g *GameState) MayRoll() bool {
 func (g *GameState) MayOK() bool {
 	if g.Spectating || g.Winner != 0 {
 		return false
-	} else if g.Turn != 0 && g.Turn != g.PlayerNumber && g.DoubleOffered {
+	} else if g.Turn != 0 && g.Turn != g.PlayerNumber && g.PlayerNumber != g.DoublePlayer && g.DoubleOffered {
 		return true
 	}
 	return g.Turn != 0 && g.Turn == g.PlayerNumber && g.Roll1 != 0 && len(g.Available) == 0
@@ -120,7 +120,7 @@ func (g *GameState) MayResign() bool {
 	if g.Spectating || g.Winner != 0 {
 		return false
 	}
-	return g.Turn != 0 && g.Turn != g.PlayerNumber && g.DoubleOffered
+	return g.Turn != 0 && g.Turn != g.PlayerNumber && g.PlayerNumber != g.DoublePlayer && g.DoubleOffered
 }
 
 // MayReset returns whether the player may send the 'reset' command.
