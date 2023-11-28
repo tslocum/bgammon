@@ -40,8 +40,8 @@ formatted responses are more easily parsed by computers.
   - List all matches.
   - Aliases: `ls`
 
-- `create <public>/<private [password]> <points> [name]`
-  - Create a match.
+- `create <public>/<private [password]> <points> <acey> [name]`
+  - Create a match. An `acey` value of 0 represents a standard game, while a value of 1 represents an acey-deucey game.
   - Aliases: `c`
 
 - `join <id>/<username> [password]`

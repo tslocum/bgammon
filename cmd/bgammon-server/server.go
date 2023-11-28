@@ -1258,15 +1258,17 @@ COMMANDS:
 				newGame.password = clientGame.password
 				newGame.client1 = clientGame.client1
 				newGame.client2 = clientGame.client2
+				newGame.spectators = make([]*serverClient, len(clientGame.spectators))
+				copy(newGame.spectators, clientGame.spectators)
 				newGame.Player1 = clientGame.Player1
 				newGame.Player2 = clientGame.Player2
 				newGame.allowed1 = clientGame.allowed1
 				newGame.allowed2 = clientGame.allowed2
-				copy(newGame.spectators, clientGame.spectators)
 				s.games = append(s.games, newGame)
 
 				clientGame.client1 = nil
 				clientGame.client2 = nil
+				clientGame.spectators = nil
 
 				s.gamesLock.Unlock()
 
