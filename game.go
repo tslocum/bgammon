@@ -374,7 +374,7 @@ func (g *Game) LegalMoves(local bool) [][]int {
 	haveBearOffDiceRoll := func(diff int) int {
 		var c int
 		for _, roll := range rolls {
-			if roll >= diff {
+			if roll == diff || (roll > diff && !g.Acey) {
 				c++
 			}
 		}
