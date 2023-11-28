@@ -68,6 +68,7 @@ func (g *serverGame) roll(player int) bool {
 
 	g.Roll1 = randInt(6) + 1
 	g.Roll2 = randInt(6) + 1
+
 	return true
 }
 

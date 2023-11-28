@@ -913,10 +913,40 @@ COMMANDS:
 			})
 
 			if clientGame.Turn == 0 && clientGame.Roll1 != 0 && clientGame.Roll2 != 0 {
+				reroll := func() {
+					clientGame.eachClient(func(client *serverClient) {
+						clientGame.sendBoard(client)
+					})
+
+					clientGame.Roll1 = 0
+					clientGame.Roll2 = 0
+					if !clientGame.roll(clientGame.Turn) {
+						log.Fatal("failed to re-roll while starting acey-deucey game")
+					}
+
+					ev := &bgammon.EventRolled{
+						Roll1: clientGame.Roll1,
+						Roll2: clientGame.Roll2,
+					}
+					ev.Player = string(clientGame.Player1.Name)
+					if clientGame.Turn == 2 {
+						ev.Player = string(clientGame.Player2.Name)
+					}
+					clientGame.eachClient(func(client *serverClient) {
+						client.sendEvent(ev)
+					})
+				}
+
 				if clientGame.Roll1 > clientGame.Roll2 {
 					clientGame.Turn = 1
+					if clientGame.Acey {
+						reroll()
+					}
 				} else if clientGame.Roll2 > clientGame.Roll1 {
 					clientGame.Turn = 2
+					if clientGame.Acey {
+						reroll()
+					}
 				} else {
 					clientGame.Roll1 = 0
 					clientGame.Roll2 = 0

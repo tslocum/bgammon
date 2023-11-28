@@ -61,8 +61,18 @@ func (g *GameState) SpaceAt(x int, y int) int {
 func (g *GameState) Pips(player int) int {
 	var pips int
 	var spaceValue int
-	pips += PlayerCheckers(g.Board[SpaceBarPlayer], player) * 25
-	pips += PlayerCheckers(g.Board[SpaceBarOpponent], player) * 25
+	if player == 1 {
+		pips += PlayerCheckers(g.Board[SpaceBarPlayer], player) * 25
+	} else {
+		pips += PlayerCheckers(g.Board[SpaceBarOpponent], player) * 25
+	}
+	if g.Acey {
+		if player == 1 {
+			pips += PlayerCheckers(g.Board[SpaceHomePlayer], player) * 25
+		} else {
+			pips += PlayerCheckers(g.Board[SpaceHomeOpponent], player) * 25
+		}
+	}
 	for i := 1; i < 25; i++ {
 		if player == g.PlayerNumber {
 			spaceValue = i
@@ -76,7 +86,7 @@ func (g *GameState) Pips(player int) int {
 
 // MayDouble returns whether the player may send the 'double' command.
 func (g *GameState) MayDouble() bool {
-	if g.Spectating || g.Winner != 0 {
+	if g.Spectating || g.Winner != 0 || g.Acey {
 		return false
 	}
 	return g.Points != 1 && g.Turn != 0 && g.Turn == g.PlayerNumber && g.Roll1 == 0 && !g.DoubleOffered && (g.DoublePlayer == 0 || g.DoublePlayer == g.PlayerNumber)
