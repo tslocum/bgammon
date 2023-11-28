@@ -1036,10 +1036,12 @@ COMMANDS:
 			if clientGame.Winner != 0 {
 				opponent := 1
 				opponentHome := bgammon.SpaceHomePlayer
+				opponentEntered := clientGame.Player1.Entered
 				playerBar := bgammon.SpaceBarPlayer
 				if clientGame.Winner == 1 {
 					opponent = 2
 					opponentHome = bgammon.SpaceHomeOpponent
+					opponentEntered = clientGame.Player2.Entered
 					playerBar = bgammon.SpaceBarOpponent
 				}
 
@@ -1053,11 +1055,22 @@ COMMANDS:
 					})
 				}
 
-				winPoints := 1
-				if backgammon {
-					winPoints = 3 // Award backgammon.
-				} else if clientGame.Board[opponentHome] == 0 {
-					winPoints = 2 // Award gammon.
+				var winPoints int
+				if !clientGame.Acey {
+					if backgammon {
+						winPoints = 3 // Award backgammon.
+					} else if clientGame.Board[opponentHome] == 0 {
+						winPoints = 2 // Award gammon.
+					} else {
+						winPoints = 1
+					}
+				} else {
+					for space := 0; space < bgammon.BoardSpaces; space++ {
+						if (space == bgammon.SpaceHomePlayer || space == bgammon.SpaceHomeOpponent) && opponentEntered {
+							continue
+						}
+						winPoints += bgammon.PlayerCheckers(clientGame.Board[space], opponent)
+					}
 				}
 
 				winEvent = &bgammon.EventWin{
