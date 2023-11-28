@@ -350,12 +350,18 @@ func (g *serverGame) listing(playerName []byte) *bgammon.GameListing {
 	} else {
 		playerCount = g.playerCount()
 	}
+
+	name := string(g.name)
+	if g.Acey {
+		name = "(Acey-deucey) " + name
+	}
+
 	return &bgammon.GameListing{
 		ID:       g.id,
 		Points:   g.Points,
 		Password: len(g.password) != 0,
 		Players:  playerCount,
-		Name:     string(g.name),
+		Name:     name,
 	}
 }
 

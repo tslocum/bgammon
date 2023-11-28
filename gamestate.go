@@ -105,6 +105,12 @@ func (g *GameState) MayRoll() bool {
 	}
 }
 
+// MayChooseRoll returns whether the player may send the 'ok' command, supplying
+// the chosen roll. This command only applies to acey-deucey games.
+func (g *GameState) MayChooseRoll() bool {
+	return g.Acey && g.Turn != 0 && g.Turn == g.PlayerNumber && ((g.Roll1 == 1 && g.Roll2 == 2) || (g.Roll1 == 2 && g.Roll2 == 1))
+}
+
 // MayOK returns whether the player may send the 'ok' command.
 func (g *GameState) MayOK() bool {
 	if g.Spectating || g.Winner != 0 {
