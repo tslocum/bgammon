@@ -15,9 +15,11 @@ CREATE TABLE game (
 	acey    integer NOT NULL,
 	started bigint NOT NULL,
 	ended   bigint NOT NULL,
-	winner  integer NOT NULL,
 	player1 text NOT NULL,
-	player2 text NOT NULL
+	player2 text NOT NULL,
+	points  integer NOT NULL,
+	winner  integer NOT NULL,
+	wintype  integer NOT NULL
 );
 `
 
@@ -70,7 +72,7 @@ func initDB(db *pgx.Conn) {
 	log.Println("Initialized database schema")
 }
 
-func recordGameResult(conn *pgx.Conn, g bgammon.Game) error {
+func recordGameResult(conn *pgx.Conn, g *bgammon.Game, winType int) error {
 	if g.Started.IsZero() || g.Ended.IsZero() || g.Winner == 0 {
 		return nil
 	}
@@ -85,7 +87,7 @@ func recordGameResult(conn *pgx.Conn, g bgammon.Game) error {
 	if g.Acey {
 		acey = 1
 	}
-	_, err = tx.Exec(context.Background(), "INSERT INTO game (acey, started, ended, winner, player1, player2) VALUES ($1, $2, $3, $4, $5, $6)", acey, g.Started.Unix(), g.Ended.Unix(), g.Winner, g.Player1.Name, g.Player2.Name)
+	_, err = tx.Exec(context.Background(), "INSERT INTO game (acey, started, ended, player1, player2, points, winner, wintype) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)", acey, g.Started.Unix(), g.Ended.Unix(), g.Player1.Name, g.Player2.Name, g.Points, g.Winner, winType)
 	return err
 }
 

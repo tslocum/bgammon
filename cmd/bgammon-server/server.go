@@ -865,7 +865,10 @@ COMMANDS:
 				}
 
 				if s.db != nil {
-					recordGameResult(s.db, *clientGame.Game)
+					err := recordGameResult(s.db, clientGame.Game, 4)
+					if err != nil {
+						log.Fatalf("failed to record game result: %s", err)
+					}
 				}
 			}
 			clientGame.eachClient(func(client *serverClient) {
@@ -1049,7 +1052,10 @@ COMMANDS:
 				}
 
 				if s.db != nil {
-					recordGameResult(s.db, *clientGame.Game)
+					err := recordGameResult(s.db, clientGame.Game, winPoints)
+					if err != nil {
+						log.Fatalf("failed to record game result: %s", err)
+					}
 				}
 			}
 
@@ -1291,7 +1297,7 @@ COMMANDS:
 			clientGame.Turn = 1
 			clientGame.Roll1 = 5
 			clientGame.Roll2 = 6
-			clientGame.Board = []int{1, 3, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -3, 2, -12, 0, 0}
+			clientGame.Board = []int{1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
