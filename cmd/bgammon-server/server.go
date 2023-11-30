@@ -1183,6 +1183,9 @@ COMMANDS:
 					cmd.client.sendNotice("Waiting for response from opponent.")
 				}
 				continue
+			} else if clientGame.Turn != cmd.client.playerNumber {
+				cmd.client.sendNotice("It is not your turn.")
+				continue
 			}
 
 			legalMoves := clientGame.LegalMoves(false)
@@ -1339,10 +1342,10 @@ COMMANDS:
 				continue
 			}
 
-			clientGame.Turn = 1
-			clientGame.Roll1 = 5
+			clientGame.Turn = 2
+			clientGame.Roll1 = 6
 			clientGame.Roll2 = 6
-			clientGame.Board = []int{1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, 0}
+			clientGame.Board = []int{1, 2, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -12, -2, 0, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
