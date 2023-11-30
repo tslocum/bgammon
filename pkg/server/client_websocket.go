@@ -1,19 +1,21 @@
-package main
+package server
 
 import (
-	"bufio"
 	"bytes"
 	"log"
 	"net"
+	"net/http"
 	"sync"
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
+	"github.com/gobwas/ws"
+	"github.com/gobwas/ws/wsutil"
 )
 
-var _ bgammon.Client = &socketClient{}
+var _ bgammon.Client = &webSocketClient{}
 
-type socketClient struct {
+type webSocketClient struct {
 	conn       net.Conn
 	events     chan []byte
 	commands   chan<- []byte
@@ -21,15 +23,20 @@ type socketClient struct {
 	wgEvents   sync.WaitGroup
 }
 
-func newSocketClient(conn net.Conn, commands chan<- []byte, events chan []byte) *socketClient {
-	return &socketClient{
+func newWebSocketClient(r *http.Request, w http.ResponseWriter, commands chan<- []byte, events chan []byte) *webSocketClient {
+	conn, _, _, err := ws.UpgradeHTTP(r, w)
+	if err != nil {
+		return nil
+	}
+
+	return &webSocketClient{
 		conn:     conn,
 		events:   events,
 		commands: commands,
 	}
 }
 
-func (c *socketClient) HandleReadWrite() {
+func (c *webSocketClient) HandleReadWrite() {
 	if c.terminated {
 		return
 	}
@@ -42,7 +49,7 @@ func (c *socketClient) HandleReadWrite() {
 	closeWrite <- struct{}{}
 }
 
-func (c *socketClient) Write(message []byte) {
+func (c *webSocketClient) Write(message []byte) {
 	if c.terminated {
 		return
 	}
@@ -51,7 +58,7 @@ func (c *socketClient) Write(message []byte) {
 	c.events <- message
 }
 
-func (c *socketClient) readCommands() {
+func (c *webSocketClient) readCommands() {
 	setTimeout := func() {
 		err := c.conn.SetReadDeadline(time.Now().Add(clientTimeout))
 		if err != nil {
@@ -60,29 +67,29 @@ func (c *socketClient) readCommands() {
 		}
 	}
 
-	setTimeout()
-	var scanner = bufio.NewScanner(c.conn)
-	for scanner.Scan() {
+	for {
 		if c.terminated {
 			return
 		}
 
-		if scanner.Err() != nil {
-			c.Terminate(scanner.Err().Error())
+		setTimeout()
+		msg, op, err := wsutil.ReadClientData(c.conn)
+		if err != nil {
+			c.Terminate(err.Error())
 			return
+		} else if op != ws.OpText {
+			continue
 		}
 
-		buf := make([]byte, len(scanner.Bytes()))
-		copy(buf, scanner.Bytes())
+		buf := make([]byte, len(msg))
+		copy(buf, msg)
 		c.commands <- buf
 
-		logClientRead(scanner.Bytes())
-
-		setTimeout()
+		logClientRead(msg)
 	}
 }
 
-func (c *socketClient) writeEvents(closeWrite chan struct{}) {
+func (c *webSocketClient) writeEvents(closeWrite chan struct{}) {
 	setTimeout := func() {
 		err := c.conn.SetWriteDeadline(time.Now().Add(clientTimeout))
 		if err != nil {
@@ -113,7 +120,7 @@ func (c *socketClient) writeEvents(closeWrite chan struct{}) {
 		}
 
 		setTimeout()
-		_, err := c.conn.Write(append(event, '\n'))
+		err := wsutil.WriteServerMessage(c.conn, ws.OpText, event)
 		if err != nil {
 			c.Terminate(err.Error())
 			c.wgEvents.Done()
@@ -127,7 +134,7 @@ func (c *socketClient) writeEvents(closeWrite chan struct{}) {
 	}
 }
 
-func (c *socketClient) Terminate(reason string) {
+func (c *webSocketClient) Terminate(reason string) {
 	if c.terminated {
 		return
 	}
@@ -135,6 +142,6 @@ func (c *socketClient) Terminate(reason string) {
 	c.conn.Close()
 }
 
-func (c *socketClient) Terminated() bool {
+func (c *webSocketClient) Terminated() bool {
 	return c.terminated
 }

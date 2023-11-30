@@ -7,6 +7,8 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+
+	"code.rocket9labs.com/tslocum/bgammon/pkg/server"
 )
 
 func main() {
@@ -47,16 +49,12 @@ func main() {
 		}()
 	}
 
-	if debugCommands {
-		allowDebugCommands = debugCommands
-	}
-
-	s := newServer(tz, dataSource)
+	s := server.NewServer(tz, dataSource, debugCommands)
 	if tcpAddress != "" {
-		s.listen("tcp", tcpAddress)
+		s.Listen("tcp", tcpAddress)
 	}
 	if wsAddress != "" {
-		s.listen("ws", wsAddress)
+		s.Listen("ws", wsAddress)
 	}
 	select {}
 }
@@ -67,8 +65,8 @@ func printRollStatistics() {
 
 	total := 1000000
 	for i := 0; i < total; i++ {
-		roll1 := randInt(6) + 1
-		roll2 := randInt(6) + 1
+		roll1 := server.RandInt(6) + 1
+		roll2 := server.RandInt(6) + 1
 
 		if roll1 == lastroll1 || roll1 == lastroll2 || roll2 == lastroll1 || roll2 == lastroll2 {
 			oneSame++

@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"bytes"
@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
-	"github.com/jackc/pgx/v5"
 )
 
 const clientTimeout = 40 * time.Second
@@ -50,11 +49,9 @@ type server struct {
 	gamesCacheLock sync.Mutex
 
 	tz *time.Location
-
-	db *pgx.Conn
 }
 
-func newServer(tz string, dataSource string) *server {
+func NewServer(tz string, dataSource string, allowDebug bool) *server {
 	const bufferSize = 10
 	s := &server{
 		newGameIDs:   make(chan int),
@@ -74,21 +71,22 @@ func newServer(tz string, dataSource string) *server {
 	}
 
 	if dataSource != "" {
-		var err error
-		s.db, err = connectDB(dataSource)
+		err := connectDB(dataSource)
 		if err != nil {
 			log.Fatalf("failed to connect to database: %s", err)
 		}
 
-		err = testDBConnection(s.db)
+		err = testDBConnection()
 		if err != nil {
 			log.Fatalf("failed to test database connection: %s", err)
 		}
 
-		initDB(s.db)
+		initDB()
 
 		log.Println("Connected to database successfully")
 	}
+
+	allowDebugCommands = allowDebug
 
 	go s.handleNewGameIDs()
 	go s.handleNewClientIDs()
@@ -136,12 +134,9 @@ func (s *server) handleListMatches(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handlePrintStats(w http.ResponseWriter, r *http.Request) {
-	if s.db == nil {
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
 
-	stats, err := serverStats(s.db, s.tz)
+	stats, err := serverStats(s.tz)
 	if err != nil {
 		log.Fatalf("failed to fetch server statistics: %s", err)
 	}
@@ -153,12 +148,9 @@ func (s *server) handlePrintStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handlePrintWildBGStats(w http.ResponseWriter, r *http.Request) {
-	if s.db == nil {
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
 
-	stats, err := wildBGStats(s.db, s.tz)
+	stats, err := wildBGStats(s.tz)
 	if err != nil {
 		log.Fatalf("failed to fetch wildbg statistics: %s", err)
 	}
@@ -205,7 +197,21 @@ func (s *server) listenWebSocket(address string) {
 	log.Fatalf("failed to listen on %s: %s", address, err)
 }
 
-func (s *server) listen(network string, address string) {
+func (s *server) handleLocal(conns chan net.Conn) {
+	for {
+		local, remote := net.Pipe()
+		conns <- local
+		go s.handleConnection(remote)
+	}
+}
+
+func (s *server) ListenLocal() chan net.Conn {
+	conns := make(chan net.Conn)
+	go s.handleLocal(conns)
+	return conns
+}
+
+func (s *server) Listen(network string, address string) {
 	if strings.ToLower(network) == "ws" {
 		go s.listenWebSocket(address)
 		return
@@ -380,7 +386,7 @@ func (s *server) handleNewClientIDs() {
 // randomUsername returns a random guest username, and assumes clients are already locked.
 func (s *server) randomUsername() []byte {
 	for {
-		name := []byte(fmt.Sprintf("Guest%d", 100+randInt(900)))
+		name := []byte(fmt.Sprintf("Guest%d", 100+RandInt(900)))
 
 		if s.clientByUsername(name) == nil {
 			return name
@@ -864,11 +870,9 @@ COMMANDS:
 					winEvent.Player = clientGame.Player2.Name
 				}
 
-				if s.db != nil {
-					err := recordGameResult(s.db, clientGame.Game, 4)
-					if err != nil {
-						log.Fatalf("failed to record game result: %s", err)
-					}
+				err := recordGameResult(clientGame.Game, 4)
+				if err != nil {
+					log.Fatalf("failed to record game result: %s", err)
 				}
 			}
 			clientGame.eachClient(func(client *serverClient) {
@@ -1094,11 +1098,9 @@ COMMANDS:
 					}
 				}
 
-				if s.db != nil {
-					err := recordGameResult(s.db, clientGame.Game, winPoints)
-					if err != nil {
-						log.Fatalf("failed to record game result: %s", err)
-					}
+				err := recordGameResult(clientGame.Game, winPoints)
+				if err != nil {
+					log.Fatalf("failed to record game result: %s", err)
 				}
 			}
 
@@ -1357,7 +1359,7 @@ COMMANDS:
 	}
 }
 
-func randInt(max int) int {
+func RandInt(max int) int {
 	i, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
 	if err != nil {
 		panic(err)

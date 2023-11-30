@@ -1,4 +1,6 @@
-package main
+//go:build database
+
+package server
 
 import (
 	"context"
@@ -23,16 +25,15 @@ CREATE TABLE game (
 );
 `
 
-func connectDB(dataSource string) (*pgx.Conn, error) {
+var db *pgx.Conn
+
+func connectDB(dataSource string) error {
 	var err error
-	db, err := pgx.Connect(context.Background(), dataSource)
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
+	db, err = pgx.Connect(context.Background(), dataSource)
+	return err
 }
 
-func begin(db *pgx.Conn) (pgx.Tx, error) {
+func begin() (pgx.Tx, error) {
 	tx, err := db.Begin(context.Background())
 	if err != nil {
 		return nil, err
@@ -45,12 +46,12 @@ func begin(db *pgx.Conn) (pgx.Tx, error) {
 	return tx, nil
 }
 
-func testDBConnection(db *pgx.Conn) error {
+func testDBConnection() error {
 	_, err := db.Exec(context.Background(), "SELECT 1=1")
 	return err
 }
 
-func initDB(db *pgx.Conn) {
+func initDB() {
 	tx, err := begin(db)
 	if err != nil {
 		log.Fatalf("failed to initialize database: %s", err)
@@ -72,8 +73,8 @@ func initDB(db *pgx.Conn) {
 	log.Println("Initialized database schema")
 }
 
-func recordGameResult(conn *pgx.Conn, g *bgammon.Game, winType int) error {
-	if g.Started.IsZero() || g.Ended.IsZero() || g.Winner == 0 {
+func recordGameResult(g *bgammon.Game, winType int) error {
+	if db == nil || g.Started.IsZero() || g.Ended.IsZero() || g.Winner == 0 {
 		return nil
 	}
 
@@ -91,16 +92,7 @@ func recordGameResult(conn *pgx.Conn, g *bgammon.Game, winType int) error {
 	return err
 }
 
-type serverStatsEntry struct {
-	Date  string
-	Games int
-}
-
-type serverStatsResult struct {
-	History []*serverStatsEntry
-}
-
-func serverStats(conn *pgx.Conn, tz *time.Location) (*serverStatsResult, error) {
+func serverStats(tz *time.Location) (*serverStatsResult, error) {
 	tx, err := begin(conn)
 	if err != nil {
 		return nil, err
@@ -155,18 +147,7 @@ func serverStats(conn *pgx.Conn, tz *time.Location) (*serverStatsResult, error) 
 	return result, nil
 }
 
-type wildBGStatsEntry struct {
-	Date    string
-	Percent float64
-	Wins    int
-	Losses  int
-}
-
-type wildBGStatsResult struct {
-	History []*wildBGStatsEntry
-}
-
-func wildBGStats(conn *pgx.Conn, tz *time.Location) (*wildBGStatsResult, error) {
+func wildBGStats(tz *time.Location) (*wildBGStatsResult, error) {
 	tx, err := begin(conn)
 	if err != nil {
 		return nil, err

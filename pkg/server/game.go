@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"bufio"
@@ -45,12 +45,12 @@ func (g *serverGame) roll(player int) bool {
 			if g.Roll1 != 0 {
 				return false
 			}
-			g.Roll1 = randInt(6) + 1
+			g.Roll1 = RandInt(6) + 1
 		} else {
 			if g.Roll2 != 0 {
 				return false
 			}
-			g.Roll2 = randInt(6) + 1
+			g.Roll2 = RandInt(6) + 1
 		}
 
 		if g.Started.IsZero() {
@@ -66,8 +66,8 @@ func (g *serverGame) roll(player int) bool {
 		return false
 	}
 
-	g.Roll1 = randInt(6) + 1
-	g.Roll2 = randInt(6) + 1
+	g.Roll1 = RandInt(6) + 1
+	g.Roll2 = RandInt(6) + 1
 
 	return true
 }
@@ -249,7 +249,7 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 		client.playerNumber = 1
 		playerNumber = 1
 	default:
-		if randInt(2) == 0 {
+		if RandInt(2) == 0 {
 			g.client1 = client
 			g.Player1.Name = string(client.name)
 			client.playerNumber = 1
