@@ -49,15 +49,18 @@ type server struct {
 	gamesCacheLock sync.Mutex
 
 	tz *time.Location
+
+	relayChat bool // Chats are not relayed normally. This option is only used by local servers.
 }
 
-func NewServer(tz string, dataSource string, allowDebug bool) *server {
+func NewServer(tz string, dataSource string, relayChat bool, allowDebug bool) *server {
 	const bufferSize = 10
 	s := &server{
 		newGameIDs:   make(chan int),
 		newClientIDs: make(chan int),
 		commands:     make(chan serverCommand, bufferSize),
 		welcome:      []byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!"),
+		relayChat:    relayChat,
 	}
 
 	if tz != "" {
@@ -587,6 +590,11 @@ COMMANDS:
 			}
 			ev.Player = string(cmd.client.name)
 			opponent.sendEvent(ev)
+			if s.relayChat {
+				for _, spectator := range clientGame.spectators {
+					spectator.sendEvent(ev)
+				}
+			}
 		case bgammon.CommandList, "ls":
 			ev := &bgammon.EventList{}
 

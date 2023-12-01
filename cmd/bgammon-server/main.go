@@ -49,7 +49,7 @@ func main() {
 		}()
 	}
 
-	s := server.NewServer(tz, dataSource, debugCommands)
+	s := server.NewServer(tz, dataSource, false, debugCommands)
 	if tcpAddress != "" {
 		s.Listen("tcp", tcpAddress)
 	}
