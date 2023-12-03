@@ -147,7 +147,7 @@ func serverStats(tz *time.Location) (*serverStatsResult, error) {
 	return result, nil
 }
 
-func wildBGStats(tz *time.Location) (*wildBGStatsResult, error) {
+func botStats(name string, tz *time.Location) (*botStatsResult, error) {
 	tx, err := begin()
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func wildBGStats(tz *time.Location) (*wildBGStatsResult, error) {
 	defer tx.Commit(context.Background())
 
 	var earliestGame int64
-	rows, err := tx.Query(context.Background(), "SELECT started FROM game WHERE player1 = 'BOT_wildbg' OR player2 = 'BOT_wildbg' ORDER BY started ASC LIMIT 1")
+	rows, err := tx.Query(context.Background(), "SELECT started FROM game WHERE player1 = $1 OR player2 = $2 ORDER BY started ASC LIMIT 1", name, name)
 	if err != nil {
 		return nil, err
 	}
@@ -169,12 +169,12 @@ func wildBGStats(tz *time.Location) (*wildBGStatsResult, error) {
 		return nil, err
 	}
 
-	result := &wildBGStatsResult{}
+	result := &botStatsResult{}
 	earliest := midnight(time.Unix(earliestGame, 0).In(tz))
 	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 0, 1).Unix()
 	var winCount, lossCount int
 	for {
-		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2 AND (player1 = 'BOT_wildbg' OR player2 = 'BOT_wildbg')", rangeStart, rangeEnd)
+		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2 AND (player1 = $3 OR player2 = $4)", rangeStart, rangeEnd, name, name)
 		if err != nil {
 			return nil, err
 		}
@@ -188,7 +188,7 @@ func wildBGStats(tz *time.Location) (*wildBGStatsResult, error) {
 			return nil, err
 		}
 
-		rows, err = tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2 AND ((player1 = 'BOT_wildbg' AND winner = 1) OR (player2 = 'BOT_wildbg' AND winner = 2))", rangeStart, rangeEnd)
+		rows, err = tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2 AND ((player1 = $3 AND winner = 1) OR (player2 = $4 AND winner = 2))", rangeStart, rangeEnd, name, name)
 		if err != nil {
 			return nil, err
 		}
@@ -204,7 +204,7 @@ func wildBGStats(tz *time.Location) (*wildBGStatsResult, error) {
 		lossCount -= winCount
 
 		if winCount != 0 || lossCount != 0 {
-			result.History = append(result.History, &wildBGStatsEntry{
+			result.History = append(result.History, &botStatsEntry{
 				Date:    earliest.Format("2006-01-02"),
 				Percent: (float64(winCount) / float64(winCount+lossCount)),
 				Wins:    winCount,

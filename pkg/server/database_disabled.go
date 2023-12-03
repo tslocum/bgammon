@@ -27,6 +27,6 @@ func serverStats(tz *time.Location) (*serverStatsResult, error) {
 	return &serverStatsResult{}, nil
 }
 
-func wildBGStats(tz *time.Location) (*wildBGStatsResult, error) {
-	return &wildBGStatsResult{}, nil
+func botStats(name string, tz *time.Location) (*botStatsResult, error) {
+	return &botStatsResult{}, nil
 }

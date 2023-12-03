@@ -150,10 +150,24 @@ func (s *server) handlePrintStats(w http.ResponseWriter, r *http.Request) {
 	w.Write(buf)
 }
 
+func (s *server) handlePrintTabulaStats(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	stats, err := botStats("BOT_tabula", s.tz)
+	if err != nil {
+		log.Fatalf("failed to fetch tabula statistics: %s", err)
+	}
+	buf, err := json.Marshal(stats)
+	if err != nil {
+		log.Fatalf("failed to fetch serialize tabula statistics: %s", err)
+	}
+	w.Write(buf)
+}
+
 func (s *server) handlePrintWildBGStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	stats, err := wildBGStats(s.tz)
+	stats, err := botStats("BOT_wildbg", s.tz)
 	if err != nil {
 		log.Fatalf("failed to fetch wildbg statistics: %s", err)
 	}
@@ -193,6 +207,7 @@ func (s *server) listenWebSocket(address string) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/matches", s.handleListMatches)
 	mux.HandleFunc("/stats", s.handlePrintStats)
+	mux.HandleFunc("/stats-tabula", s.handlePrintTabulaStats)
 	mux.HandleFunc("/stats-wildbg", s.handlePrintWildBGStats)
 	mux.HandleFunc("/", s.handleWebSocket)
 
