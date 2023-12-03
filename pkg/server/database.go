@@ -52,7 +52,7 @@ func testDBConnection() error {
 }
 
 func initDB() {
-	tx, err := begin(db)
+	tx, err := begin()
 	if err != nil {
 		log.Fatalf("failed to initialize database: %s", err)
 	}
@@ -78,7 +78,7 @@ func recordGameResult(g *bgammon.Game, winType int) error {
 		return nil
 	}
 
-	tx, err := begin(conn)
+	tx, err := begin()
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func recordGameResult(g *bgammon.Game, winType int) error {
 }
 
 func serverStats(tz *time.Location) (*serverStatsResult, error) {
-	tx, err := begin(conn)
+	tx, err := begin()
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func serverStats(tz *time.Location) (*serverStatsResult, error) {
 }
 
 func wildBGStats(tz *time.Location) (*wildBGStatsResult, error) {
-	tx, err := begin(conn)
+	tx, err := begin()
 	if err != nil {
 		return nil, err
 	}
