@@ -1213,6 +1213,11 @@ COMMANDS:
 				continue
 			}
 
+			if clientGame.Roll1 == 0 || clientGame.Roll2 == 0 {
+				cmd.client.sendNotice("You must roll first.")
+				continue
+			}
+
 			legalMoves := clientGame.LegalMoves(false)
 			if len(legalMoves) != 0 {
 				available := bgammon.FlipMoves(legalMoves, cmd.client.playerNumber)
