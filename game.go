@@ -381,7 +381,7 @@ func (g *Game) LegalMoves(local bool) [][]int {
 		return c
 	}
 
-	useDiceRoll := func(from, to int) {
+	useDiceRoll := func(from, to int) bool {
 		if to == SpaceHomePlayer || to == SpaceHomeOpponent {
 			needRoll := from
 			if to == SpaceHomeOpponent {
@@ -390,29 +390,32 @@ func (g *Game) LegalMoves(local bool) [][]int {
 			for i, roll := range rolls {
 				if roll == needRoll {
 					rolls = append(rolls[:i], rolls[i+1:]...)
-					return
+					return true
 				}
 			}
 			for i, roll := range rolls {
 				if roll > needRoll {
 					rolls = append(rolls[:i], rolls[i+1:]...)
-					return
+					return true
 				}
 			}
-			log.Panicf("no dice roll to use for %d/%d", from, to)
+			return false
 		}
 
 		diff := SpaceDiff(from, to, g.Acey)
 		for i, roll := range rolls {
 			if roll == diff {
 				rolls = append(rolls[:i], rolls[i+1:]...)
-				return
+				return true
 			}
 		}
+		return false
 	}
 
 	for _, move := range g.Moves {
-		useDiceRoll(move[0], move[1])
+		if !useDiceRoll(move[0], move[1]) {
+			return nil
+		}
 	}
 
 	var moves [][]int
