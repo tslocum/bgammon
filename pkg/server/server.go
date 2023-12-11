@@ -666,11 +666,15 @@ COMMANDS:
 			var acey bool
 
 			// Backwards-compatible acey-deucey parameter. Added in v1.1.5.
-			noAcey := bytes.HasPrefix(gameName, []byte("0 "))
-			yesAcey := bytes.HasPrefix(gameName, []byte("1 "))
+			noAcey := bytes.HasPrefix(gameName, []byte("0 ")) || bytes.Equal(gameName, []byte("0"))
+			yesAcey := bytes.HasPrefix(gameName, []byte("1 ")) || bytes.Equal(gameName, []byte("1"))
 			if noAcey || yesAcey {
 				acey = yesAcey
-				gameName = gameName[2:]
+				if len(gameName) > 1 {
+					gameName = gameName[2:]
+				} else {
+					gameName = nil
+				}
 			}
 
 			points, err := strconv.Atoi(string(gamePoints))
