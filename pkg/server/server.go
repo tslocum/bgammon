@@ -943,12 +943,9 @@ COMMANDS:
 				client.sendEvent(ev)
 			})
 
+			var skipBoard bool
 			if clientGame.Turn == 0 && clientGame.Roll1 != 0 && clientGame.Roll2 != 0 {
 				reroll := func() {
-					clientGame.eachClient(func(client *serverClient) {
-						clientGame.sendBoard(client)
-					})
-
 					clientGame.Roll1 = 0
 					clientGame.Roll2 = 0
 					if !clientGame.roll(clientGame.Turn) {
@@ -964,8 +961,10 @@ COMMANDS:
 						ev.Player = string(clientGame.Player2.Name)
 					}
 					clientGame.eachClient(func(client *serverClient) {
+						clientGame.sendBoard(client)
 						client.sendEvent(ev)
 					})
+					skipBoard = true
 				}
 
 				if clientGame.Roll1 > clientGame.Roll2 {
@@ -983,11 +982,13 @@ COMMANDS:
 					clientGame.Roll2 = 0
 				}
 			}
-			clientGame.eachClient(func(client *serverClient) {
-				if clientGame.Turn != 0 || !client.json {
-					clientGame.sendBoard(client)
-				}
-			})
+			if !skipBoard {
+				clientGame.eachClient(func(client *serverClient) {
+					if clientGame.Turn != 0 || !client.json {
+						clientGame.sendBoard(client)
+					}
+				})
+			}
 		case bgammon.CommandMove, "m", "mv":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
