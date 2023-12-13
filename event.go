@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-// events are always received FROM the server
-
 type Event struct {
 	Type   string
 	Player string

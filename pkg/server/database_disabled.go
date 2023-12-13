@@ -19,7 +19,15 @@ func testDBConnection() error {
 func initDB() {
 }
 
-func recordGameResult(g *bgammon.Game, winType int) error {
+func registerAccount(a *account) error {
+	return nil
+}
+
+func loginAccount(username []byte, password []byte) (*account, error) {
+	return nil, nil
+}
+
+func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int) error {
 	return nil
 }
 

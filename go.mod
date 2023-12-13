@@ -3,8 +3,9 @@ module code.rocket9labs.com/tslocum/bgammon
 go 1.20
 
 require (
+	github.com/alexedwards/argon2id v1.0.0
 	github.com/gobwas/ws v1.3.1
-	github.com/jackc/pgx/v5 v5.5.0
+	github.com/jackc/pgx/v5 v5.5.1
 )
 
 require (

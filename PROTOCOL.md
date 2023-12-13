@@ -16,14 +16,25 @@ Players always perceive games from the perspective of player number 1 (black).
 
 ### Client commands
 
-- `login [username] [password]`
-  - Log in to bgammon. A random username is assigned when none is provided.
+Clients must send a register command or login command before sending any other commands.
+
+- `register <email> <username> <password>`
+  - Register an account. A valid email address must be provided.
   - Usernames must contain at least one non-numeric character.
-  - This (or `loginjson`) must be the first command sent when a client connects to bgammon.
-  - Aliases: `l`
+
+- `registerjson <client name> <email> <username> <password>`
+  - Register an account and enable JSON formatted responses.
+  - All client applications should use the `registerjson` command to register, as JSON 
+formatted responses are more easily parsed by computers.
+  - The name of the client must be specified.
+  - Aliases: `rj`
+
+- `login [username] [password]`
+  - Log in. A random username is assigned when none is provided.
+  - Usernames must contain at least one non-numeric character.
 
 - `loginjson <client name> [username] [password]`
-  - Log in to bgammon and enable JSON formatted responses.
+  - Log in and enable JSON formatted responses.
   - All client applications should use the `loginjson` command to log in, as JSON 
 formatted responses are more easily parsed by computers.
   - The name of the client must be specified.

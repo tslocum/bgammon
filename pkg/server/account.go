@@ -2,5 +2,7 @@ package server
 
 type account struct {
 	id       int
-	username string
+	email    []byte
+	username []byte
+	password []byte
 }

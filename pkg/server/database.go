@@ -3,29 +3,50 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"log"
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
+	"github.com/alexedwards/argon2id"
 	"github.com/jackc/pgx/v5"
 )
 
 const databaseSchema = `
+CREATE TABLE account (
+	id       serial PRIMARY KEY,
+	created  bigint NOT NULL,
+	active   bigint NOT NULL,
+	email    text NOT NULL,
+	username text NOT NULL,
+	password text NOT NULL
+);
 CREATE TABLE game (
-	id      serial PRIMARY KEY,
-	acey    integer NOT NULL,
-	started bigint NOT NULL,
-	ended   bigint NOT NULL,
-	player1 text NOT NULL,
-	player2 text NOT NULL,
-	points  integer NOT NULL,
-	winner  integer NOT NULL,
+	id       serial PRIMARY KEY,
+	acey     integer NOT NULL,
+	started  bigint NOT NULL,
+	ended    bigint NOT NULL,
+	player1  text NOT NULL,
+	account1 integer NOT NULL,
+	player2  text NOT NULL,
+	account2 integer NOT NULL,
+	points   integer NOT NULL,
+	winner   integer NOT NULL,
 	wintype  integer NOT NULL
 );
 `
 
 var db *pgx.Conn
+
+var passwordArgon2id = &argon2id.Params{
+	Memory:      128 * 1024,
+	Iterations:  16,
+	Parallelism: 4,
+	SaltLength:  16,
+	KeyLength:   64,
+}
 
 func connectDB(dataSource string) error {
 	var err error
@@ -73,7 +94,87 @@ func initDB() {
 	log.Println("Initialized database schema")
 }
 
-func recordGameResult(g *bgammon.Game, winType int) error {
+func registerAccount(a *account) error {
+	if db == nil {
+		return nil
+	} else if len(bytes.TrimSpace(a.username)) == 0 {
+		return fmt.Errorf("please enter a username")
+	} else if len(bytes.TrimSpace(a.email)) == 0 {
+		return fmt.Errorf("please enter an email address")
+	} else if len(bytes.TrimSpace(a.password)) == 0 {
+		return fmt.Errorf("please enter a password")
+	} else if !bytes.ContainsRune(a.email, '@') || !bytes.ContainsRune(a.email, '.') {
+		return fmt.Errorf("please enter a valid email address")
+	} else if !alphaNumericUnderscore.Match(a.username) {
+		return fmt.Errorf("please enter a username containing only letters, numbers and underscores")
+	} else if bytes.HasPrefix(bytes.ToLower(a.username), []byte("guest_")) {
+		return fmt.Errorf("please enter a valid username")
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit(context.Background())
+
+	var result int
+	err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM account WHERE email = $1", bytes.ToLower(bytes.TrimSpace(a.email))).Scan(&result)
+	if err != nil {
+		log.Fatal(err)
+	} else if result > 0 {
+		return fmt.Errorf("email address already in use")
+	}
+
+	err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM account WHERE username = $1", bytes.ToLower(bytes.TrimSpace(a.username))).Scan(&result)
+	if err != nil {
+		log.Fatal(err)
+	} else if result > 0 {
+		return fmt.Errorf("username already in use")
+	}
+
+	passwordHash, err := argon2id.CreateHash(string(a.password), passwordArgon2id)
+	if err != nil {
+		return err
+	}
+
+	timestamp := time.Now().Unix()
+	_, err = tx.Exec(context.Background(), "INSERT INTO account (created, active, email, username, password) VALUES ($1, $2, $3, $4, $5)", timestamp, timestamp, bytes.ToLower(bytes.TrimSpace(a.email)), bytes.ToLower(bytes.TrimSpace(a.username)), passwordHash)
+	return err
+}
+
+func loginAccount(username []byte, password []byte) (*account, error) {
+	if db == nil {
+		return nil, nil
+	} else if len(bytes.TrimSpace(username)) == 0 {
+		return nil, fmt.Errorf("please enter an email address")
+	} else if len(bytes.TrimSpace(password)) == 0 {
+		return nil, fmt.Errorf("please enter a password")
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	account := &account{}
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&account.id, &account.email, &account.username, &account.password)
+	if err != nil {
+		return nil, nil
+	} else if len(account.password) == 0 {
+		return nil, fmt.Errorf("account disabled")
+	}
+
+	match, err := argon2id.ComparePasswordAndHash(string(password), string(account.password))
+	if err != nil {
+		return nil, err
+	} else if !match {
+		return nil, nil
+	}
+	return account, nil
+}
+
+func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int) error {
 	if db == nil || g.Started.IsZero() || g.Ended.IsZero() || g.Winner == 0 {
 		return nil
 	}
@@ -88,7 +189,7 @@ func recordGameResult(g *bgammon.Game, winType int) error {
 	if g.Acey {
 		acey = 1
 	}
-	_, err = tx.Exec(context.Background(), "INSERT INTO game (acey, started, ended, player1, player2, points, winner, wintype) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)", acey, g.Started.Unix(), g.Ended.Unix(), g.Player1.Name, g.Player2.Name, g.Points, g.Winner, winType)
+	_, err = tx.Exec(context.Background(), "INSERT INTO game (acey, started, ended, player1, account1, player2, account2, points, winner, wintype) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", acey, g.Started.Unix(), g.Ended.Unix(), g.Player1.Name, account1, g.Player2.Name, account2, g.Points, g.Winner, winType)
 	return err
 }
 

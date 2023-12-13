@@ -23,8 +23,9 @@ const clientTimeout = 40 * time.Second
 var allowDebugCommands bool
 
 var (
-	onlyNumbers = regexp.MustCompile(`^[0-9]+$`)
-	guestName   = regexp.MustCompile(`^guest[0-9]+$`)
+	onlyNumbers            = regexp.MustCompile(`^[0-9]+$`)
+	guestName              = regexp.MustCompile(`^guest[0-9]+$`)
+	alphaNumericUnderscore = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
 )
 
 type serverCommand struct {
@@ -404,7 +405,7 @@ func (s *server) handleNewClientIDs() {
 // randomUsername returns a random guest username, and assumes clients are already locked.
 func (s *server) randomUsername() []byte {
 	for {
-		name := []byte(fmt.Sprintf("Guest%d", 100+RandInt(900)))
+		name := []byte(fmt.Sprintf("Guest_%d", 100+RandInt(900)))
 
 		if s.clientByUsername(name) == nil {
 			return name
@@ -466,55 +467,112 @@ COMMANDS:
 
 		// Require users to send login command first.
 		if cmd.client.account == -1 {
-			if keyword == bgammon.CommandLogin || keyword == bgammon.CommandLoginJSON || keyword == "l" || keyword == "lj" {
-				if keyword == bgammon.CommandLoginJSON || keyword == "lj" {
+			loginCommand := keyword == bgammon.CommandLogin || keyword == bgammon.CommandLoginJSON || keyword == "lj"
+			registerCommand := keyword == bgammon.CommandRegister || keyword == bgammon.CommandRegisterJSON || keyword == "rj"
+			if loginCommand || registerCommand {
+				if keyword == bgammon.CommandLoginJSON || keyword == bgammon.CommandRegisterJSON || keyword == "lj" || keyword == "rj" {
 					cmd.client.json = true
 				}
 
-				s.clientsLock.Lock()
-
 				var username []byte
 				var password []byte
-				readUsername := func() bool {
-					if cmd.client.json {
-						if len(params) > 1 {
-							username = params[1]
-						}
-					} else {
-						if len(params) > 0 {
-							username = params[0]
-						}
+				var randomUsername bool
+				if registerCommand {
+					sendUsage := func() {
+						cmd.client.Terminate("Please enter an email, username and password.")
 					}
-					var randomUsername bool
-					if len(bytes.TrimSpace(username)) == 0 {
-						username = s.randomUsername()
-						randomUsername = true
+
+					var email []byte
+					if keyword == bgammon.CommandRegisterJSON || keyword == "rj" {
+						if len(params) < 4 {
+							sendUsage()
+							continue
+						}
+						email = params[1]
+						username = params[2]
+						password = bytes.Join(params[3:], []byte("_"))
+					} else {
+						if len(params) < 3 {
+							sendUsage()
+							continue
+						}
+						email = params[0]
+						username = params[1]
+						password = bytes.Join(params[2:], []byte("_"))
 					}
 					if onlyNumbers.Match(username) {
-						cmd.client.Terminate("Invalid username: must contain at least one non-numeric character.")
-						return false
-					} else if s.clientByUsername(username) != nil || (!randomUsername && !s.nameAllowed(username)) {
-						cmd.client.Terminate("That username is already in use.")
-						return false
+						cmd.client.Terminate("Failed to register: Invalid username: must contain at least one non-numeric character.")
+						continue
 					}
-					return true
-				}
-				if !readUsername() {
-					s.clientsLock.Unlock()
-					continue
-				}
-				if len(params) > 2 {
-					password = bytes.ReplaceAll(bytes.Join(params[2:], []byte(" ")), []byte("_"), []byte(" "))
-				}
+					password = bytes.ReplaceAll(password, []byte("_"), []byte(" "))
+					a := &account{
+						email:    email,
+						username: username,
+						password: password,
+					}
+					err := registerAccount(a)
+					if err != nil {
+						cmd.client.Terminate(fmt.Sprintf("Failed to register: %s", err))
+						continue
+					}
+				} else {
+					s.clientsLock.Lock()
 
-				s.clientsLock.Unlock()
+					readUsername := func() bool {
+						if cmd.client.json {
+							if len(params) > 1 {
+								username = params[1]
+							}
+						} else {
+							if len(params) > 0 {
+								username = params[0]
+							}
+						}
+						if len(bytes.TrimSpace(username)) == 0 {
+							username = s.randomUsername()
+							randomUsername = true
+						} else if !alphaNumericUnderscore.Match(username) {
+							cmd.client.Terminate("Invalid username: must contain only letters, numbers and underscores.")
+							return false
+						}
+						if onlyNumbers.Match(username) {
+							cmd.client.Terminate("Invalid username: must contain at least one non-numeric character.")
+							return false
+						} else if s.clientByUsername(username) != nil || s.clientByUsername(append([]byte("Guest_"), username...)) != nil || (!randomUsername && !s.nameAllowed(username)) {
+							cmd.client.Terminate("That username is already in use.")
+							return false
+						}
+						return true
+					}
+					if !readUsername() {
+						s.clientsLock.Unlock()
+						continue
+					}
+					if len(params) > 2 {
+						password = bytes.ReplaceAll(bytes.Join(params[2:], []byte(" ")), []byte("_"), []byte(" "))
+					}
+
+					s.clientsLock.Unlock()
+				}
 
 				if len(password) > 0 {
-					cmd.client.account = 1
+					a, err := loginAccount(username, password)
+					if err != nil {
+						cmd.client.Terminate(fmt.Sprintf("Failed to log in: %s", err))
+						continue
+					} else if a == nil {
+						cmd.client.Terminate("No account was found with the provided username and password. To log in as a guest, do not enter a password.")
+						continue
+					}
+					cmd.client.account = a.id
+					cmd.client.name = a.username
 				} else {
 					cmd.client.account = 0
+					if !randomUsername && !bytes.HasPrefix(username, []byte("BOT_")) {
+						username = append([]byte("Guest_"), username...)
+					}
+					cmd.client.name = username
 				}
-				cmd.client.name = username
 
 				cmd.client.sendEvent(&bgammon.EventWelcome{
 					PlayerName: string(cmd.client.name),
@@ -897,7 +955,7 @@ COMMANDS:
 					winEvent.Player = clientGame.Player2.Name
 				}
 
-				err := recordGameResult(clientGame.Game, 4)
+				err := recordGameResult(clientGame.Game, 4, clientGame.client1.account, clientGame.client2.account)
 				if err != nil {
 					log.Fatalf("failed to record game result: %s", err)
 				}
@@ -1126,7 +1184,7 @@ COMMANDS:
 					}
 				}
 
-				err := recordGameResult(clientGame.Game, winPoints)
+				err := recordGameResult(clientGame.Game, winPoints, clientGame.client1.account, clientGame.client2.account)
 				if err != nil {
 					log.Fatalf("failed to record game result: %s", err)
 				}
@@ -1380,7 +1438,7 @@ COMMANDS:
 			clientGame.Turn = 2
 			clientGame.Roll1 = 6
 			clientGame.Roll2 = 6
-			clientGame.Board = []int{1, 2, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -12, -2, 0, 0, 0}
+			clientGame.Board = []int{1, 2, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, -2, 0, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
