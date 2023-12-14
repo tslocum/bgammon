@@ -5,23 +5,34 @@ package server
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"log"
+	"math/rand"
+	"mime/multipart"
+	"net/smtp"
+	"net/textproto"
+	"strconv"
+	"strings"
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
 	"github.com/alexedwards/argon2id"
 	"github.com/jackc/pgx/v5"
+	"github.com/matcornic/hermes/v2"
 )
 
 const databaseSchema = `
 CREATE TABLE account (
-	id       serial PRIMARY KEY,
-	created  bigint NOT NULL,
-	active   bigint NOT NULL,
-	email    text NOT NULL,
-	username text NOT NULL,
-	password text NOT NULL
+	id        serial PRIMARY KEY,
+	created   bigint NOT NULL,
+	confirmed bigint NOT NULL DEFAULT 0,
+	active    bigint NOT NULL,
+	reset     bigint NOT NULL DEFAULT 0,
+	email     text NOT NULL,
+	username  text NOT NULL,
+	password  text NOT NULL
 );
 CREATE TABLE game (
 	id       serial PRIMARY KEY,
@@ -142,11 +153,149 @@ func registerAccount(a *account) error {
 	return err
 }
 
+func resetAccount(mailServer string, resetSalt string, email []byte) error {
+	if db == nil {
+		return nil
+	} else if len(bytes.TrimSpace(email)) == 0 {
+		return fmt.Errorf("please enter an email address")
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit(context.Background())
+
+	var result int
+	err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM account WHERE email = $1", bytes.ToLower(bytes.TrimSpace(email))).Scan(&result)
+	if err != nil {
+		return err
+	} else if result == 0 {
+		return nil
+	}
+
+	var (
+		id           int
+		reset        int64
+		accountEmail []byte
+		passwordHash []byte
+	)
+	err = tx.QueryRow(context.Background(), "SELECT id, reset, email, password FROM account WHERE email = $1", bytes.ToLower(bytes.TrimSpace(email))).Scan(&id, &reset, &accountEmail, &passwordHash)
+	if err != nil {
+		return err
+	} else if id == 0 || len(passwordHash) == 0 {
+		return nil
+	}
+
+	const resetTimeout = 86400 // 24 hours.
+	if time.Now().Unix()-reset >= resetTimeout {
+		timestamp := time.Now().Unix()
+
+		h := sha256.New()
+		h.Write([]byte(fmt.Sprintf("%d", timestamp) + resetSalt))
+		hash := fmt.Sprintf("%x", h.Sum(nil))[0:16]
+
+		emailConfig := hermes.Hermes{
+			Product: hermes.Product{
+				Name:      "https://bgammon.org",
+				Link:      " ",
+				Copyright: " ",
+			},
+		}
+
+		resetEmail := hermes.Email{
+			Body: hermes.Body{
+				Greeting: "Hello",
+				Intros: []string{
+					"You are receiving this email because you (or someone else) requested to reset your bgammon.org password.",
+				},
+				Actions: []hermes.Action{
+					{
+						Instructions: "Click to reset your password:",
+						Button: hermes.Button{
+							Color: "#DC4D2F",
+							Text:  "Reset your password",
+							Link:  "https://bgammon.org/reset/" + strconv.Itoa(id) + "/" + hash,
+						},
+					},
+				},
+				Outros: []string{
+					"If you did not request to reset your bgammon.org password, no further action is required on your part.",
+				},
+				Signature: "Ciao",
+			},
+		}
+		emailPlain, err := emailConfig.GeneratePlainText(resetEmail)
+		if err != nil {
+			return nil
+		}
+		emailPlain = strings.ReplaceAll(emailPlain, "https://bgammon.org -", "https://bgammon.org")
+
+		emailHTML, err := emailConfig.GenerateHTML(resetEmail)
+		if err != nil {
+			return nil
+		}
+
+		if sendEmail(mailServer, string(accountEmail), "Reset your bgammon.org password", emailPlain, emailHTML) {
+			_, err = tx.Exec(context.Background(), "UPDATE account SET reset = $1 WHERE id = $2", timestamp, id)
+		}
+		return err
+	}
+	return nil
+}
+
+func confirmResetAccount(resetSalt string, id int, key string) (string, error) {
+	if db == nil {
+		return "", nil
+	} else if id == 0 {
+		return "", fmt.Errorf("no id provided")
+	} else if len(strings.TrimSpace(key)) == 0 {
+		return "", fmt.Errorf("no reset key provided")
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return "", err
+	}
+	defer tx.Commit(context.Background())
+
+	var result int
+	err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM account WHERE id = $1 AND reset != 0", id).Scan(&result)
+	if err != nil {
+		return "", err
+	} else if result == 0 {
+		return "", nil
+	}
+
+	var reset int
+	err = tx.QueryRow(context.Background(), "SELECT reset FROM account WHERE id = $1", id).Scan(&reset)
+	if err != nil {
+		return "", err
+	}
+
+	h := sha256.New()
+	h.Write([]byte(fmt.Sprintf("%d", reset) + resetSalt))
+	hash := fmt.Sprintf("%x", h.Sum(nil))[0:16]
+	if key != hash {
+		return "", nil
+	}
+
+	newPassword := randomAlphanumeric(7)
+
+	passwordHash, err := argon2id.CreateHash(newPassword, passwordArgon2id)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = tx.Exec(context.Background(), "UPDATE account SET password = $1, reset = reset - 1 WHERE id = $2", passwordHash, id)
+	return newPassword, err
+}
+
 func loginAccount(username []byte, password []byte) (*account, error) {
 	if db == nil {
 		return nil, nil
 	} else if len(bytes.TrimSpace(username)) == 0 {
-		return nil, fmt.Errorf("please enter an email address")
+		return nil, fmt.Errorf("please enter a username")
 	} else if len(bytes.TrimSpace(password)) == 0 {
 		return nil, fmt.Errorf("please enter a password")
 	}
@@ -324,4 +473,93 @@ func botStats(name string, tz *time.Location) (*botStatsResult, error) {
 
 func midnight(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+}
+
+func sendEmail(mailServer string, emailAddress string, emailSubject string, emailPlain string, emailHTML string) bool {
+	mixedContent := &bytes.Buffer{}
+	mixedWriter := multipart.NewWriter(mixedContent)
+	var newBoundary = "RELATED-" + mixedWriter.Boundary()
+	mixedWriter.SetBoundary(first70("MIXED-" + mixedWriter.Boundary()))
+	relatedWriter, newBoundary := nestedMultipart(mixedWriter, "multipart/related", newBoundary)
+	altWriter, newBoundary := nestedMultipart(relatedWriter, "multipart/alternative", "ALTERNATIVE-"+newBoundary)
+
+	var childContent io.Writer
+	childContent, _ = altWriter.CreatePart(textproto.MIMEHeader{"Content-Type": {"text/plain"}})
+	childContent.Write([]byte(emailPlain))
+	childContent, _ = altWriter.CreatePart(textproto.MIMEHeader{"Content-Type": {"text/html"}})
+	childContent.Write([]byte(emailHTML))
+
+	altWriter.Close()
+	relatedWriter.Close()
+	mixedWriter.Close()
+
+	if mailServer == "" {
+		fmt.Print(`From: bgammon.org <noreply@bgammon.org>
+	To: <` + emailAddress + `>
+	Subject: ` + emailSubject + `
+	MIME-Version: 1.0
+	Content-Type: multipart/mixed; boundary=`)
+		fmt.Print(mixedWriter.Boundary(), "\n\n")
+		fmt.Println(mixedContent.String())
+		return true
+	}
+
+	c, err := smtp.Dial(mailServer)
+	if err != nil {
+		return false
+	}
+	defer c.Close()
+
+	c.Mail("noreply@bgammon.org")
+	c.Rcpt(emailAddress)
+
+	wc, err := c.Data()
+	if err != nil {
+		return false
+	}
+	defer wc.Close()
+
+	fmt.Fprint(wc, `From: bgammon.org <noreply@bgammon.org>
+To: `+emailAddress+`
+Subject: `+emailSubject+`
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary=`)
+	fmt.Fprint(wc, mixedWriter.Boundary(), "\n\n")
+	fmt.Fprintln(wc, mixedContent.String())
+	return true
+}
+
+func nestedMultipart(enclosingWriter *multipart.Writer, contentType, boundary string) (nestedWriter *multipart.Writer, newBoundary string) {
+
+	var contentBuffer io.Writer
+	var err error
+
+	boundary = first70(boundary)
+	contentWithBoundary := contentType + "; boundary=\"" + boundary + "\""
+	contentBuffer, err = enclosingWriter.CreatePart(textproto.MIMEHeader{"Content-Type": {contentWithBoundary}})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nestedWriter = multipart.NewWriter(contentBuffer)
+	newBoundary = nestedWriter.Boundary()
+	nestedWriter.SetBoundary(boundary)
+	return
+}
+
+func first70(str string) string {
+	if len(str) > 70 {
+		return string(str[0:69])
+	}
+	return str
+}
+
+var letters = []rune("abcdefghkmnpqrstwxyzABCDEFGHJKMNPQRSTWXYZ23456789")
+
+func randomAlphanumeric(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }

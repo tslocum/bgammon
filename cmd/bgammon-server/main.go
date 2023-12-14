@@ -17,6 +17,9 @@ func main() {
 		wsAddress      string
 		tz             string
 		dataSource     string
+		mailServer     string
+		passwordSalt   string
+		resetSalt      string
 		debug          int
 		debugCommands  bool
 		rollStatistics bool
@@ -25,6 +28,7 @@ func main() {
 	flag.StringVar(&wsAddress, "ws", "localhost:1338", "WebSocket listen address")
 	flag.StringVar(&tz, "tz", "", "Time zone used when calculating statistics")
 	flag.StringVar(&dataSource, "db", "", "Database data source (postgres://username:password@localhost:5432/database_name")
+	flag.StringVar(&mailServer, "smtp", "", "SMTP server address")
 	flag.IntVar(&debug, "debug", 0, "print debug information and serve pprof on specified port")
 	flag.BoolVar(&debugCommands, "debug-commands", false, "allow players to use restricted commands")
 	flag.BoolVar(&rollStatistics, "statistics", false, "print dice roll statistics and exit")
@@ -33,6 +37,13 @@ func main() {
 	if dataSource == "" {
 		dataSource = os.Getenv("BGAMMON_DB")
 	}
+
+	if mailServer == "" {
+		mailServer = os.Getenv("BGAMMON_SMTP")
+	}
+
+	passwordSalt = os.Getenv("BGAMMON_SALT_PASSWORD")
+	resetSalt = os.Getenv("BGAMMON_SALT_RESET")
 
 	if rollStatistics {
 		printRollStatistics()
@@ -49,7 +60,7 @@ func main() {
 		}()
 	}
 
-	s := server.NewServer(tz, dataSource, false, debugCommands)
+	s := server.NewServer(tz, dataSource, mailServer, passwordSalt, resetSalt, false, debugCommands)
 	if tcpAddress != "" {
 		s.Listen("tcp", tcpAddress)
 	}

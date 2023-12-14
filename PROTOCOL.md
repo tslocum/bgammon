@@ -16,7 +16,7 @@ Players always perceive games from the perspective of player number 1 (black).
 
 ### Client commands
 
-Clients must send a register command or login command before sending any other commands.
+Clients must send a register command, reset command or login command before sending any other commands.
 
 - `register <email> <username> <password>`
   - Register an account. A valid email address must be provided.
@@ -28,6 +28,10 @@ Clients must send a register command or login command before sending any other c
 formatted responses are more easily parsed by computers.
   - The name of the client must be specified.
   - Aliases: `rj`
+
+- `resetpassword <email>`
+  - Request a password reset link via email.
+  - This command always terminates the client with the message "resetpasswordok", even if an account is not found.
 
 - `login [username] [password]`
   - Log in. A random username is assigned when none is provided.

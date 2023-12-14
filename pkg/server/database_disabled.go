@@ -23,6 +23,14 @@ func registerAccount(a *account) error {
 	return nil
 }
 
+func resetAccount(mailServer string, resetSalt string, email []byte) error {
+	return nil
+}
+
+func confirmResetAccount(resetSalt string, id int, key string) (string, error) {
+	return "", nil
+}
+
 func loginAccount(username []byte, password []byte) (*account, error) {
 	return nil, nil
 }

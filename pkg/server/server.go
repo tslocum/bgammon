@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
+	"github.com/gorilla/mux"
 )
 
 const clientTimeout = 40 * time.Second
@@ -49,18 +50,25 @@ type server struct {
 	gamesCacheTime time.Time
 	gamesCacheLock sync.Mutex
 
+	mailServer   string
+	passwordSalt string
+	resetSalt    string
+
 	tz *time.Location
 
 	relayChat bool // Chats are not relayed normally. This option is only used by local servers.
 }
 
-func NewServer(tz string, dataSource string, relayChat bool, allowDebug bool) *server {
+func NewServer(tz string, dataSource string, mailServer string, passwordSalt string, resetSalt string, relayChat bool, allowDebug bool) *server {
 	const bufferSize = 10
 	s := &server{
 		newGameIDs:   make(chan int),
 		newClientIDs: make(chan int),
 		commands:     make(chan serverCommand, bufferSize),
 		welcome:      []byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!"),
+		mailServer:   mailServer,
+		passwordSalt: passwordSalt,
+		resetSalt:    resetSalt,
 		relayChat:    relayChat,
 	}
 
@@ -130,6 +138,27 @@ func (s *server) cachedMatches() []byte {
 		log.Fatalf("failed to marshal %+v: %s", games, err)
 	}
 	return s.gamesCache
+}
+
+func (s *server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil || id <= 0 {
+		return
+	}
+	key := vars["key"]
+
+	newPassword, err := confirmResetAccount(s.resetSalt, id, key)
+	if err != nil {
+		log.Printf("failed to reset password: %s", err)
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	if err != nil || newPassword == "" {
+		w.Write([]byte(`<!DOCTYPE html><html><body><h1>Invalid or expired password reset link.</h1></body></html>`))
+		return
+	}
+	w.Write([]byte(`<!DOCTYPE html><html><body><h1>Your bgammon.org password has been reset.</h1>Your new password is <b>` + newPassword + `</b></body></html>`))
 }
 
 func (s *server) handleListMatches(w http.ResponseWriter, r *http.Request) {
@@ -205,14 +234,15 @@ func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 func (s *server) listenWebSocket(address string) {
 	log.Printf("Listening for WebSocket connections on %s...", address)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/matches", s.handleListMatches)
-	mux.HandleFunc("/stats", s.handlePrintStats)
-	mux.HandleFunc("/stats-tabula", s.handlePrintTabulaStats)
-	mux.HandleFunc("/stats-wildbg", s.handlePrintWildBGStats)
-	mux.HandleFunc("/", s.handleWebSocket)
+	m := mux.NewRouter()
+	m.HandleFunc("/reset/{id:[0-9]+}/{key:[A-Za-z0-9]+}", s.handleResetPassword)
+	m.HandleFunc("/matches", s.handleListMatches)
+	m.HandleFunc("/stats", s.handlePrintStats)
+	m.HandleFunc("/stats-tabula", s.handlePrintTabulaStats)
+	m.HandleFunc("/stats-wildbg", s.handlePrintWildBGStats)
+	m.HandleFunc("/", s.handleWebSocket)
 
-	err := http.ListenAndServe(address, mux)
+	err := http.ListenAndServe(address, m)
 	log.Fatalf("failed to listen on %s: %s", address, err)
 }
 
@@ -467,6 +497,21 @@ COMMANDS:
 
 		// Require users to send login command first.
 		if cmd.client.account == -1 {
+			resetCommand := keyword == bgammon.CommandResetPassword
+			if resetCommand {
+				if len(params) > 0 {
+					email := bytes.ToLower(bytes.TrimSpace(params[0]))
+					if len(email) > 0 {
+						err := resetAccount(s.mailServer, s.resetSalt, email)
+						if err != nil {
+							log.Fatalf("failed to reset password: %s", err)
+						}
+					}
+				}
+				cmd.client.Terminate("resetpasswordok")
+				continue
+			}
+
 			loginCommand := keyword == bgammon.CommandLogin || keyword == bgammon.CommandLoginJSON || keyword == "lj"
 			registerCommand := keyword == bgammon.CommandRegister || keyword == bgammon.CommandRegisterJSON || keyword == "rj"
 			if loginCommand || registerCommand {
@@ -508,7 +553,7 @@ COMMANDS:
 					a := &account{
 						email:    email,
 						username: username,
-						password: password,
+						password: append(password, []byte(s.passwordSalt)...),
 					}
 					err := registerAccount(a)
 					if err != nil {
@@ -556,7 +601,7 @@ COMMANDS:
 				}
 
 				if len(password) > 0 {
-					a, err := loginAccount(username, password)
+					a, err := loginAccount(username, append(password, []byte(s.passwordSalt)...))
 					if err != nil {
 						cmd.client.Terminate(fmt.Sprintf("Failed to log in: %s", err))
 						continue
