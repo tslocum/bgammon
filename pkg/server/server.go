@@ -614,7 +614,7 @@ COMMANDS:
 					cmd.client.name = a.username
 				} else {
 					cmd.client.account = 0
-					if !randomUsername && !bytes.HasPrefix(username, []byte("BOT_")) {
+					if !randomUsername && !bytes.HasPrefix(username, []byte("BOT_")) && !bytes.HasPrefix(username, []byte("Guest_")) {
 						username = append([]byte("Guest_"), username...)
 					}
 					cmd.client.name = username
@@ -1230,7 +1230,11 @@ COMMANDS:
 					}
 				}
 
-				err := recordGameResult(clientGame.Game, winPoints, clientGame.client1.account, clientGame.client2.account)
+				winType := winPoints
+				if clientGame.Acey {
+					winType = 1
+				}
+				err := recordGameResult(clientGame.Game, winType, clientGame.client1.account, clientGame.client2.account)
 				if err != nil {
 					log.Fatalf("failed to record game result: %s", err)
 				}
@@ -1492,9 +1496,9 @@ COMMANDS:
 			}
 
 			clientGame.Turn = 2
-			clientGame.Roll1 = 6
-			clientGame.Roll2 = 6
-			clientGame.Board = []int{1, 2, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, -2, 0, 0, 0}
+			clientGame.Roll1 = 4
+			clientGame.Roll2 = 4
+			clientGame.Board = []int{1, -4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 0, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
