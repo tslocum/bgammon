@@ -67,9 +67,9 @@ func (g *GameState) Pips(player int) int {
 		pips += PlayerCheckers(g.Board[SpaceBarOpponent], player) * 25
 	}
 	if g.Acey {
-		if player == 1 {
+		if player == 1 && !g.Player1.Entered {
 			pips += PlayerCheckers(g.Board[SpaceHomePlayer], player) * 25
-		} else {
+		} else if player == 2 && !g.Player2.Entered {
 			pips += PlayerCheckers(g.Board[SpaceHomeOpponent], player) * 25
 		}
 	}
