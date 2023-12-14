@@ -78,8 +78,9 @@ type EventBoard struct {
 
 type EventRolled struct {
 	Event
-	Roll1 int
-	Roll2 int
+	Roll1    int
+	Roll2    int
+	Selected bool // Whether the roll is selected by the player (used in acey-deucey games).
 }
 
 type EventFailedRoll struct {

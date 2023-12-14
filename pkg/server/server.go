@@ -249,6 +249,7 @@ func (s *server) listenWebSocket(address string) {
 func (s *server) handleLocal(conns chan net.Conn) {
 	for {
 		local, remote := net.Pipe()
+
 		conns <- local
 		go s.handleConnection(remote)
 	}
@@ -1351,6 +1352,16 @@ COMMANDS:
 				clientGame.NextTurn(true)
 				clientGame.Roll1, clientGame.Roll2 = doubles, doubles
 				clientGame.Reroll = true
+
+				clientGame.eachClient(func(client *serverClient) {
+					ev := &bgammon.EventRolled{
+						Roll1:    clientGame.Roll1,
+						Roll2:    clientGame.Roll2,
+						Selected: true,
+					}
+					ev.Player = string(cmd.client.name)
+					client.sendEvent(ev)
+				})
 			} else if clientGame.Acey && clientGame.Reroll {
 				clientGame.NextTurn(true)
 				clientGame.Roll1, clientGame.Roll2 = 0, 0
