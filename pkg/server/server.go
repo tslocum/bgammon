@@ -1436,6 +1436,32 @@ COMMANDS:
 				})
 			} else {
 				clientGame.NextTurn(false)
+				if clientGame.Winner == 0 {
+					gameState := &bgammon.GameState{
+						Game:         clientGame.Game,
+						PlayerNumber: clientGame.Turn,
+						Available:    clientGame.LegalMoves(false),
+					}
+					if !gameState.MayDouble() {
+						if !clientGame.roll(clientGame.Turn) {
+							cmd.client.Terminate("Server error")
+							opponent.Terminate("Server error")
+							continue
+						}
+						clientGame.eachClient(func(client *serverClient) {
+							ev := &bgammon.EventRolled{
+								Roll1: clientGame.Roll1,
+								Roll2: clientGame.Roll2,
+							}
+							if clientGame.Turn == 1 {
+								ev.Player = gameState.Player1.Name
+							} else {
+								ev.Player = gameState.Player2.Name
+							}
+							client.sendEvent(ev)
+						})
+					}
+				}
 			}
 
 			clientGame.eachClient(func(client *serverClient) {
