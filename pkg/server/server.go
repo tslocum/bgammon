@@ -1477,6 +1477,27 @@ COMMANDS:
 			}
 
 			clientGame.sendBoard(cmd.client)
+		case bgammon.CommandPassword:
+			if cmd.client.account == 0 {
+				cmd.client.sendNotice("Failed to change password: you are logged in as a guest.")
+				continue
+			} else if len(params) < 2 {
+				cmd.client.sendNotice("Please specify your old and new passwords as follows: password <old> <new>")
+				continue
+			}
+
+			a, err := loginAccount(cmd.client.name, append(params[0], []byte(s.passwordSalt)...))
+			if err != nil || a == nil || a.id == 0 {
+				cmd.client.sendNotice("Failed to change password: incorrect existing password.")
+				continue
+			}
+
+			err = setAccountPassword(s.passwordSalt, a.id, string(bytes.Join(params[1:], []byte("_"))))
+			if err != nil {
+				cmd.client.sendNotice("Failed to change password.")
+				continue
+			}
+			cmd.client.sendNotice("Password changed successfully.")
 		case bgammon.CommandDisconnect:
 			if clientGame != nil {
 				clientGame.removeClient(cmd.client)

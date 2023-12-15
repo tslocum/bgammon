@@ -323,6 +323,38 @@ func loginAccount(username []byte, password []byte) (*account, error) {
 	return account, nil
 }
 
+func setAccountPassword(passwordSalt string, id int, password string) error {
+	if db == nil {
+		return nil
+	} else if id <= 0 {
+		return fmt.Errorf("no id provided")
+	} else if len(strings.TrimSpace(password)) == 0 {
+		return fmt.Errorf("no password provided")
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit(context.Background())
+
+	var result int
+	err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM account WHERE id = $1", id).Scan(&result)
+	if err != nil {
+		return err
+	} else if result == 0 {
+		return nil
+	}
+
+	passwordHash, err := argon2id.CreateHash(password+passwordSalt, passwordArgon2id)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(context.Background(), "UPDATE account SET password = $1 WHERE id = $2", passwordHash, id)
+	return err
+}
+
 func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int) error {
 	if db == nil || g.Started.IsZero() || g.Ended.IsZero() || g.Winner == 0 {
 		return nil

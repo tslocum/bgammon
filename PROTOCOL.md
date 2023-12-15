@@ -44,6 +44,9 @@ formatted responses are more easily parsed by computers.
   - The name of the client must be specified.
   - Aliases: `lj`
 
+- `password <old> <new>`
+  - Change account password.
+
 - `json <on/off>`
   - Turn JSON formatted messages on or off. JSON messages are not sent by default.
 

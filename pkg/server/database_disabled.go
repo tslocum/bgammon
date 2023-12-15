@@ -35,6 +35,10 @@ func loginAccount(username []byte, password []byte) (*account, error) {
 	return nil, nil
 }
 
+func setAccountPassword(passwordSalt string, id int, password string) error {
+	return nil
+}
+
 func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int) error {
 	return nil
 }
