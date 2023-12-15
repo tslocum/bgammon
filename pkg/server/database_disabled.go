@@ -27,7 +27,7 @@ func resetAccount(mailServer string, resetSalt string, email []byte) error {
 	return nil
 }
 
-func confirmResetAccount(resetSalt string, id int, key string) (string, error) {
+func confirmResetAccount(resetSalt string, passwordSalt string, id int, key string) (string, error) {
 	return "", nil
 }
 

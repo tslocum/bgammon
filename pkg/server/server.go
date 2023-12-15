@@ -148,7 +148,7 @@ func (s *server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	key := vars["key"]
 
-	newPassword, err := confirmResetAccount(s.resetSalt, id, key)
+	newPassword, err := confirmResetAccount(s.resetSalt, s.passwordSalt, id, key)
 	if err != nil {
 		log.Printf("failed to reset password: %s", err)
 	}

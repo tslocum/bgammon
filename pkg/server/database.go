@@ -244,7 +244,7 @@ func resetAccount(mailServer string, resetSalt string, email []byte) error {
 	return nil
 }
 
-func confirmResetAccount(resetSalt string, id int, key string) (string, error) {
+func confirmResetAccount(resetSalt string, passwordSalt string, id int, key string) (string, error) {
 	if db == nil {
 		return "", nil
 	} else if id == 0 {
@@ -282,7 +282,7 @@ func confirmResetAccount(resetSalt string, id int, key string) (string, error) {
 
 	newPassword := randomAlphanumeric(7)
 
-	passwordHash, err := argon2id.CreateHash(newPassword, passwordArgon2id)
+	passwordHash, err := argon2id.CreateHash(newPassword+passwordSalt, passwordArgon2id)
 	if err != nil {
 		return "", err
 	}
