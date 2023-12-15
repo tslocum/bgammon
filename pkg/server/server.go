@@ -1087,8 +1087,52 @@ COMMANDS:
 						reroll()
 					}
 				} else {
-					clientGame.Roll1 = 0
-					clientGame.Roll2 = 0
+					for {
+						clientGame.Roll1 = 0
+						clientGame.Roll2 = 0
+						if !clientGame.roll(1) {
+							log.Fatal("failed to re-roll to determine starting player")
+						}
+						if !clientGame.roll(2) {
+							log.Fatal("failed to re-roll to determine starting player")
+						}
+						clientGame.eachClient(func(client *serverClient) {
+							{
+								ev := &bgammon.EventRolled{
+									Roll1: clientGame.Roll1,
+								}
+								ev.Player = clientGame.Player1.Name
+								if clientGame.Turn == 0 && client.playerNumber == 2 {
+									ev.Roll1, ev.Roll2 = ev.Roll2, ev.Roll1
+								}
+								client.sendEvent(ev)
+							}
+							{
+								ev := &bgammon.EventRolled{
+									Roll1: clientGame.Roll1,
+									Roll2: clientGame.Roll2,
+								}
+								ev.Player = clientGame.Player2.Name
+								if clientGame.Turn == 0 && client.playerNumber == 2 {
+									ev.Roll1, ev.Roll2 = ev.Roll2, ev.Roll1
+								}
+								client.sendEvent(ev)
+							}
+						})
+						if clientGame.Roll1 > clientGame.Roll2 {
+							clientGame.Turn = 1
+							if clientGame.Acey {
+								reroll()
+							}
+							break
+						} else if clientGame.Roll2 > clientGame.Roll1 {
+							clientGame.Turn = 2
+							if clientGame.Acey {
+								reroll()
+							}
+							break
+						}
+					}
 				}
 			}
 			if !skipBoard {
@@ -1544,7 +1588,7 @@ COMMANDS:
 			clientGame.Turn = 2
 			clientGame.Roll1 = 4
 			clientGame.Roll2 = 4
-			clientGame.Board = []int{1, -4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 0, 0, 0}
+			clientGame.Board = []int{1, -4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, -1, 1, -1}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
