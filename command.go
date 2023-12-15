@@ -9,6 +9,7 @@ const (
 	CommandRegisterJSON  = "registerjson"  // Register an account and enable JSON messages.
 	CommandResetPassword = "resetpassword" // Request password reset link via email.
 	CommandPassword      = "password"      // Change password.
+	CommandSet           = "set"           // Change account setting.
 	CommandHelp          = "help"          // Print help information.
 	CommandJSON          = "json"          // Enable or disable JSON formatted messages.
 	CommandSay           = "say"           // Send chat message.
@@ -48,4 +49,5 @@ const (
 	EventTypeFailedMove  = "failedmove"
 	EventTypeFailedOk    = "failedok"
 	EventTypeWin         = "win"
+	EventTypeSettings    = "settings"
 )

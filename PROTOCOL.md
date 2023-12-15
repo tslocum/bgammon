@@ -47,6 +47,10 @@ formatted responses are more easily parsed by computers.
 - `password <old> <new>`
   - Change account password.
 
+- `set <name> <value>`
+  - Change account setting.
+  - Available settings: `highlight`, `pips` and `moves`.
+
 - `json <on/off>`
   - Turn JSON formatted messages on or off. JSON messages are not sent by default.
 

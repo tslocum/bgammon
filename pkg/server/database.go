@@ -32,7 +32,10 @@ CREATE TABLE account (
 	reset     bigint NOT NULL DEFAULT 0,
 	email     text NOT NULL,
 	username  text NOT NULL,
-	password  text NOT NULL
+	password  text NOT NULL,
+	highlight smallint NOT NULL DEFAULT 1,
+	pips      smallint NOT NULL DEFAULT 1,
+	moves     smallint NOT NULL DEFAULT 0
 );
 CREATE TABLE game (
 	id       serial PRIMARY KEY,
@@ -105,7 +108,7 @@ func initDB() {
 	log.Println("Initialized database schema")
 }
 
-func registerAccount(a *account) error {
+func registerAccount(passwordSalt string, a *account) error {
 	if db == nil {
 		return nil
 	} else if len(bytes.TrimSpace(a.username)) == 0 {
@@ -143,7 +146,7 @@ func registerAccount(a *account) error {
 		return fmt.Errorf("username already in use")
 	}
 
-	passwordHash, err := argon2id.CreateHash(string(a.password), passwordArgon2id)
+	passwordHash, err := argon2id.CreateHash(string(a.password)+passwordSalt, passwordArgon2id)
 	if err != nil {
 		return err
 	}
@@ -192,7 +195,7 @@ func resetAccount(mailServer string, resetSalt string, email []byte) error {
 		timestamp := time.Now().Unix()
 
 		h := sha256.New()
-		h.Write([]byte(fmt.Sprintf("%d", timestamp) + resetSalt))
+		h.Write([]byte(fmt.Sprintf("%d/%d", id, timestamp) + resetSalt))
 		hash := fmt.Sprintf("%x", h.Sum(nil))[0:16]
 
 		emailConfig := hermes.Hermes{
@@ -274,7 +277,7 @@ func confirmResetAccount(resetSalt string, passwordSalt string, id int, key stri
 	}
 
 	h := sha256.New()
-	h.Write([]byte(fmt.Sprintf("%d", reset) + resetSalt))
+	h.Write([]byte(fmt.Sprintf("%d/%d", id, reset) + resetSalt))
 	hash := fmt.Sprintf("%x", h.Sum(nil))[0:16]
 	if key != hash {
 		return "", nil
@@ -291,7 +294,7 @@ func confirmResetAccount(resetSalt string, passwordSalt string, id int, key stri
 	return newPassword, err
 }
 
-func loginAccount(username []byte, password []byte) (*account, error) {
+func loginAccount(passwordSalt string, username []byte, password []byte) (*account, error) {
 	if db == nil {
 		return nil, nil
 	} else if len(bytes.TrimSpace(username)) == 0 {
@@ -306,21 +309,25 @@ func loginAccount(username []byte, password []byte) (*account, error) {
 	}
 	defer tx.Commit(context.Background())
 
-	account := &account{}
-	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&account.id, &account.email, &account.username, &account.password)
+	a := &account{}
+	var highlight, pips, moves int
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, highlight, pips, moves FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &highlight, &pips, &moves)
 	if err != nil {
 		return nil, nil
-	} else if len(account.password) == 0 {
+	} else if len(a.password) == 0 {
 		return nil, fmt.Errorf("account disabled")
 	}
+	a.highlight = highlight == 1
+	a.pips = pips == 1
+	a.moves = moves == 1
 
-	match, err := argon2id.ComparePasswordAndHash(string(password), string(account.password))
+	match, err := argon2id.ComparePasswordAndHash(string(password)+passwordSalt, string(a.password))
 	if err != nil {
 		return nil, err
 	} else if !match {
 		return nil, nil
 	}
-	return account, nil
+	return a, nil
 }
 
 func setAccountPassword(passwordSalt string, id int, password string) error {
@@ -352,6 +359,31 @@ func setAccountPassword(passwordSalt string, id int, password string) error {
 	}
 
 	_, err = tx.Exec(context.Background(), "UPDATE account SET password = $1 WHERE id = $2", passwordHash, id)
+	return err
+}
+
+func setAccountSetting(id int, name string, value int) error {
+	if db == nil {
+		return nil
+	} else if name == "" {
+		return fmt.Errorf("no setting name provided")
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit(context.Background())
+
+	var result int
+	err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM account WHERE id = $1", id).Scan(&result)
+	if err != nil {
+		return err
+	} else if result == 0 {
+		return nil
+	}
+
+	_, err = tx.Exec(context.Background(), "UPDATE account SET "+name+" = $1 WHERE id = $2", value, id)
 	return err
 }
 

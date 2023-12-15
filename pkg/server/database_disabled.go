@@ -19,7 +19,7 @@ func testDBConnection() error {
 func initDB() {
 }
 
-func registerAccount(a *account) error {
+func registerAccount(passwordSalt string, a *account) error {
 	return nil
 }
 
@@ -31,11 +31,15 @@ func confirmResetAccount(resetSalt string, passwordSalt string, id int, key stri
 	return "", nil
 }
 
-func loginAccount(username []byte, password []byte) (*account, error) {
+func loginAccount(passwordSalt string, username []byte, password []byte) (*account, error) {
 	return nil, nil
 }
 
 func setAccountPassword(passwordSalt string, id int, password string) error {
+	return nil
+}
+
+func setAccountSetting(id int, name string, value int) error {
 	return nil
 }
 

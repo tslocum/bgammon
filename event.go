@@ -110,6 +110,13 @@ type EventWin struct {
 	Points int
 }
 
+type EventSettings struct {
+	Event
+	Highlight bool
+	Pips      bool
+	Moves     bool
+}
+
 func DecodeEvent(message []byte) (interface{}, error) {
 	e := &Event{}
 	err := json.Unmarshal(message, e)
@@ -153,6 +160,8 @@ func DecodeEvent(message []byte) (interface{}, error) {
 		ev = &EventFailedOk{}
 	case EventTypeWin:
 		ev = &EventWin{}
+	case EventTypeSettings:
+		ev = &EventSettings{}
 	default:
 		return nil, fmt.Errorf("failed to decode event: unknown event type: %s", e.Type)
 	}

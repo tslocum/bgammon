@@ -550,13 +550,13 @@ COMMANDS:
 						cmd.client.Terminate("Failed to register: Invalid username: must contain at least one non-numeric character.")
 						continue
 					}
-					password = bytes.ReplaceAll(password, []byte("_"), []byte(" "))
+					password = bytes.ReplaceAll(password, []byte(" "), []byte("_"))
 					a := &account{
 						email:    email,
 						username: username,
-						password: append(password, []byte(s.passwordSalt)...),
+						password: password,
 					}
-					err := registerAccount(a)
+					err := registerAccount(s.passwordSalt, a)
 					if err != nil {
 						cmd.client.Terminate(fmt.Sprintf("Failed to register: %s", err))
 						continue
@@ -595,14 +595,14 @@ COMMANDS:
 						continue
 					}
 					if len(params) > 2 {
-						password = bytes.ReplaceAll(bytes.Join(params[2:], []byte(" ")), []byte("_"), []byte(" "))
+						password = bytes.ReplaceAll(bytes.Join(params[2:], []byte(" ")), []byte(" "), []byte("_"))
 					}
 
 					s.clientsLock.Unlock()
 				}
 
 				if len(password) > 0 {
-					a, err := loginAccount(username, append(password, []byte(s.passwordSalt)...))
+					a, err := loginAccount(s.passwordSalt, username, password)
 					if err != nil {
 						cmd.client.Terminate(fmt.Sprintf("Failed to log in: %s", err))
 						continue
@@ -612,6 +612,11 @@ COMMANDS:
 					}
 					cmd.client.account = a.id
 					cmd.client.name = a.username
+					cmd.client.sendEvent(&bgammon.EventSettings{
+						Highlight: a.highlight,
+						Pips:      a.pips,
+						Moves:     a.moves,
+					})
 				} else {
 					cmd.client.account = 0
 					if !randomUsername && !bytes.HasPrefix(username, []byte("BOT_")) && !bytes.HasPrefix(username, []byte("Guest_")) {
@@ -1486,7 +1491,7 @@ COMMANDS:
 				continue
 			}
 
-			a, err := loginAccount(cmd.client.name, append(params[0], []byte(s.passwordSalt)...))
+			a, err := loginAccount(s.passwordSalt, cmd.client.name, params[0])
 			if err != nil || a == nil || a.id == 0 {
 				cmd.client.sendNotice("Failed to change password: incorrect existing password.")
 				continue
@@ -1498,6 +1503,26 @@ COMMANDS:
 				continue
 			}
 			cmd.client.sendNotice("Password changed successfully.")
+		case bgammon.CommandSet:
+			if cmd.client.account == 0 {
+				continue
+			} else if len(params) < 2 {
+				cmd.client.sendNotice("Please specify the setting name and value as follows: set <name> <value>")
+				continue
+			}
+
+			name := string(bytes.ToLower(params[0]))
+			if name != "highlight" && name != "pips" && name != "moves" {
+				cmd.client.sendNotice("Please specify the setting name and value as follows: set <name> <value>")
+				continue
+			}
+
+			value, err := strconv.Atoi(string(params[1]))
+			if err != nil || value < 0 {
+				cmd.client.sendNotice("Invalid setting value provided.")
+				continue
+			}
+			_ = setAccountSetting(cmd.client.account, name, value)
 		case bgammon.CommandDisconnect:
 			if clientGame != nil {
 				clientGame.removeClient(cmd.client)

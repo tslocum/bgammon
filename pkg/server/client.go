@@ -63,6 +63,8 @@ func (c *serverClient) sendEvent(e interface{}) {
 			ev.Type = bgammon.EventTypeFailedOk
 		case *bgammon.EventWin:
 			ev.Type = bgammon.EventTypeWin
+		case *bgammon.EventSettings:
+			ev.Type = bgammon.EventTypeSettings
 		default:
 			log.Panicf("unknown event type %+v", ev)
 		}
