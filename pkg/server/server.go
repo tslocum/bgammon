@@ -992,13 +992,22 @@ COMMANDS:
 			cmd.client.sendNotice("Declined double offer")
 			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf("%s declined double offer.", cmd.client.name))
 
+			acey := 0
+			if clientGame.Acey {
+				acey = 1
+			}
+			clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %s %s %d %d %d %d %d %d", clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, clientGame.DoubleValue, acey))}, clientGame.replay...)
+
+			clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d d %d 0", clientGame.Turn, clientGame.DoubleValue*2)))
+
+			var reset bool
 			if cmd.client.playerNumber == 1 {
 				clientGame.Player2.Points = clientGame.Player2.Points + clientGame.DoubleValue
 				if clientGame.Player2.Points >= clientGame.Points {
 					clientGame.Winner = 2
 					clientGame.Ended = time.Now()
 				} else {
-					clientGame.Reset()
+					reset = true
 				}
 			} else {
 				clientGame.Player1.Points = clientGame.Player2.Points + clientGame.DoubleValue
@@ -1006,7 +1015,7 @@ COMMANDS:
 					clientGame.Winner = 1
 					clientGame.Ended = time.Now()
 				} else {
-					clientGame.Reset()
+					reset = true
 				}
 			}
 
@@ -1021,11 +1030,17 @@ COMMANDS:
 					winEvent.Player = clientGame.Player2.Name
 				}
 
-				err := recordGameResult(clientGame.Game, 4, clientGame.client1.account, clientGame.client2.account)
+				err := recordGameResult(clientGame.Game, 4, clientGame.client1.account, clientGame.client2.account, clientGame.replay)
 				if err != nil {
 					log.Fatalf("failed to record game result: %s", err)
 				}
 			}
+
+			if reset {
+				clientGame.Reset()
+				clientGame.replay = clientGame.replay[:0]
+			}
+
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
 				if winEvent != nil {
@@ -1273,14 +1288,23 @@ COMMANDS:
 					}
 				}
 
+				acey := 0
+				if clientGame.Acey {
+					acey = 1
+				}
+				clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %s %s %d %d %d %d %d %d", clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, winPoints, acey))}, clientGame.replay...)
+
+				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d r %d-%d %s", clientGame.Turn, clientGame.Roll1, clientGame.Roll2, bgammon.FormatMoves(clientGame.Moves))))
+
 				winEvent = &bgammon.EventWin{
 					Points: winPoints * clientGame.DoubleValue,
 				}
+				var reset bool
 				if clientGame.Winner == 1 {
 					winEvent.Player = clientGame.Player1.Name
 					clientGame.Player1.Points = clientGame.Player1.Points + winPoints*clientGame.DoubleValue
 					if clientGame.Player1.Points < clientGame.Points {
-						clientGame.Reset()
+						reset = true
 					} else {
 						clientGame.Ended = time.Now()
 					}
@@ -1288,7 +1312,7 @@ COMMANDS:
 					winEvent.Player = clientGame.Player2.Name
 					clientGame.Player2.Points = clientGame.Player2.Points + winPoints*clientGame.DoubleValue
 					if clientGame.Player2.Points < clientGame.Points {
-						clientGame.Reset()
+						reset = true
 					} else {
 						clientGame.Ended = time.Now()
 					}
@@ -1298,9 +1322,14 @@ COMMANDS:
 				if clientGame.Acey {
 					winType = 1
 				}
-				err := recordGameResult(clientGame.Game, winType, clientGame.client1.account, clientGame.client2.account)
+				err := recordGameResult(clientGame.Game, winType, clientGame.client1.account, clientGame.client2.account, clientGame.replay)
 				if err != nil {
 					log.Fatalf("failed to record game result: %s", err)
+				}
+
+				if reset {
+					clientGame.Reset()
+					clientGame.replay = clientGame.replay[:0]
 				}
 			}
 
@@ -1378,6 +1407,7 @@ COMMANDS:
 					cmd.client.sendNotice("Accepted double.")
 					opponent.sendNotice(fmt.Sprintf("%s accepted double.", cmd.client.name))
 
+					clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d d %d 1", clientGame.Turn, clientGame.DoubleValue)))
 					clientGame.eachClient(func(client *serverClient) {
 						clientGame.sendBoard(client)
 					})
@@ -1405,6 +1435,10 @@ COMMANDS:
 				continue
 			}
 
+			recordEvent := func() {
+				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d r %d-%d %s", clientGame.Turn, clientGame.Roll1, clientGame.Roll2, bgammon.FormatMoves(clientGame.Moves))))
+			}
+
 			if clientGame.Acey && ((clientGame.Roll1 == 1 && clientGame.Roll2 == 2) || (clientGame.Roll1 == 2 && clientGame.Roll2 == 1)) && len(clientGame.Moves) == 2 {
 				var doubles int
 				if len(params) > 0 {
@@ -1417,6 +1451,7 @@ COMMANDS:
 					continue
 				}
 
+				recordEvent()
 				clientGame.NextTurn(true)
 				clientGame.Roll1, clientGame.Roll2 = doubles, doubles
 				clientGame.Reroll = true
@@ -1431,6 +1466,7 @@ COMMANDS:
 					client.sendEvent(ev)
 				})
 			} else if clientGame.Acey && clientGame.Reroll {
+				recordEvent()
 				clientGame.NextTurn(true)
 				clientGame.Roll1, clientGame.Roll2 = 0, 0
 				if !clientGame.roll(cmd.client.playerNumber) {
@@ -1450,6 +1486,7 @@ COMMANDS:
 					clientGame.sendBoard(client)
 				})
 			} else {
+				recordEvent()
 				clientGame.NextTurn(false)
 				if clientGame.Winner == 0 {
 					gameState := &bgammon.GameState{
@@ -1629,7 +1666,7 @@ COMMANDS:
 			clientGame.Turn = 2
 			clientGame.Roll1 = 4
 			clientGame.Roll2 = 4
-			clientGame.Board = []int{1, -4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, -1, 1, -1}
+			clientGame.Board = []int{1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, -1, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)

@@ -8,6 +8,11 @@ import (
 	"code.rocket9labs.com/tslocum/bgammon"
 )
 
+type replayEvent struct {
+	Player int
+	Event  []byte
+}
+
 type serverGame struct {
 	id         int
 	created    int64
@@ -22,6 +27,7 @@ type serverGame struct {
 	rematch    int
 	rejoin1    bool
 	rejoin2    bool
+	replay     [][]byte
 	*bgammon.Game
 }
 

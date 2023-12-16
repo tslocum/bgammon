@@ -48,7 +48,8 @@ CREATE TABLE game (
 	account2 integer NOT NULL,
 	points   integer NOT NULL,
 	winner   integer NOT NULL,
-	wintype  integer NOT NULL
+	wintype  integer NOT NULL,
+	replay   TEXT NOT NULL DEFAULT ''
 );
 `
 
@@ -387,9 +388,14 @@ func setAccountSetting(id int, name string, value int) error {
 	return err
 }
 
-func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int) error {
-	if db == nil || g.Started.IsZero() || g.Ended.IsZero() || g.Winner == 0 {
+func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int, replay [][]byte) error {
+	if db == nil || g.Started.IsZero() || g.Winner == 0 {
 		return nil
+	}
+
+	ended := g.Ended
+	if ended.IsZero() {
+		ended = time.Now()
 	}
 
 	tx, err := begin()
@@ -402,7 +408,7 @@ func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int) 
 	if g.Acey {
 		acey = 1
 	}
-	_, err = tx.Exec(context.Background(), "INSERT INTO game (acey, started, ended, player1, account1, player2, account2, points, winner, wintype) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", acey, g.Started.Unix(), g.Ended.Unix(), g.Player1.Name, account1, g.Player2.Name, account2, g.Points, g.Winner, winType)
+	_, err = tx.Exec(context.Background(), "INSERT INTO game (acey, started, ended, player1, account1, player2, account2, points, winner, wintype, replay) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", acey, g.Started.Unix(), ended.Unix(), g.Player1.Name, account1, g.Player2.Name, account2, g.Points, g.Winner, winType, bytes.Join(replay, []byte("\n")))
 	return err
 }
 
