@@ -1294,7 +1294,15 @@ COMMANDS:
 				}
 				clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, winPoints, acey))}, clientGame.replay...)
 
-				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d r %d-%d %s", clientGame.Turn, clientGame.Roll1, clientGame.Roll2, bgammon.FormatMoves(clientGame.Moves))))
+				r1, r2 := clientGame.Roll1, clientGame.Roll2
+				if r2 > r1 {
+					r1, r2 = r2, r1
+				}
+				var movesFormatted []byte
+				if len(clientGame.Moves) != 0 {
+					movesFormatted = append([]byte(" "), bgammon.FormatMoves(clientGame.Moves)...)
+				}
+				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d r %d-%d%s", clientGame.Turn, r1, r2, movesFormatted)))
 
 				winEvent = &bgammon.EventWin{
 					Points: winPoints * clientGame.DoubleValue,
@@ -1436,7 +1444,15 @@ COMMANDS:
 			}
 
 			recordEvent := func() {
-				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d r %d-%d %s", clientGame.Turn, clientGame.Roll1, clientGame.Roll2, bgammon.FormatMoves(clientGame.Moves))))
+				r1, r2 := clientGame.Roll1, clientGame.Roll2
+				if r2 > r1 {
+					r1, r2 = r2, r1
+				}
+				var movesFormatted []byte
+				if len(clientGame.Moves) != 0 {
+					movesFormatted = append([]byte(" "), bgammon.FormatMoves(clientGame.Moves)...)
+				}
+				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d r %d-%d%s", clientGame.Turn, r1, r2, movesFormatted)))
 			}
 
 			if clientGame.Acey && ((clientGame.Roll1 == 1 && clientGame.Roll2 == 2) || (clientGame.Roll1 == 2 && clientGame.Roll2 == 1)) && len(clientGame.Moves) == 2 {
