@@ -166,10 +166,24 @@ func (s *server) handleListMatches(w http.ResponseWriter, r *http.Request) {
 	w.Write(s.cachedMatches())
 }
 
-func (s *server) handlePrintStats(w http.ResponseWriter, r *http.Request) {
+func (s *server) handlePrintDailyStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	stats, err := serverStats(s.tz)
+	stats, err := dailyStats(s.tz)
+	if err != nil {
+		log.Fatalf("failed to fetch server statistics: %s", err)
+	}
+	buf, err := json.Marshal(stats)
+	if err != nil {
+		log.Fatalf("failed to fetch serialize server statistics: %s", err)
+	}
+	w.Write(buf)
+}
+
+func (s *server) handlePrintCumulativeStats(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	stats, err := cumulativeStats(s.tz)
 	if err != nil {
 		log.Fatalf("failed to fetch server statistics: %s", err)
 	}
@@ -237,7 +251,8 @@ func (s *server) listenWebSocket(address string) {
 	m := mux.NewRouter()
 	m.HandleFunc("/reset/{id:[0-9]+}/{key:[A-Za-z0-9]+}", s.handleResetPassword)
 	m.HandleFunc("/matches", s.handleListMatches)
-	m.HandleFunc("/stats", s.handlePrintStats)
+	m.HandleFunc("/stats", s.handlePrintDailyStats)
+	m.HandleFunc("/stats-total", s.handlePrintCumulativeStats)
 	m.HandleFunc("/stats-tabula", s.handlePrintTabulaStats)
 	m.HandleFunc("/stats-wildbg", s.handlePrintWildBGStats)
 	m.HandleFunc("/", s.handleWebSocket)

@@ -406,7 +406,7 @@ func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int) 
 	return err
 }
 
-func serverStats(tz *time.Location) (*serverStatsResult, error) {
+func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 	tx, err := begin()
 	if err != nil {
 		return nil, err
@@ -450,6 +450,64 @@ func serverStats(tz *time.Location) (*serverStatsResult, error) {
 		result.History = append(result.History, &serverStatsEntry{
 			Date:  earliest.Format("2006-01-02"),
 			Games: count,
+		})
+
+		earliest = earliest.AddDate(0, 0, 1)
+		rangeStart, rangeEnd = rangeEnd, earliest.AddDate(0, 0, 1).Unix()
+		if rangeStart >= time.Now().Unix() {
+			break
+		}
+	}
+	return result, nil
+}
+
+func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
+	tx, err := begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	var earliestGame int64
+	rows, err := tx.Query(context.Background(), "SELECT started FROM game ORDER BY started ASC LIMIT 1")
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		if err != nil {
+			continue
+		}
+		err = rows.Scan(&earliestGame)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	result := &serverStatsResult{}
+	earliest := midnight(time.Unix(earliestGame, 0).In(tz))
+	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 0, 1).Unix()
+	var count int
+	var total int
+	for {
+		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2", rangeStart, rangeEnd)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			if err != nil {
+				continue
+			}
+			err = rows.Scan(&count)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		total += count
+
+		result.History = append(result.History, &serverStatsEntry{
+			Date:  earliest.Format("2006-01-02"),
+			Games: total,
 		})
 
 		earliest = earliest.AddDate(0, 0, 1)

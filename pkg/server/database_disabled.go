@@ -47,7 +47,11 @@ func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int) 
 	return nil
 }
 
-func serverStats(tz *time.Location) (*serverStatsResult, error) {
+func dailyStats(tz *time.Location) (*serverStatsResult, error) {
+	return &serverStatsResult{}, nil
+}
+
+func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
 	return &serverStatsResult{}, nil
 }
 
