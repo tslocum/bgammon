@@ -22,9 +22,9 @@ The index is always eight digits in length with leading zeroes.
 
 #### Metadata
 
-The first line of the game is the metadata.
+The first line of the game is the metadata. The timestamp specifies when the game started.
 
-`i <player1> <player2> <total> <score1> <score2> <winner> <points> <acey>`
+`i <timestamp> <player1> <player2> <total> <score1> <score2> <winner> <points> <acey>`
 
 #### Events
 

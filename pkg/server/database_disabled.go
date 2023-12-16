@@ -43,6 +43,10 @@ func setAccountSetting(id int, name string, value int) error {
 	return nil
 }
 
+func replayByID(id int) ([]byte, error) {
+	return nil, nil
+}
+
 func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int, replay [][]byte) error {
 	return nil
 }

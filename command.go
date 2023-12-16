@@ -10,6 +10,7 @@ const (
 	CommandResetPassword = "resetpassword" // Request password reset link via email.
 	CommandPassword      = "password"      // Change password.
 	CommandSet           = "set"           // Change account setting.
+	CommandReplay        = "replay"        // Retrieve replay.
 	CommandHelp          = "help"          // Print help information.
 	CommandJSON          = "json"          // Enable or disable JSON formatted messages.
 	CommandSay           = "say"           // Send chat message.
@@ -50,4 +51,5 @@ const (
 	EventTypeFailedOk    = "failedok"
 	EventTypeWin         = "win"
 	EventTypeSettings    = "settings"
+	EventTypeReplay      = "replay"
 )

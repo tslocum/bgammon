@@ -65,6 +65,8 @@ func (c *serverClient) sendEvent(e interface{}) {
 			ev.Type = bgammon.EventTypeWin
 		case *bgammon.EventSettings:
 			ev.Type = bgammon.EventTypeSettings
+		case *bgammon.EventReplay:
+			ev.Type = bgammon.EventTypeReplay
 		default:
 			log.Panicf("unknown event type %+v", ev)
 		}
@@ -128,7 +130,7 @@ func (c *serverClient) sendEvent(e interface{}) {
 			c.Write([]byte(fmt.Sprintf("win %s wins!", ev.Player)))
 		}
 	default:
-		log.Panicf("unknown event type %+v", ev)
+		log.Printf("warning: skipped sending unknown event to non-json client: %+v", ev)
 	}
 }
 

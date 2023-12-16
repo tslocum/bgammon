@@ -51,6 +51,9 @@ formatted responses are more easily parsed by computers.
   - Change account setting.
   - Available settings: `highlight`, `pips` and `moves`.
 
+- `replay <id>`
+  - Retrieve replay of the specified game.
+
 - `json <on/off>`
   - Turn JSON formatted messages on or off. JSON messages are not sent by default.
 

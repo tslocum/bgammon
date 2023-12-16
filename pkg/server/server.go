@@ -996,7 +996,7 @@ COMMANDS:
 			if clientGame.Acey {
 				acey = 1
 			}
-			clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %s %s %d %d %d %d %d %d", clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, clientGame.DoubleValue, acey))}, clientGame.replay...)
+			clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, clientGame.DoubleValue, acey))}, clientGame.replay...)
 
 			clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d d %d 0", clientGame.Turn, clientGame.DoubleValue*2)))
 
@@ -1292,7 +1292,7 @@ COMMANDS:
 				if clientGame.Acey {
 					acey = 1
 				}
-				clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %s %s %d %d %d %d %d %d", clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, winPoints, acey))}, clientGame.replay...)
+				clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, winPoints, acey))}, clientGame.replay...)
 
 				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d r %d-%d %s", clientGame.Turn, clientGame.Roll1, clientGame.Roll2, bgammon.FormatMoves(clientGame.Moves))))
 
@@ -1645,6 +1645,30 @@ COMMANDS:
 				continue
 			}
 			_ = setAccountSetting(cmd.client.account, name, value)
+		case bgammon.CommandReplay:
+			if len(params) == 0 {
+				cmd.client.sendNotice("Please specify the game as follows: replay <id>")
+				continue
+			}
+
+			id, err := strconv.Atoi(string(params[0]))
+			if err != nil || id < 0 {
+				cmd.client.sendNotice("Invalid replay ID provided.")
+				continue
+			}
+
+			replay, err := replayByID(id)
+			if err != nil {
+				cmd.client.sendNotice("Invalid replay ID provided.")
+				continue
+			} else if len(replay) == 0 {
+				cmd.client.sendNotice("No replay was recorded for that game.")
+				continue
+			}
+			cmd.client.sendEvent(&bgammon.EventReplay{
+				ID:      id,
+				Content: replay,
+			})
 		case bgammon.CommandDisconnect:
 			if clientGame != nil {
 				clientGame.removeClient(cmd.client)

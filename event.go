@@ -117,6 +117,12 @@ type EventSettings struct {
 	Moves     bool
 }
 
+type EventReplay struct {
+	Event
+	ID      int
+	Content []byte
+}
+
 func DecodeEvent(message []byte) (interface{}, error) {
 	e := &Event{}
 	err := json.Unmarshal(message, e)
@@ -162,6 +168,8 @@ func DecodeEvent(message []byte) (interface{}, error) {
 		ev = &EventWin{}
 	case EventTypeSettings:
 		ev = &EventSettings{}
+	case EventTypeReplay:
+		ev = &EventReplay{}
 	default:
 		return nil, fmt.Errorf("failed to decode event: unknown event type: %s", e.Type)
 	}

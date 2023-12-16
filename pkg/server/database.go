@@ -412,6 +412,27 @@ func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int, 
 	return err
 }
 
+func replayByID(id int) ([]byte, error) {
+	if db == nil {
+		return nil, nil
+	} else if id <= 0 {
+		return nil, fmt.Errorf("please specify an id")
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	var replay []byte
+	err = tx.QueryRow(context.Background(), "SELECT replay FROM game WHERE id = $1", id).Scan(&replay)
+	if err != nil {
+		return nil, nil
+	}
+	return replay, nil
+}
+
 func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 	tx, err := begin()
 	if err != nil {
