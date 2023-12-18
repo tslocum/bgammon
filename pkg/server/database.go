@@ -15,6 +15,7 @@ import (
 	"net/textproto"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
@@ -53,7 +54,10 @@ CREATE TABLE game (
 );
 `
 
-var db *pgx.Conn
+var (
+	db     *pgx.Conn
+	dbLock = &sync.Mutex{}
+)
 
 var passwordArgon2id = &argon2id.Params{
 	Memory:      128 * 1024,
@@ -110,6 +114,9 @@ func initDB() {
 }
 
 func registerAccount(passwordSalt string, a *account) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
 	if db == nil {
 		return nil
 	} else if len(bytes.TrimSpace(a.username)) == 0 {
@@ -158,6 +165,9 @@ func registerAccount(passwordSalt string, a *account) error {
 }
 
 func resetAccount(mailServer string, resetSalt string, email []byte) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
 	if db == nil {
 		return nil
 	} else if len(bytes.TrimSpace(email)) == 0 {
@@ -249,6 +259,9 @@ func resetAccount(mailServer string, resetSalt string, email []byte) error {
 }
 
 func confirmResetAccount(resetSalt string, passwordSalt string, id int, key string) (string, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
 	if db == nil {
 		return "", nil
 	} else if id == 0 {
@@ -296,6 +309,9 @@ func confirmResetAccount(resetSalt string, passwordSalt string, id int, key stri
 }
 
 func loginAccount(passwordSalt string, username []byte, password []byte) (*account, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
 	if db == nil {
 		return nil, nil
 	} else if len(bytes.TrimSpace(username)) == 0 {
@@ -332,6 +348,9 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 }
 
 func setAccountPassword(passwordSalt string, id int, password string) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
 	if db == nil {
 		return nil
 	} else if id <= 0 {
@@ -364,6 +383,9 @@ func setAccountPassword(passwordSalt string, id int, password string) error {
 }
 
 func setAccountSetting(id int, name string, value int) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
 	if db == nil {
 		return nil
 	} else if name == "" {
@@ -389,6 +411,9 @@ func setAccountSetting(id int, name string, value int) error {
 }
 
 func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int, replay [][]byte) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
 	if db == nil || g.Started.IsZero() || g.Winner == 0 {
 		return nil
 	}
@@ -413,6 +438,9 @@ func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int, 
 }
 
 func replayByID(id int) ([]byte, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
 	if db == nil {
 		return nil, nil
 	} else if id <= 0 {
@@ -434,6 +462,9 @@ func replayByID(id int) ([]byte, error) {
 }
 
 func dailyStats(tz *time.Location) (*serverStatsResult, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
 	tx, err := begin()
 	if err != nil {
 		return nil, err
@@ -489,6 +520,9 @@ func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 }
 
 func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
 	tx, err := begin()
 	if err != nil {
 		return nil, err
@@ -547,6 +581,9 @@ func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
 }
 
 func botStats(name string, tz *time.Location) (*botStatsResult, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
 	tx, err := begin()
 	if err != nil {
 		return nil, err

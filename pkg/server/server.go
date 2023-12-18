@@ -1703,10 +1703,10 @@ COMMANDS:
 				continue
 			}
 
-			clientGame.Turn = 2
-			clientGame.Roll1 = 4
-			clientGame.Roll2 = 4
-			clientGame.Board = []int{1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, -1, 0, 0}
+			clientGame.Turn = 1
+			clientGame.Roll1 = 6
+			clientGame.Roll2 = 6
+			clientGame.Board = []int{1, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, -1, 1, -1}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
