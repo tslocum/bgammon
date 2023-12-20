@@ -677,7 +677,7 @@ COMMANDS:
 		clientGame := s.gameByClient(cmd.client)
 		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
 			switch keyword {
-			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandDisconnect, bgammon.CommandPong:
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandDisconnect, bgammon.CommandPong:
 				// These commands are allowed to be used by spectators.
 			default:
 				cmd.client.sendNotice("Command ignored: You are spectating this match.")
@@ -1662,22 +1662,31 @@ COMMANDS:
 			}
 			_ = setAccountSetting(cmd.client.account, name, value)
 		case bgammon.CommandReplay:
+			var (
+				id     int
+				replay []byte
+				err    error
+			)
 			if len(params) == 0 {
-				cmd.client.sendNotice("Please specify the game as follows: replay <id>")
-				continue
+				if clientGame == nil || clientGame.Winner == 0 {
+					cmd.client.sendNotice("Please specify the game as follows: replay <id>")
+					continue
+				}
+				id = -1
+				replay = bytes.Join(clientGame.replay, []byte("\n"))
+			} else {
+				id, err = strconv.Atoi(string(params[0]))
+				if err != nil || id < 0 {
+					cmd.client.sendNotice("Invalid replay ID provided.")
+					continue
+				}
+				replay, err = replayByID(id)
+				if err != nil {
+					cmd.client.sendNotice("Invalid replay ID provided.")
+					continue
+				}
 			}
-
-			id, err := strconv.Atoi(string(params[0]))
-			if err != nil || id < 0 {
-				cmd.client.sendNotice("Invalid replay ID provided.")
-				continue
-			}
-
-			replay, err := replayByID(id)
-			if err != nil {
-				cmd.client.sendNotice("Invalid replay ID provided.")
-				continue
-			} else if len(replay) == 0 {
+			if len(replay) == 0 {
 				cmd.client.sendNotice("No replay was recorded for that game.")
 				continue
 			}
