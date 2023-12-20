@@ -161,6 +161,24 @@ func (s *server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`<!DOCTYPE html><html><body><h1>Your bgammon.org password has been reset.</h1>Your new password is <b>` + newPassword + `</b></body></html>`))
 }
 
+func (s *server) handleMatch(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil || id <= 0 {
+		return
+	}
+
+	timestamp, player1, player2, replay, err := matchInfo(id)
+	if err != nil || len(replay) == 0 {
+		log.Printf("failed to retrieve match: %s", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%d_%s_%s.match"`, timestamp, player1, player2))
+	w.Write(replay)
+}
+
 func (s *server) handleListMatches(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(s.cachedMatches())
@@ -250,6 +268,7 @@ func (s *server) listenWebSocket(address string) {
 
 	m := mux.NewRouter()
 	m.HandleFunc("/reset/{id:[0-9]+}/{key:[A-Za-z0-9]+}", s.handleResetPassword)
+	m.HandleFunc("/match/{id:[0-9]+}", s.handleMatch)
 	m.HandleFunc("/matches", s.handleListMatches)
 	m.HandleFunc("/stats", s.handlePrintDailyStats)
 	m.HandleFunc("/stats-total", s.handlePrintCumulativeStats)

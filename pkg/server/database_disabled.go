@@ -43,6 +43,10 @@ func setAccountSetting(id int, name string, value int) error {
 	return nil
 }
 
+func matchInfo(id int) (timestamp int64, player1 string, player2 string, replay []byte, err error) {
+	return 0, "", "", nil, nil
+}
+
 func replayByID(id int) ([]byte, error) {
 	return nil, nil
 }

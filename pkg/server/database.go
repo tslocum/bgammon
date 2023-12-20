@@ -437,6 +437,29 @@ func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int, 
 	return err
 }
 
+func matchInfo(id int) (timestamp int64, player1 string, player2 string, replay []byte, err error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil {
+		return 0, "", "", nil, err
+	} else if id <= 0 {
+		return 0, "", "", nil, fmt.Errorf("please specify an id")
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return 0, "", "", nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	err = tx.QueryRow(context.Background(), "SELECT started, player1, player2, replay FROM game WHERE id = $1 AND replay != ''", id).Scan(&timestamp, &player1, &player2, &replay)
+	if err != nil {
+		return 0, "", "", nil, err
+	}
+	return timestamp, player1, player2, replay, nil
+}
+
 func replayByID(id int) ([]byte, error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()
