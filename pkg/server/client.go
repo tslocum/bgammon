@@ -67,6 +67,8 @@ func (c *serverClient) sendEvent(e interface{}) {
 			ev.Type = bgammon.EventTypeSettings
 		case *bgammon.EventReplay:
 			ev.Type = bgammon.EventTypeReplay
+		case *bgammon.EventHistory:
+			ev.Type = bgammon.EventTypeHistory
 		default:
 			log.Panicf("unknown event type %+v", ev)
 		}

@@ -123,6 +123,19 @@ type EventReplay struct {
 	Content []byte
 }
 
+type HistoryMatch struct {
+	ID        int
+	Timestamp int64
+	Points    int
+	Opponent  string
+	Winner    int
+}
+
+type EventHistory struct {
+	Event
+	Matches []*HistoryMatch
+}
+
 func DecodeEvent(message []byte) (interface{}, error) {
 	e := &Event{}
 	err := json.Unmarshal(message, e)
@@ -170,6 +183,8 @@ func DecodeEvent(message []byte) (interface{}, error) {
 		ev = &EventSettings{}
 	case EventTypeReplay:
 		ev = &EventReplay{}
+	case EventTypeHistory:
+		ev = &EventHistory{}
 	default:
 		return nil, fmt.Errorf("failed to decode event: unknown event type: %s", e.Type)
 	}

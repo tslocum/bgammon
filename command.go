@@ -11,6 +11,7 @@ const (
 	CommandPassword      = "password"      // Change password.
 	CommandSet           = "set"           // Change account setting.
 	CommandReplay        = "replay"        // Retrieve replay.
+	CommandHistory       = "history"       // Retrieve match history.
 	CommandHelp          = "help"          // Print help information.
 	CommandJSON          = "json"          // Enable or disable JSON formatted messages.
 	CommandSay           = "say"           // Send chat message.
@@ -52,4 +53,5 @@ const (
 	EventTypeWin         = "win"
 	EventTypeSettings    = "settings"
 	EventTypeReplay      = "replay"
+	EventTypeHistory     = "history"
 )

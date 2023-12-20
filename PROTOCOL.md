@@ -54,6 +54,9 @@ formatted responses are more easily parsed by computers.
 - `replay <id>`
   - Retrieve replay of the specified game.
 
+- `history <username>`
+  - Retrieve match history of the specified player.
+
 - `json <on/off>`
   - Turn JSON formatted messages on or off. JSON messages are not sent by default.
 

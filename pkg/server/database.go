@@ -461,6 +461,47 @@ func replayByID(id int) ([]byte, error) {
 	return replay, nil
 }
 
+func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	tx, err := begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	username = strings.ToLower(username)
+
+	var matches []*bgammon.HistoryMatch
+	var player1, player2 string
+	var winner int
+	rows, err := tx.Query(context.Background(), "SELECT id, started, player1, player2, points, winner FROM game WHERE (LOWER(player1) = $1 OR LOWER(player2) = $2) AND replay != '' ORDER BY id DESC", username, username)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		if err != nil {
+			continue
+		}
+		match := &bgammon.HistoryMatch{}
+		err = rows.Scan(&match.ID, &match.Timestamp, &player1, &player2, &match.Points, &winner)
+		if err != nil {
+			continue
+		}
+		if strings.ToLower(player1) == username {
+			match.Winner, match.Opponent = winner, player2
+		} else {
+			match.Winner, match.Opponent = 1+(2-winner), player1
+		}
+		matches = append(matches, match)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return matches, nil
+}
+
 func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()

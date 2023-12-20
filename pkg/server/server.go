@@ -1685,6 +1685,22 @@ COMMANDS:
 				ID:      id,
 				Content: replay,
 			})
+		case bgammon.CommandHistory:
+			if len(params) == 0 {
+				cmd.client.sendNotice("Please specify the player as follows: history <username>")
+				continue
+			}
+
+			matches, err := matchHistory(string(params[0]))
+			if err != nil {
+				cmd.client.sendNotice("Invalid replay ID provided.")
+				continue
+			}
+			ev := &bgammon.EventHistory{
+				Matches: matches,
+			}
+			ev.Player = string(params[0])
+			cmd.client.sendEvent(ev)
 		case bgammon.CommandDisconnect:
 			if clientGame != nil {
 				clientGame.removeClient(cmd.client)

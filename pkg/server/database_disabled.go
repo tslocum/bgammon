@@ -51,6 +51,10 @@ func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int, 
 	return nil
 }
 
+func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {
+	return nil, nil
+}
+
 func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 	return &serverStatsResult{}, nil
 }
