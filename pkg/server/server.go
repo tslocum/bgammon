@@ -57,9 +57,10 @@ type server struct {
 	tz *time.Location
 
 	relayChat bool // Chats are not relayed normally. This option is only used by local servers.
+	verbose   bool
 }
 
-func NewServer(tz string, dataSource string, mailServer string, passwordSalt string, resetSalt string, relayChat bool, allowDebug bool) *server {
+func NewServer(tz string, dataSource string, mailServer string, passwordSalt string, resetSalt string, relayChat bool, verbose bool, allowDebug bool) *server {
 	const bufferSize = 10
 	s := &server{
 		newGameIDs:   make(chan int),
@@ -70,6 +71,7 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 		passwordSalt: passwordSalt,
 		resetSalt:    resetSalt,
 		relayChat:    relayChat,
+		verbose:      verbose,
 	}
 
 	if tz != "" {
@@ -245,7 +247,7 @@ func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	commands := make(chan []byte, bufferSize)
 	events := make(chan []byte, bufferSize)
 
-	wsClient := newWebSocketClient(r, w, commands, events)
+	wsClient := newWebSocketClient(r, w, commands, events, s.verbose)
 	if wsClient == nil {
 		return
 	}
@@ -411,7 +413,7 @@ func (s *server) handleConnection(conn net.Conn) {
 		connected:  now,
 		lastActive: now,
 		commands:   commands,
-		Client:     newSocketClient(conn, commands, events),
+		Client:     newSocketClient(conn, commands, events, s.verbose),
 	}
 	s.sendHello(c)
 	s.handleClient(c)

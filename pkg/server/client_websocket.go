@@ -21,9 +21,10 @@ type webSocketClient struct {
 	commands   chan<- []byte
 	terminated bool
 	wgEvents   sync.WaitGroup
+	verbose    bool
 }
 
-func newWebSocketClient(r *http.Request, w http.ResponseWriter, commands chan<- []byte, events chan []byte) *webSocketClient {
+func newWebSocketClient(r *http.Request, w http.ResponseWriter, commands chan<- []byte, events chan []byte, verbose bool) *webSocketClient {
 	conn, _, _, err := ws.UpgradeHTTP(r, w)
 	if err != nil {
 		return nil
@@ -33,6 +34,7 @@ func newWebSocketClient(r *http.Request, w http.ResponseWriter, commands chan<- 
 		conn:     conn,
 		events:   events,
 		commands: commands,
+		verbose:  verbose,
 	}
 }
 
@@ -85,7 +87,9 @@ func (c *webSocketClient) readCommands() {
 		copy(buf, msg)
 		c.commands <- buf
 
-		logClientRead(msg)
+		if c.verbose {
+			logClientRead(msg)
+		}
 	}
 }
 
@@ -127,7 +131,7 @@ func (c *webSocketClient) writeEvents(closeWrite chan struct{}) {
 			continue
 		}
 
-		if !bytes.HasPrefix(event, []byte(`{"Type":"ping"`)) && !bytes.HasPrefix(event, []byte(`{"Type":"list"`)) {
+		if c.verbose && !bytes.HasPrefix(event, []byte(`{"Type":"ping"`)) && !bytes.HasPrefix(event, []byte(`{"Type":"list"`)) {
 			log.Printf("-> %s", event)
 		}
 		c.wgEvents.Done()

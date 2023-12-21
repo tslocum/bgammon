@@ -19,13 +19,15 @@ type socketClient struct {
 	commands   chan<- []byte
 	terminated bool
 	wgEvents   sync.WaitGroup
+	verbose    bool
 }
 
-func newSocketClient(conn net.Conn, commands chan<- []byte, events chan []byte) *socketClient {
+func newSocketClient(conn net.Conn, commands chan<- []byte, events chan []byte, verbose bool) *socketClient {
 	return &socketClient{
 		conn:     conn,
 		events:   events,
 		commands: commands,
+		verbose:  verbose,
 	}
 }
 
@@ -76,7 +78,9 @@ func (c *socketClient) readCommands() {
 		copy(buf, scanner.Bytes())
 		c.commands <- buf
 
-		logClientRead(scanner.Bytes())
+		if c.verbose {
+			logClientRead(scanner.Bytes())
+		}
 
 		setTimeout()
 	}
@@ -120,7 +124,7 @@ func (c *socketClient) writeEvents(closeWrite chan struct{}) {
 			continue
 		}
 
-		if !bytes.HasPrefix(event, []byte(`{"Type":"ping"`)) && !bytes.HasPrefix(event, []byte(`{"Type":"list"`)) {
+		if c.verbose && !bytes.HasPrefix(event, []byte(`{"Type":"ping"`)) && !bytes.HasPrefix(event, []byte(`{"Type":"list"`)) {
 			log.Printf("-> %s", event)
 		}
 		c.wgEvents.Done()

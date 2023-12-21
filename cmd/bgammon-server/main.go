@@ -20,6 +20,7 @@ func main() {
 		mailServer     string
 		passwordSalt   string
 		resetSalt      string
+		verbose        bool
 		debug          int
 		debugCommands  bool
 		rollStatistics bool
@@ -29,6 +30,7 @@ func main() {
 	flag.StringVar(&tz, "tz", "", "Time zone used when calculating statistics")
 	flag.StringVar(&dataSource, "db", "", "Database data source (postgres://username:password@localhost:5432/database_name")
 	flag.StringVar(&mailServer, "smtp", "", "SMTP server address")
+	flag.BoolVar(&verbose, "verbose", false, "Print all client messages")
 	flag.IntVar(&debug, "debug", 0, "print debug information and serve pprof on specified port")
 	flag.BoolVar(&debugCommands, "debug-commands", false, "allow players to use restricted commands")
 	flag.BoolVar(&rollStatistics, "statistics", false, "print dice roll statistics and exit")
@@ -60,7 +62,7 @@ func main() {
 		}()
 	}
 
-	s := server.NewServer(tz, dataSource, mailServer, passwordSalt, resetSalt, false, debugCommands)
+	s := server.NewServer(tz, dataSource, mailServer, passwordSalt, resetSalt, false, verbose || debug > 0, debugCommands)
 	if tcpAddress != "" {
 		s.Listen("tcp", tcpAddress)
 	}
