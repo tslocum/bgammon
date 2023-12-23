@@ -1580,8 +1580,10 @@ COMMANDS:
 				newGame.client2 = clientGame.client2
 				newGame.spectators = make([]*serverClient, len(clientGame.spectators))
 				copy(newGame.spectators, clientGame.spectators)
-				newGame.Player1 = clientGame.Player1
-				newGame.Player2 = clientGame.Player2
+				newGame.Player1.Name = clientGame.Player1.Name
+				newGame.Player2.Name = clientGame.Player2.Name
+				newGame.Player1.Points = clientGame.Player1.Points
+				newGame.Player2.Points = clientGame.Player2.Points
 				newGame.allowed1 = clientGame.allowed1
 				newGame.allowed2 = clientGame.allowed2
 				s.games = append(s.games, newGame)
