@@ -950,6 +950,8 @@ COMMANDS:
 			if clientGame == nil {
 				cmd.client.sendNotice("You are not currently in a match.")
 				continue
+			} else if clientGame.Winner != 0 {
+				continue
 			}
 
 			if clientGame.Turn != cmd.client.playerNumber {
@@ -991,6 +993,8 @@ COMMANDS:
 		case bgammon.CommandResign:
 			if clientGame == nil {
 				cmd.client.sendNotice("You are not currently in a match.")
+				continue
+			} else if clientGame.Winner != 0 {
 				continue
 			}
 
@@ -1073,6 +1077,8 @@ COMMANDS:
 				cmd.client.sendEvent(&bgammon.EventFailedRoll{
 					Reason: "You are not currently in a match.",
 				})
+				continue
+			} else if clientGame.Winner != 0 {
 				continue
 			}
 
@@ -1198,6 +1204,9 @@ COMMANDS:
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
 					Reason: "You are not currently in a match.",
 				})
+				continue
+			} else if clientGame.Winner != 0 {
+				clientGame.sendBoard(cmd.client)
 				continue
 			}
 
@@ -1379,6 +1388,8 @@ COMMANDS:
 			if clientGame == nil {
 				cmd.client.sendNotice("You are not currently in a match.")
 				continue
+			} else if clientGame.Winner != 0 {
+				continue
 			}
 
 			if clientGame.Turn != cmd.client.playerNumber {
@@ -1412,6 +1423,8 @@ COMMANDS:
 		case bgammon.CommandOk, "k":
 			if clientGame == nil {
 				cmd.client.sendNotice("You are not currently in a match.")
+				continue
+			} else if clientGame.Winner != 0 {
 				continue
 			}
 
