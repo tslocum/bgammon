@@ -462,6 +462,15 @@ func (s *server) handleTerminatedGames() {
 			if !g.terminated() {
 				s.games[i] = g
 				i++
+			} else if g.forefeit != 0 && g.Winner == 0 {
+				g.Winner = 1
+				if g.forefeit == 1 {
+					g.Winner = 2
+				}
+				err := recordMatchResult(g.Game, matchTypeCasual, g.account1, g.account2)
+				if err != nil {
+					log.Fatalf("failed to record match result: %s", err)
+				}
 			}
 		}
 		for j := i; j < len(s.games); j++ {

@@ -8,11 +8,6 @@ import (
 	"code.rocket9labs.com/tslocum/bgammon"
 )
 
-type replayEvent struct {
-	Player int
-	Event  []byte
-}
-
 type serverGame struct {
 	id         int
 	created    int64
@@ -24,6 +19,9 @@ type serverGame struct {
 	spectators []*serverClient
 	allowed1   []byte
 	allowed2   []byte
+	account1   int
+	account2   int
+	forefeit   int
 	rematch    int
 	rejoin1    bool
 	rejoin2    bool
@@ -59,13 +57,15 @@ func (g *serverGame) roll(player int) bool {
 			g.Roll2 = RandInt(6) + 1
 		}
 
-		if g.Started.IsZero() {
-			g.Started = time.Now()
-		}
-
 		// Only allow the same players to rejoin the game.
 		if g.allowed1 == nil {
 			g.allowed1, g.allowed2 = g.client1.name, g.client2.name
+		}
+
+		// Store account IDs.
+		if g.Started.IsZero() && g.Roll1 != 0 && g.Roll2 != 0 {
+			g.Started = time.Now()
+			g.account1, g.account2 = g.client1.account, g.client2.account
 		}
 		return true
 	} else if player != g.Turn || g.Roll1 != 0 || g.Roll2 != 0 {
@@ -242,6 +242,10 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 		} else {
 			g.rejoin2 = true
 		}
+
+		if g.forefeit == playerNumber {
+			g.forefeit = 0
+		}
 	}()
 	switch {
 	case g.client1 != nil:
@@ -303,6 +307,12 @@ func (g *serverGame) removeClient(client *serverClient) {
 			if !spectator.json {
 				g.sendBoard(spectator)
 			}
+		}
+
+		if playerNumber == 1 && g.client2 != nil {
+			g.forefeit = 1
+		} else if playerNumber == 2 && g.client1 != nil {
+			g.forefeit = 2
 		}
 
 		client.playerNumber = 0
