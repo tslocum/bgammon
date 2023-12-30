@@ -592,6 +592,57 @@ func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {
 	return matches, nil
 }
 
+func getLeaderboard(matchType int, multiPoint bool) (*leaderboardResult, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	tx, err := begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	var columnName string
+	switch matchType {
+	case matchTypeCasual:
+		if !multiPoint {
+			columnName = "casualsingle"
+		} else {
+			columnName = "casualmulti"
+		}
+	case matchTypeRated:
+		if !multiPoint {
+			columnName = "ratedsingle"
+		} else {
+			columnName = "ratedmulti"
+		}
+	default:
+		log.Panicf("unknown match type: %d", matchType)
+	}
+
+	result := &leaderboardResult{}
+	rows, err := tx.Query(context.Background(), "SELECT username, "+columnName+" FROM account ORDER BY "+columnName+" DESC LIMIT 100")
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		if err != nil {
+			continue
+		}
+		entry := &leaderboardEntry{}
+		err = rows.Scan(&entry.User, &entry.Rating)
+		if err != nil {
+			continue
+		}
+		entry.Rating /= 100
+		result.Leaderboard = append(result.Leaderboard, entry)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()

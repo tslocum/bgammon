@@ -63,6 +63,10 @@ func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {
 	return nil, nil
 }
 
+func getLeaderboard(matchType int, multiPoint bool) (*leaderboardResult, error) {
+	return nil, nil
+}
+
 func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 	return &serverStatsResult{}, nil
 }

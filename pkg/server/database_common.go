@@ -5,6 +5,15 @@ const (
 	matchTypeRated
 )
 
+type leaderboardEntry struct {
+	User   string
+	Rating int
+}
+
+type leaderboardResult struct {
+	Leaderboard []*leaderboardEntry
+}
+
 type serverStatsEntry struct {
 	Date  string
 	Games int

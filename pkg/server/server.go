@@ -50,6 +50,10 @@ type server struct {
 	gamesCacheTime time.Time
 	gamesCacheLock sync.Mutex
 
+	leaderboardCache     [4][]byte
+	leaderboardCacheTime time.Time
+	leaderboardCacheLock sync.Mutex
+
 	mailServer   string
 	passwordSalt string
 	resetSalt    string
@@ -142,6 +146,67 @@ func (s *server) cachedMatches() []byte {
 	return s.gamesCache
 }
 
+func (s *server) cachedLeaderboard(matchType int, multiPoint bool) []byte {
+	s.leaderboardCacheLock.Lock()
+	defer s.leaderboardCacheLock.Unlock()
+
+	var i int
+	switch matchType {
+	case matchTypeCasual:
+		if multiPoint {
+			i = 1
+		}
+	case matchTypeRated:
+		if !multiPoint {
+			i = 2
+		} else {
+			i = 3
+		}
+	}
+
+	if time.Since(s.leaderboardCacheTime) < 5*time.Minute {
+		return s.leaderboardCache[i]
+	}
+	s.leaderboardCacheTime = time.Now()
+
+	result, err := getLeaderboard(matchTypeCasual, false)
+	if err != nil {
+		log.Fatalf("failed to get leaderboard: %s", err)
+	}
+	s.leaderboardCache[0], err = json.Marshal(result)
+	if err != nil {
+		log.Fatalf("failed to marshal %+v: %s", result, err)
+	}
+
+	result, err = getLeaderboard(matchTypeCasual, true)
+	if err != nil {
+		log.Fatalf("failed to get leaderboard: %s", err)
+	}
+	s.leaderboardCache[1], err = json.Marshal(result)
+	if err != nil {
+		log.Fatalf("failed to marshal %+v: %s", result, err)
+	}
+
+	result, err = getLeaderboard(matchTypeRated, false)
+	if err != nil {
+		log.Fatalf("failed to get leaderboard: %s", err)
+	}
+	s.leaderboardCache[2], err = json.Marshal(result)
+	if err != nil {
+		log.Fatalf("failed to marshal %+v: %s", result, err)
+	}
+
+	result, err = getLeaderboard(matchTypeRated, true)
+	if err != nil {
+		log.Fatalf("failed to get leaderboard: %s", err)
+	}
+	s.leaderboardCache[3], err = json.Marshal(result)
+	if err != nil {
+		log.Fatalf("failed to marshal %+v: %s", result, err)
+	}
+	return s.leaderboardCache[i]
+}
+
 func (s *server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -184,6 +249,26 @@ func (s *server) handleMatch(w http.ResponseWriter, r *http.Request) {
 func (s *server) handleListMatches(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(s.cachedMatches())
+}
+
+func (s *server) handleLeaderboardCasualSingle(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(s.cachedLeaderboard(matchTypeCasual, false))
+}
+
+func (s *server) handleLeaderboardCasualMulti(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(s.cachedLeaderboard(matchTypeCasual, true))
+}
+
+func (s *server) handleLeaderboardRatedSingle(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(s.cachedLeaderboard(matchTypeRated, false))
+}
+
+func (s *server) handleLeaderboardRatedMulti(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(s.cachedLeaderboard(matchTypeRated, true))
 }
 
 func (s *server) handlePrintDailyStats(w http.ResponseWriter, r *http.Request) {
@@ -272,6 +357,10 @@ func (s *server) listenWebSocket(address string) {
 	m.HandleFunc("/reset/{id:[0-9]+}/{key:[A-Za-z0-9]+}", s.handleResetPassword)
 	m.HandleFunc("/match/{id:[0-9]+}", s.handleMatch)
 	m.HandleFunc("/matches", s.handleListMatches)
+	m.HandleFunc("/leaderboard-casual-single", s.handleLeaderboardCasualSingle)
+	m.HandleFunc("/leaderboard-casual-multi", s.handleLeaderboardCasualMulti)
+	m.HandleFunc("/leaderboard-rated-single", s.handleLeaderboardRatedSingle)
+	m.HandleFunc("/leaderboard-rated-multi", s.handleLeaderboardRatedMulti)
 	m.HandleFunc("/stats", s.handlePrintDailyStats)
 	m.HandleFunc("/stats-total", s.handlePrintCumulativeStats)
 	m.HandleFunc("/stats-tabula", s.handlePrintTabulaStats)
