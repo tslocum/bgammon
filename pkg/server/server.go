@@ -646,8 +646,20 @@ COMMANDS:
 						cmd.client.Terminate("No account was found with the provided username and password. To log in as a guest, do not enter a password.")
 						continue
 					}
+
+					var name []byte
+					if bytes.HasPrefix(a.username, []byte("bot_")) {
+						name = append([]byte("BOT_"), a.username[4:]...)
+					} else {
+						name = a.username
+					}
+					if s.clientByUsername(name) != nil {
+						cmd.client.Terminate("That username is already in use.")
+						continue
+					}
+
 					cmd.client.account = a.id
-					cmd.client.name = a.username
+					cmd.client.name = name
 					cmd.client.sendEvent(&bgammon.EventSettings{
 						Highlight: a.highlight,
 						Pips:      a.pips,
