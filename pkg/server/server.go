@@ -1059,6 +1059,13 @@ COMMANDS:
 				if err != nil {
 					log.Fatalf("failed to record game result: %s", err)
 				}
+
+				if !reset {
+					err := recordMatchResult(clientGame.Game, matchTypeCasual, clientGame.client1.account, clientGame.client2.account)
+					if err != nil {
+						log.Fatalf("failed to record match result: %s", err)
+					}
+				}
 			}
 
 			if reset {
@@ -1365,7 +1372,12 @@ COMMANDS:
 					log.Fatalf("failed to record game result: %s", err)
 				}
 
-				if reset {
+				if !reset {
+					err := recordMatchResult(clientGame.Game, matchTypeCasual, clientGame.client1.account, clientGame.client2.account)
+					if err != nil {
+						log.Fatalf("failed to record match result: %s", err)
+					}
+				} else {
 					clientGame.Reset()
 					clientGame.replay = clientGame.replay[:0]
 				}
@@ -1767,7 +1779,7 @@ COMMANDS:
 			clientGame.Turn = 1
 			clientGame.Roll1 = 6
 			clientGame.Roll2 = 6
-			clientGame.Board = []int{1, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, -1, 1, -1}
+			clientGame.Board = []int{1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
@@ -1785,4 +1797,27 @@ func RandInt(max int) int {
 		panic(err)
 	}
 	return int(i.Int64())
+}
+
+type ratingPlayer struct {
+	r       float64
+	rd      float64
+	sigma   float64
+	outcome float64
+}
+
+func (p ratingPlayer) R() float64 {
+	return p.r
+}
+
+func (p ratingPlayer) RD() float64 {
+	return p.rd
+}
+
+func (p ratingPlayer) Sigma() float64 {
+	return p.sigma
+}
+
+func (p ratingPlayer) SJ() float64 {
+	return p.outcome
 }

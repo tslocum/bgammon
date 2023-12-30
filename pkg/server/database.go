@@ -21,22 +21,27 @@ import (
 	"code.rocket9labs.com/tslocum/bgammon"
 	"github.com/alexedwards/argon2id"
 	"github.com/jackc/pgx/v5"
+	"github.com/jlouis/glicko2"
 	"github.com/matcornic/hermes/v2"
 )
 
 const databaseSchema = `
 CREATE TABLE account (
-	id        serial PRIMARY KEY,
-	created   bigint NOT NULL,
-	confirmed bigint NOT NULL DEFAULT 0,
-	active    bigint NOT NULL,
-	reset     bigint NOT NULL DEFAULT 0,
-	email     text NOT NULL,
-	username  text NOT NULL,
-	password  text NOT NULL,
-	highlight smallint NOT NULL DEFAULT 1,
-	pips      smallint NOT NULL DEFAULT 1,
-	moves     smallint NOT NULL DEFAULT 0
+	id           serial PRIMARY KEY,
+	created      bigint NOT NULL,
+	confirmed    bigint NOT NULL DEFAULT 0,
+	active       bigint NOT NULL,
+	reset        bigint NOT NULL DEFAULT 0,
+	email        text NOT NULL,
+	username     text NOT NULL,
+	password     text NOT NULL,
+	casualsingle integer NOT NULL DEFAULT 150000,
+	casualmulti  integer NOT NULL DEFAULT 150000,
+	ratedsingle  integer NOT NULL DEFAULT 150000,
+	ratedmulti   integer NOT NULL DEFAULT 150000,
+	highlight    smallint NOT NULL DEFAULT 1,
+	pips         smallint NOT NULL DEFAULT 1,
+	moves        smallint NOT NULL DEFAULT 0
 );
 CREATE TABLE game (
 	id       serial PRIMARY KEY,
@@ -434,6 +439,68 @@ func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int, 
 		acey = 1
 	}
 	_, err = tx.Exec(context.Background(), "INSERT INTO game (acey, started, ended, player1, account1, player2, account2, points, winner, wintype, replay) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", acey, g.Started.Unix(), ended.Unix(), g.Player1.Name, account1, g.Player2.Name, account2, g.Points, g.Winner, winType, bytes.Join(replay, []byte("\n")))
+	return err
+}
+
+func recordMatchResult(g *bgammon.Game, matchType int, account1 int, account2 int) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil || g.Started.IsZero() || g.Winner == 0 || account1 == 0 || account2 == 0 || account1 == account2 {
+		return nil
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit(context.Background())
+
+	var columnName string
+	switch matchType {
+	case matchTypeCasual:
+		if g.Points == 1 {
+			columnName = "casualsingle"
+		} else {
+			columnName = "casualmulti"
+		}
+	case matchTypeRated:
+		if g.Points == 1 {
+			columnName = "ratedsingle"
+		} else {
+			columnName = "ratedmulti"
+		}
+	default:
+		log.Panicf("unknown match type: %d", matchType)
+	}
+
+	var rating1i int
+	err = tx.QueryRow(context.Background(), "SELECT "+columnName+" FROM account WHERE id = $1", account1).Scan(&rating1i)
+	if err != nil {
+		return err
+	}
+	rating1 := float64(rating1i) / 100
+
+	var rating2i int
+	err = tx.QueryRow(context.Background(), "SELECT "+columnName+" FROM account WHERE id = $1", account2).Scan(&rating2i)
+	if err != nil {
+		return err
+	}
+	rating2 := float64(rating2i) / 100
+
+	outcome1, outcome2 := 1.0, 0.0
+	if g.Winner == 2 {
+		outcome1, outcome2 = 0.0, 1.0
+	}
+	rating1New, _, _ := glicko2.Rank(rating1, 50, 0.06, []glicko2.Opponent{ratingPlayer{rating2, 30, 0.06, outcome1}}, 0.6)
+	rating2New, _, _ := glicko2.Rank(rating2, 50, 0.06, []glicko2.Opponent{ratingPlayer{rating1, 30, 0.06, outcome2}}, 0.6)
+
+	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1 WHERE id = $2", int(rating1New*100), account1)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1 WHERE id = $2", int(rating2New*100), account2)
 	return err
 }
 

@@ -1,5 +1,10 @@
 package server
 
+const (
+	matchTypeCasual = iota
+	matchTypeRated
+)
+
 type serverStatsEntry struct {
 	Date  string
 	Games int

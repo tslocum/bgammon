@@ -55,6 +55,10 @@ func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int, 
 	return nil
 }
 
+func recordMatchResult(g *bgammon.Game, matchType int, account1 int, account2 int) error {
+	return nil
+}
+
 func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {
 	return nil, nil
 }

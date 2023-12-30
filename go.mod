@@ -7,6 +7,7 @@ require (
 	github.com/gobwas/ws v1.3.1
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgx/v5 v5.5.1
+	github.com/jlouis/glicko2 v1.0.0
 	github.com/matcornic/hermes/v2 v2.1.0
 )
 
