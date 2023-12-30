@@ -634,6 +634,9 @@ func getLeaderboard(matchType int, multiPoint bool) (*leaderboardResult, error) 
 		if err != nil {
 			continue
 		}
+		if strings.HasPrefix(entry.User, "bot_") {
+			entry.User = "BOT_" + entry.User[4:]
+		}
 		entry.Rating /= 100
 		result.Leaderboard = append(result.Leaderboard, entry)
 	}
