@@ -1027,6 +1027,14 @@ COMMANDS:
 						s.gamesLock.Unlock()
 						continue COMMANDS
 					}
+
+					if bytes.HasPrefix(bytes.ToLower(cmd.client.name), []byte("bot_")) && ((g.client1 != nil && !bytes.HasPrefix(bytes.ToLower(g.client1.name), []byte("bot_"))) || (g.client2 != nil && !bytes.HasPrefix(bytes.ToLower(g.client2.name), []byte("bot_")))) {
+						cmd.client.sendEvent(&bgammon.EventFailedJoin{
+							Reason: "Bots are not allowed to join player matches. Please create a match instead.",
+						})
+						continue COMMANDS
+					}
+
 					spectator := g.addClient(cmd.client)
 					s.gamesLock.Unlock()
 					cmd.client.sendNotice(fmt.Sprintf("Joined match: %s", g.name))
