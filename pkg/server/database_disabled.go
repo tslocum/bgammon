@@ -63,7 +63,7 @@ func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {
 	return nil, nil
 }
 
-func getLeaderboard(matchType int, multiPoint bool) (*leaderboardResult, error) {
+func getLeaderboard(matchType int, acey bool, multiPoint bool) (*leaderboardResult, error) {
 	return nil, nil
 }
 

@@ -54,7 +54,7 @@ type server struct {
 	gamesCacheTime time.Time
 	gamesCacheLock sync.Mutex
 
-	leaderboardCache     [4][]byte
+	leaderboardCache     [8][]byte
 	leaderboardCacheTime time.Time
 	leaderboardCacheLock sync.Mutex
 
@@ -150,7 +150,7 @@ func (s *server) cachedMatches() []byte {
 	return s.gamesCache
 }
 
-func (s *server) cachedLeaderboard(matchType int, multiPoint bool) []byte {
+func (s *server) cachedLeaderboard(matchType int, acey bool, multiPoint bool) []byte {
 	s.leaderboardCacheLock.Lock()
 	defer s.leaderboardCacheLock.Unlock()
 
@@ -167,47 +167,59 @@ func (s *server) cachedLeaderboard(matchType int, multiPoint bool) []byte {
 			i = 3
 		}
 	}
+	if acey {
+		i += 4
+	}
 
 	if time.Since(s.leaderboardCacheTime) < 5*time.Minute {
 		return s.leaderboardCache[i]
 	}
 	s.leaderboardCacheTime = time.Now()
 
-	result, err := getLeaderboard(matchTypeCasual, false)
-	if err != nil {
-		log.Fatalf("failed to get leaderboard: %s", err)
-	}
-	s.leaderboardCache[0], err = json.Marshal(result)
-	if err != nil {
-		log.Fatalf("failed to marshal %+v: %s", result, err)
+	for j := 0; j < 2; j++ {
+		i := 0
+		var acey bool
+		if j == 1 {
+			i += 4
+			acey = true
+		}
+		result, err := getLeaderboard(matchTypeCasual, acey, false)
+		if err != nil {
+			log.Fatalf("failed to get leaderboard: %s", err)
+		}
+		s.leaderboardCache[i], err = json.Marshal(result)
+		if err != nil {
+			log.Fatalf("failed to marshal %+v: %s", result, err)
+		}
+
+		result, err = getLeaderboard(matchTypeCasual, acey, true)
+		if err != nil {
+			log.Fatalf("failed to get leaderboard: %s", err)
+		}
+		s.leaderboardCache[i+1], err = json.Marshal(result)
+		if err != nil {
+			log.Fatalf("failed to marshal %+v: %s", result, err)
+		}
+
+		result, err = getLeaderboard(matchTypeRated, acey, false)
+		if err != nil {
+			log.Fatalf("failed to get leaderboard: %s", err)
+		}
+		s.leaderboardCache[i+2], err = json.Marshal(result)
+		if err != nil {
+			log.Fatalf("failed to marshal %+v: %s", result, err)
+		}
+
+		result, err = getLeaderboard(matchTypeRated, acey, true)
+		if err != nil {
+			log.Fatalf("failed to get leaderboard: %s", err)
+		}
+		s.leaderboardCache[i+3], err = json.Marshal(result)
+		if err != nil {
+			log.Fatalf("failed to marshal %+v: %s", result, err)
+		}
 	}
 
-	result, err = getLeaderboard(matchTypeCasual, true)
-	if err != nil {
-		log.Fatalf("failed to get leaderboard: %s", err)
-	}
-	s.leaderboardCache[1], err = json.Marshal(result)
-	if err != nil {
-		log.Fatalf("failed to marshal %+v: %s", result, err)
-	}
-
-	result, err = getLeaderboard(matchTypeRated, false)
-	if err != nil {
-		log.Fatalf("failed to get leaderboard: %s", err)
-	}
-	s.leaderboardCache[2], err = json.Marshal(result)
-	if err != nil {
-		log.Fatalf("failed to marshal %+v: %s", result, err)
-	}
-
-	result, err = getLeaderboard(matchTypeRated, true)
-	if err != nil {
-		log.Fatalf("failed to get leaderboard: %s", err)
-	}
-	s.leaderboardCache[3], err = json.Marshal(result)
-	if err != nil {
-		log.Fatalf("failed to marshal %+v: %s", result, err)
-	}
 	return s.leaderboardCache[i]
 }
 
@@ -255,24 +267,44 @@ func (s *server) handleListMatches(w http.ResponseWriter, r *http.Request) {
 	w.Write(s.cachedMatches())
 }
 
-func (s *server) handleLeaderboardCasualSingle(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleLeaderboardCasualBackgammonSingle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(s.cachedLeaderboard(matchTypeCasual, false))
+	w.Write(s.cachedLeaderboard(matchTypeCasual, false, false))
 }
 
-func (s *server) handleLeaderboardCasualMulti(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleLeaderboardCasualBackgammonMulti(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(s.cachedLeaderboard(matchTypeCasual, true))
+	w.Write(s.cachedLeaderboard(matchTypeCasual, false, true))
 }
 
-func (s *server) handleLeaderboardRatedSingle(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleLeaderboardCasualAceySingle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(s.cachedLeaderboard(matchTypeRated, false))
+	w.Write(s.cachedLeaderboard(matchTypeCasual, true, false))
 }
 
-func (s *server) handleLeaderboardRatedMulti(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleLeaderboardCasualAceyMulti(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(s.cachedLeaderboard(matchTypeRated, true))
+	w.Write(s.cachedLeaderboard(matchTypeCasual, true, true))
+}
+
+func (s *server) handleLeaderboardRatedBackgammonSingle(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(s.cachedLeaderboard(matchTypeRated, false, false))
+}
+
+func (s *server) handleLeaderboardRatedBackgammonMulti(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(s.cachedLeaderboard(matchTypeRated, false, true))
+}
+
+func (s *server) handleLeaderboardRatedAceySingle(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(s.cachedLeaderboard(matchTypeRated, true, false))
+}
+
+func (s *server) handleLeaderboardRatedAceyMulti(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(s.cachedLeaderboard(matchTypeRated, true, true))
 }
 
 func (s *server) handlePrintDailyStats(w http.ResponseWriter, r *http.Request) {
@@ -361,10 +393,14 @@ func (s *server) listenWebSocket(address string) {
 	m.HandleFunc("/reset/{id:[0-9]+}/{key:[A-Za-z0-9]+}", s.handleResetPassword)
 	m.HandleFunc("/match/{id:[0-9]+}", s.handleMatch)
 	m.HandleFunc("/matches", s.handleListMatches)
-	m.HandleFunc("/leaderboard-casual-single", s.handleLeaderboardCasualSingle)
-	m.HandleFunc("/leaderboard-casual-multi", s.handleLeaderboardCasualMulti)
-	m.HandleFunc("/leaderboard-rated-single", s.handleLeaderboardRatedSingle)
-	m.HandleFunc("/leaderboard-rated-multi", s.handleLeaderboardRatedMulti)
+	m.HandleFunc("/leaderboard-casual-backgammon-single", s.handleLeaderboardCasualBackgammonSingle)
+	m.HandleFunc("/leaderboard-casual-backgammon-multi", s.handleLeaderboardCasualBackgammonMulti)
+	m.HandleFunc("/leaderboard-casual-acey-single", s.handleLeaderboardCasualAceySingle)
+	m.HandleFunc("/leaderboard-casual-acey-multi", s.handleLeaderboardCasualAceyMulti)
+	m.HandleFunc("/leaderboard-rated-backgammon-single", s.handleLeaderboardRatedBackgammonSingle)
+	m.HandleFunc("/leaderboard-rated-backgammon-multi", s.handleLeaderboardRatedBackgammonMulti)
+	m.HandleFunc("/leaderboard-rated-acey-single", s.handleLeaderboardRatedAceySingle)
+	m.HandleFunc("/leaderboard-rated-acey-multi", s.handleLeaderboardRatedAceyMulti)
 	m.HandleFunc("/stats", s.handlePrintDailyStats)
 	m.HandleFunc("/stats-total", s.handlePrintCumulativeStats)
 	m.HandleFunc("/stats-tabula", s.handlePrintTabulaStats)

@@ -27,21 +27,25 @@ import (
 
 const databaseSchema = `
 CREATE TABLE account (
-	id           serial PRIMARY KEY,
-	created      bigint NOT NULL,
-	confirmed    bigint NOT NULL DEFAULT 0,
-	active       bigint NOT NULL,
-	reset        bigint NOT NULL DEFAULT 0,
-	email        text NOT NULL,
-	username     text NOT NULL,
-	password     text NOT NULL,
-	casualsingle integer NOT NULL DEFAULT 150000,
-	casualmulti  integer NOT NULL DEFAULT 150000,
-	ratedsingle  integer NOT NULL DEFAULT 150000,
-	ratedmulti   integer NOT NULL DEFAULT 150000,
-	highlight    smallint NOT NULL DEFAULT 1,
-	pips         smallint NOT NULL DEFAULT 1,
-	moves        smallint NOT NULL DEFAULT 0
+	id                       serial PRIMARY KEY,
+	created                  bigint NOT NULL,
+	confirmed                bigint NOT NULL DEFAULT 0,
+	active                   bigint NOT NULL,
+	reset                    bigint NOT NULL DEFAULT 0,
+	email                    text NOT NULL,
+	username                 text NOT NULL,
+	password                 text NOT NULL,
+	casual_backgammon_single integer NOT NULL DEFAULT 150000,
+	casual_backgammon_multi  integer NOT NULL DEFAULT 150000,
+	casual_acey_single integer NOT NULL DEFAULT 150000,
+	casual_acey_multi  integer NOT NULL DEFAULT 150000,
+	rated_backgammon_single  integer NOT NULL DEFAULT 150000,
+	rated_backgammon_multi   integer NOT NULL DEFAULT 150000,
+	rated_acey_single        integer NOT NULL DEFAULT 150000,
+	rated_acey_multi         integer NOT NULL DEFAULT 150000,
+	highlight                smallint NOT NULL DEFAULT 1,
+	pips                     smallint NOT NULL DEFAULT 1,
+	moves                    smallint NOT NULL DEFAULT 0
 );
 CREATE TABLE game (
 	id       serial PRIMARY KEY,
@@ -459,16 +463,32 @@ func recordMatchResult(g *bgammon.Game, matchType int, account1 int, account2 in
 	var columnName string
 	switch matchType {
 	case matchTypeCasual:
-		if g.Points == 1 {
-			columnName = "casualsingle"
+		if !g.Acey {
+			if g.Points == 1 {
+				columnName = "casual_backgammon_single"
+			} else {
+				columnName = "casual_backgammon_multi"
+			}
 		} else {
-			columnName = "casualmulti"
+			if g.Points == 1 {
+				columnName = "casual_acey_single"
+			} else {
+				columnName = "casual_acey_multi"
+			}
 		}
 	case matchTypeRated:
-		if g.Points == 1 {
-			columnName = "ratedsingle"
+		if !g.Acey {
+			if g.Points == 1 {
+				columnName = "rated_backgammon_single"
+			} else {
+				columnName = "rated_backgammon_multi"
+			}
 		} else {
-			columnName = "ratedmulti"
+			if g.Points == 1 {
+				columnName = "rated_acey_single"
+			} else {
+				columnName = "rated_acey_multi"
+			}
 		}
 	default:
 		log.Panicf("unknown match type: %d", matchType)
@@ -592,7 +612,7 @@ func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {
 	return matches, nil
 }
 
-func getLeaderboard(matchType int, multiPoint bool) (*leaderboardResult, error) {
+func getLeaderboard(matchType int, acey bool, multiPoint bool) (*leaderboardResult, error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
@@ -605,16 +625,32 @@ func getLeaderboard(matchType int, multiPoint bool) (*leaderboardResult, error) 
 	var columnName string
 	switch matchType {
 	case matchTypeCasual:
-		if !multiPoint {
-			columnName = "casualsingle"
+		if !acey {
+			if !multiPoint {
+				columnName = "casual_backgammon_single"
+			} else {
+				columnName = "casual_backgammon_multi"
+			}
 		} else {
-			columnName = "casualmulti"
+			if !multiPoint {
+				columnName = "casual_acey_single"
+			} else {
+				columnName = "casual_acey_multi"
+			}
 		}
 	case matchTypeRated:
-		if !multiPoint {
-			columnName = "ratedsingle"
+		if !acey {
+			if !multiPoint {
+				columnName = "rated_backgammon_single"
+			} else {
+				columnName = "rated_backgammon_multi"
+			}
 		} else {
-			columnName = "ratedmulti"
+			if !multiPoint {
+				columnName = "rated_acey_single"
+			} else {
+				columnName = "rated_acey_multi"
+			}
 		}
 	default:
 		log.Panicf("unknown match type: %d", matchType)
