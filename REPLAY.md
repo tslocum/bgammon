@@ -1,6 +1,7 @@
 # Specification of bgammon.org replay file
 
-Replays are stored as .match files with lines separated by newline characters only (no carriage-return characters).
+Replays are stored as .match files with lines separated by newline characters only
+(no carriage-return characters). Replay files are always UTF-8 encoded.
 
 ## Match format (.match)
 

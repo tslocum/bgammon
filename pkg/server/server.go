@@ -842,6 +842,7 @@ COMMANDS:
 						Highlight: a.highlight,
 						Pips:      a.pips,
 						Moves:     a.moves,
+						Flip:      a.flip,
 					})
 				} else {
 					cmd.client.account = 0
@@ -1896,7 +1897,15 @@ COMMANDS:
 			}
 
 			name := string(bytes.ToLower(params[0]))
-			if name != "highlight" && name != "pips" && name != "moves" {
+			settings := []string{"highlight", "pips", "moves", "flip"}
+			var found bool
+			for i := range settings {
+				if name == settings[i] {
+					found = true
+					break
+				}
+			}
+			if !found {
 				cmd.client.sendNotice("Please specify the setting name and value as follows: set <name> <value>")
 				continue
 			}

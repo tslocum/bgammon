@@ -8,4 +8,5 @@ type account struct {
 	highlight bool
 	pips      bool
 	moves     bool
+	flip      bool
 }
