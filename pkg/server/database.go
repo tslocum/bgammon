@@ -421,7 +421,7 @@ func setAccountSetting(id int, name string, value int) error {
 	return err
 }
 
-func recordGameResult(g *bgammon.Game, winType int, account1 int, account2 int, replay [][]byte) error {
+func recordGameResult(g *bgammon.Game, winType int8, account1 int, account2 int, replay [][]byte) error {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
@@ -587,7 +587,7 @@ func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {
 
 	var matches []*bgammon.HistoryMatch
 	var player1, player2 string
-	var winner int
+	var winner int8
 	rows, err := tx.Query(context.Background(), "SELECT id, started, player1, player2, points, winner FROM game WHERE (LOWER(player1) = $1 OR LOWER(player2) = $2) AND replay != '' ORDER BY id DESC", username, username)
 	if err != nil {
 		return nil, err

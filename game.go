@@ -22,21 +22,21 @@ type Game struct {
 	Player2 Player
 
 	Acey   bool // Acey-deucey.
-	Board  []int
-	Turn   int
-	Roll1  int
-	Roll2  int
-	Moves  [][]int // Pending moves.
-	Winner int
+	Board  []int8
+	Turn   int8
+	Roll1  int8
+	Roll2  int8
+	Moves  [][]int8 // Pending moves.
+	Winner int8
 
-	Points        int  // Points required to win the match.
-	DoubleValue   int  // Doubling cube value.
-	DoublePlayer  int  // Player that currently posesses the doubling cube.
+	Points        int8 // Points required to win the match.
+	DoubleValue   int8 // Doubling cube value.
+	DoublePlayer  int8 // Player that currently posesses the doubling cube.
 	DoubleOffered bool // Whether the current player is offering a double.
 
 	Reroll bool // Used in acey-deucey.
 
-	boardStates [][]int // One board state for each move to allow undoing a move.
+	boardStates [][]int8 // One board state for each move to allow undoing a move.
 }
 
 func NewGame(acey bool) *Game {
@@ -64,11 +64,11 @@ func (g *Game) Copy() *Game {
 		Player2: g.Player2,
 
 		Acey:   g.Acey,
-		Board:  make([]int, len(g.Board)),
+		Board:  make([]int8, len(g.Board)),
 		Turn:   g.Turn,
 		Roll1:  g.Roll1,
 		Roll2:  g.Roll2,
-		Moves:  make([][]int, len(g.Moves)),
+		Moves:  make([][]int8, len(g.Moves)),
 		Winner: g.Winner,
 
 		Points:        g.Points,
@@ -78,7 +78,7 @@ func (g *Game) Copy() *Game {
 
 		Reroll: g.Reroll,
 
-		boardStates: make([][]int, len(g.boardStates)),
+		boardStates: make([][]int8, len(g.boardStates)),
 	}
 	copy(newGame.Board, g.Board)
 	copy(newGame.Moves, g.Moves)
@@ -101,7 +101,7 @@ func (g *Game) NextTurn(replay bool) {
 	}
 
 	if !replay {
-		nextTurn := 1
+		var nextTurn int8 = 1
 		if g.Turn == 1 {
 			nextTurn = 2
 		}
@@ -148,18 +148,18 @@ func (g *Game) opponentPlayer() Player {
 	}
 }
 
-func (g *Game) addMove(move []int) bool {
+func (g *Game) addMove(move []int8) bool {
 	opponentCheckers := OpponentCheckers(g.Board[move[1]], g.Turn)
 	if opponentCheckers > 1 {
 		return false
 	}
 
-	delta := 1
+	var delta int8 = 1
 	if g.Turn == 2 {
 		delta = -1
 	}
 
-	boardState := make([]int, len(g.Board))
+	boardState := make([]int8, len(g.Board))
 	copy(boardState, g.Board)
 	g.boardStates = append(g.boardStates, boardState)
 
@@ -177,26 +177,26 @@ func (g *Game) addMove(move []int) bool {
 		g.Board[move[1]] += delta
 	}
 
-	g.Moves = append(g.Moves, []int{move[0], move[1]})
+	g.Moves = append(g.Moves, []int8{move[0], move[1]})
 	return true
 }
 
 // AddLocalMove adds a move without performing any validation. This is useful when
 // adding a move locally while waiting for an EventBoard response from the server.
-func (g *Game) AddLocalMove(move []int) bool {
+func (g *Game) AddLocalMove(move []int8) bool {
 	return g.addMove(move)
 }
 
-func (g *Game) ExpandMove(move []int, currentSpace int, moves [][]int, local bool) ([][]int, bool) {
+func (g *Game) ExpandMove(move []int8, currentSpace int8, moves [][]int8, local bool) ([][]int8, bool) {
 	l := g.LegalMoves(local)
-	var hitMoves [][]int
+	var hitMoves [][]int8
 	for _, m := range l {
 		if OpponentCheckers(g.Board[m[1]], g.Turn) == 1 {
 			hitMoves = append(hitMoves, m)
 		}
 	}
 	for i := 0; i < 2; i++ {
-		var checkMoves [][]int
+		var checkMoves [][]int8
 		if i == 0 { // Try moves that will hit an opponent's checker first.
 			checkMoves = hitMoves
 		} else {
@@ -207,9 +207,9 @@ func (g *Game) ExpandMove(move []int, currentSpace int, moves [][]int, local boo
 				continue
 			}
 
-			newMoves := make([][]int, len(moves))
+			newMoves := make([][]int8, len(moves))
 			copy(newMoves, moves)
-			newMoves = append(newMoves, []int{lm[0], lm[1]})
+			newMoves = append(newMoves, []int8{lm[0], lm[1]})
 
 			if lm[1] == move[1] {
 				return newMoves, true
@@ -229,13 +229,13 @@ func (g *Game) ExpandMove(move []int, currentSpace int, moves [][]int, local boo
 }
 
 // AddMoves adds moves to the game state.  Adding a backwards move will remove the equivalent existing move.
-func (g *Game) AddMoves(moves [][]int, local bool) (bool, [][]int) {
+func (g *Game) AddMoves(moves [][]int8, local bool) (bool, [][]int8) {
 	if g.Player1.Name == "" || g.Player2.Name == "" || g.Winner != 0 {
 		return false, nil
 	}
 
-	var addMoves [][]int
-	var undoMoves [][]int
+	var addMoves [][]int8
+	var undoMoves [][]int8
 
 	gameCopy := g.Copy()
 
@@ -245,7 +245,7 @@ VALIDATEMOVES:
 		l := gameCopy.LegalMoves(local)
 		for _, lm := range l {
 			if lm[0] == move[0] && lm[1] == move[1] {
-				addMoves = append(addMoves, []int{move[0], move[1]})
+				addMoves = append(addMoves, []int8{move[0], move[1]})
 				continue VALIDATEMOVES
 			}
 		}
@@ -257,7 +257,7 @@ VALIDATEMOVES:
 			}
 			gameMove := gameCopy.Moves[i]
 			if move[0] == gameMove[1] && move[1] == gameMove[0] {
-				undoMoves = append(undoMoves, []int{gameMove[1], gameMove[0]})
+				undoMoves = append(undoMoves, []int8{gameMove[1], gameMove[0]})
 				validateOffset++
 				continue VALIDATEMOVES
 			}
@@ -266,7 +266,7 @@ VALIDATEMOVES:
 		expandedMoves, ok := g.ExpandMove(move, move[0], nil, local)
 		if ok {
 			for _, expanded := range expandedMoves {
-				addMoves = append(addMoves, []int{expanded[0], expanded[1]})
+				addMoves = append(addMoves, []int8{expanded[0], expanded[1]})
 			}
 			continue VALIDATEMOVES
 		}
@@ -347,12 +347,12 @@ ADDMOVES:
 	}
 }
 
-func (g *Game) LegalMoves(local bool) [][]int {
+func (g *Game) LegalMoves(local bool) [][]int8 {
 	if g.Winner != 0 || g.Roll1 == 0 || g.Roll2 == 0 {
 		return nil
 	}
 
-	rolls := []int{
+	rolls := []int8{
 		g.Roll1,
 		g.Roll2,
 	}
@@ -360,9 +360,9 @@ func (g *Game) LegalMoves(local bool) [][]int {
 		rolls = append(rolls, g.Roll1, g.Roll2)
 	}
 
-	haveDiceRoll := func(from, to int) int {
+	haveDiceRoll := func(from, to int8) int8 {
 		diff := SpaceDiff(from, to, g.Acey)
-		var c int
+		var c int8
 		for _, roll := range rolls {
 			if roll == diff {
 				c++
@@ -371,8 +371,8 @@ func (g *Game) LegalMoves(local bool) [][]int {
 		return c
 	}
 
-	haveBearOffDiceRoll := func(diff int) int {
-		var c int
+	haveBearOffDiceRoll := func(diff int8) int8 {
+		var c int8
 		for _, roll := range rolls {
 			if roll == diff || (roll > diff && !g.Acey) {
 				c++
@@ -381,7 +381,7 @@ func (g *Game) LegalMoves(local bool) [][]int {
 		return c
 	}
 
-	useDiceRoll := func(from, to int) bool {
+	useDiceRoll := func(from, to int8) bool {
 		if to == SpaceHomePlayer || to == SpaceHomeOpponent {
 			needRoll := from
 			if to == SpaceHomeOpponent {
@@ -418,11 +418,11 @@ func (g *Game) LegalMoves(local bool) [][]int {
 		}
 	}
 
-	var moves [][]int
-	var movesFound = make(map[int]bool)
+	var moves [][]int8
+	var movesFound = make(map[int8]bool)
 
 	var mustEnter bool
-	var barSpace int
+	var barSpace int8
 	if PlayerCheckers(g.Board[SpaceBarPlayer], g.Turn) > 0 {
 		mustEnter = true
 		barSpace = SpaceBarPlayer
@@ -432,7 +432,7 @@ func (g *Game) LegalMoves(local bool) [][]int {
 	}
 	if mustEnter { // Must enter from bar.
 		from, to := HomeRange(g.opponentPlayer().Number)
-		IterateSpaces(from, to, g.Acey, func(homeSpace int, spaceCount int) {
+		IterateSpaces(from, to, g.Acey, func(homeSpace int8, spaceCount int8) {
 			if movesFound[barSpace*100+homeSpace] {
 				return
 			}
@@ -442,13 +442,14 @@ func (g *Game) LegalMoves(local bool) [][]int {
 			}
 			opponentCheckers := OpponentCheckers(g.Board[homeSpace], g.Turn)
 			if opponentCheckers <= 1 {
-				moves = append(moves, []int{barSpace, homeSpace})
+				moves = append(moves, []int8{barSpace, homeSpace})
 				movesFound[barSpace*100+homeSpace] = true
 			}
 		})
 	} else {
 		canBearOff := CanBearOff(g.Board, g.Turn, false)
-		for space := range g.Board {
+		for sp := range g.Board {
+			space := int8(sp)
 			if space == SpaceBarPlayer || space == SpaceBarOpponent { // Handled above.
 				continue
 			} else if space == SpaceHomePlayer || space == SpaceHomeOpponent {
@@ -499,19 +500,19 @@ func (g *Game) LegalMoves(local bool) [][]int {
 						}
 					}
 					if ok {
-						moves = append(moves, []int{space, homeSpace})
+						moves = append(moves, []int8{space, homeSpace})
 						movesFound[space*100+homeSpace] = true
 					}
 				}
 			}
 
 			// Move normally.
-			lastSpace := 1
+			var lastSpace int8 = 1
 			if g.Turn == 2 {
 				lastSpace = 24
 			}
 
-			f := func(to int, spaceCount int) {
+			f := func(to int8, spaceCount int8) {
 				if movesFound[space*100+to] {
 					return
 				}
@@ -522,7 +523,7 @@ func (g *Game) LegalMoves(local bool) [][]int {
 
 				opponentCheckers := OpponentCheckers(g.Board[to], g.Turn)
 				if opponentCheckers <= 1 {
-					moves = append(moves, []int{space, to})
+					moves = append(moves, []int8{space, to})
 					movesFound[space*100+to] = true
 				}
 			}
@@ -537,14 +538,14 @@ func (g *Game) LegalMoves(local bool) [][]int {
 	}
 
 	// totalMoves tries all legal moves in a game and returns the maximum total number of moves that a player may consecutively make.
-	var totalMoves func(in *Game, move []int) int
-	totalMoves = func(in *Game, move []int) int {
+	var totalMoves func(in *Game, move []int8) int8
+	totalMoves = func(in *Game, move []int8) int8 {
 		gc := in.Copy()
 		if !gc.addMove(move) {
 			log.Panicf("failed to add move %+v to game %+v", move, in)
 		}
 
-		maxTotal := 1
+		var maxTotal int8 = 1
 		for _, m := range gc.LegalMoves(local) {
 			total := totalMoves(gc, m)
 			if total+1 > maxTotal {
@@ -555,8 +556,8 @@ func (g *Game) LegalMoves(local bool) [][]int {
 	}
 
 	// Simulate all possible moves to their final value and only allow moves that will achieve the maximum total moves.
-	var maxMoves int
-	moveCounts := make([]int, len(moves))
+	var maxMoves int8
+	moveCounts := make([]int8, len(moves))
 	for i, move := range moves {
 		moveCounts[i] = totalMoves(g, move)
 		if moveCounts[i] > maxMoves {
@@ -564,7 +565,7 @@ func (g *Game) LegalMoves(local bool) [][]int {
 		}
 	}
 	if maxMoves > 1 {
-		var newMoves [][]int
+		var newMoves [][]int8
 		for i, move := range moves {
 			if moveCounts[i] >= maxMoves {
 				newMoves = append(newMoves, move)
@@ -576,7 +577,7 @@ func (g *Game) LegalMoves(local bool) [][]int {
 	return moves
 }
 
-func (g *Game) RenderSpace(player int, space int, spaceValue int, legalMoves [][]int) []byte {
+func (g *Game) RenderSpace(player int8, space int8, spaceValue int8, legalMoves [][]int8) []byte {
 	var playerColor = "x"
 	var opponentColor = "o"
 	if player == 2 {
@@ -610,8 +611,8 @@ func (g *Game) RenderSpace(player int, space int, spaceValue int, legalMoves [][
 		top = !top
 	}
 
-	firstDigit := 4
-	secondDigit := 5
+	var firstDigit int8 = 4
+	var secondDigit int8 = 5
 	if !top {
 		firstDigit = 5
 		secondDigit = 4
@@ -623,10 +624,10 @@ func (g *Game) RenderSpace(player int, space int, spaceValue int, legalMoves [][
 		if abs > 9 {
 			firstNumeral = "1"
 		} else {
-			firstNumeral = strconv.Itoa(abs)
+			firstNumeral = strconv.Itoa(int(abs))
 		}
 		if abs > 9 {
-			secondNumeral = strconv.Itoa(abs - 10)
+			secondNumeral = strconv.Itoa(int(abs) - 10)
 		}
 
 		if spaceValue == firstDigit && (!top || abs > 9) {
@@ -651,7 +652,7 @@ func (g *Game) RenderSpace(player int, space int, spaceValue int, legalMoves [][
 	return append(append([]byte(" "), r...), ' ')
 }
 
-func (g *Game) BoardState(player int, local bool) []byte {
+func (g *Game) BoardState(player int8, local bool) []byte {
 	var t bytes.Buffer
 
 	playerRating := "0"
@@ -694,8 +695,8 @@ func (g *Game) BoardState(player int, local bool) []byte {
 	t.WriteByte('\n')
 
 	legalMoves := g.LegalMoves(local)
-	space := func(row int, col int) []byte {
-		spaceValue := row + 1
+	space := func(row int8, col int8) []byte {
+		var spaceValue int8 = row + 1
 		if row > 5 {
 			spaceValue = 5 - (row - 6)
 		}
@@ -707,7 +708,7 @@ func (g *Game) BoardState(player int, local bool) []byte {
 			return g.RenderSpace(player, SpaceBarPlayer, spaceValue, legalMoves)
 		}
 
-		var space int
+		var space int8
 		if white {
 			space = 24 - col
 			if row > 5 {
@@ -727,10 +728,10 @@ func (g *Game) BoardState(player int, local bool) []byte {
 		return g.RenderSpace(player, space, spaceValue, legalMoves)
 	}
 
-	for i := 0; i < 11; i++ {
+	for i := int8(0); i < 11; i++ {
 		t.WriteRune(VerticalBar)
 		t.Write([]byte(""))
-		for j := 0; j < 12; j++ {
+		for j := int8(0); j < 12; j++ {
 			t.Write(space(i, j))
 
 			if j == 5 {
@@ -808,7 +809,7 @@ func (g *Game) BoardState(player int, local bool) []byte {
 	return t.Bytes()
 }
 
-func SpaceDiff(from int, to int, acey bool) int {
+func SpaceDiff(from int8, to int8, acey bool) int8 {
 	if from < 0 || from > 27 || to < 0 || to > 27 {
 		return 0
 	} else if to == SpaceBarPlayer || to == SpaceBarOpponent {
@@ -847,13 +848,13 @@ func SpaceDiff(from int, to int, acey bool) int {
 	return diff
 }
 
-func IterateSpaces(from int, to int, acey bool, f func(space int, spaceCount int)) {
+func IterateSpaces(from int8, to int8, acey bool, f func(space int8, spaceCount int8)) {
 	if from == to || from < 0 || from > 25 || to < 0 || to > 25 {
 		return
 	} else if !acey && (from == 0 || from == 25 || to == 0 || to == 25) {
 		return
 	}
-	i := 1
+	var i int8 = 1
 	if to > from {
 		for space := from; space <= to; space++ {
 			f(space, i)
@@ -867,7 +868,7 @@ func IterateSpaces(from int, to int, acey bool, f func(space int, spaceCount int
 	}
 }
 
-func PlayerCheckers(checkers int, player int) int {
+func PlayerCheckers(checkers int8, player int8) int8 {
 	if player == 1 {
 		if checkers > 0 {
 			return checkers
@@ -881,7 +882,7 @@ func PlayerCheckers(checkers int, player int) int {
 	}
 }
 
-func OpponentCheckers(checkers int, player int) int {
+func OpponentCheckers(checkers int8, player int8) int8 {
 	if player == 2 {
 		if checkers > 0 {
 			return checkers
@@ -895,7 +896,7 @@ func OpponentCheckers(checkers int, player int) int {
 	}
 }
 
-func FlipSpace(space int, player int) int {
+func FlipSpace(space int8, player int8) int8 {
 	if player == 1 {
 		return space
 	}
@@ -916,17 +917,17 @@ func FlipSpace(space int, player int) int {
 	return 24 - space + 1
 }
 
-func FlipMoves(moves [][]int, player int) [][]int {
-	m := make([][]int, len(moves))
+func FlipMoves(moves [][]int8, player int8) [][]int8 {
+	m := make([][]int8, len(moves))
 	for i := range moves {
-		m[i] = []int{FlipSpace(moves[i][0], player), FlipSpace(moves[i][1], player)}
+		m[i] = []int8{FlipSpace(moves[i][0], player), FlipSpace(moves[i][1], player)}
 	}
 	return m
 }
 
-func FormatSpace(space int) []byte {
+func FormatSpace(space int8) []byte {
 	if space >= 1 && space <= 24 {
-		return []byte(strconv.Itoa(space))
+		return []byte(strconv.Itoa(int(space)))
 	} else if space == SpaceBarPlayer || space == SpaceBarOpponent {
 		return []byte("bar")
 	} else if space == SpaceHomePlayer || space == SpaceHomeOpponent {
@@ -935,7 +936,7 @@ func FormatSpace(space int) []byte {
 	return []byte("?")
 }
 
-func FormatMoves(moves [][]int) []byte {
+func FormatMoves(moves [][]int8) []byte {
 	if len(moves) == 0 {
 		return []byte("none")
 	}
@@ -950,11 +951,11 @@ func FormatMoves(moves [][]int) []byte {
 	return out.Bytes()
 }
 
-func FormatAndFlipMoves(moves [][]int, player int) []byte {
+func FormatAndFlipMoves(moves [][]int8, player int8) []byte {
 	return FormatMoves(FlipMoves(moves, player))
 }
 
-func ValidSpace(space int) bool {
+func ValidSpace(space int8) bool {
 	return space >= 0 && space <= 27
 }
 

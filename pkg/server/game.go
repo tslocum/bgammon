@@ -21,8 +21,8 @@ type serverGame struct {
 	allowed2   []byte
 	account1   int
 	account2   int
-	forefeit   int
-	rematch    int
+	forefeit   int8
+	rematch    int8
 	rejoin1    bool
 	rejoin2    bool
 	replay     [][]byte
@@ -39,7 +39,7 @@ func newServerGame(id int, acey bool) *serverGame {
 	}
 }
 
-func (g *serverGame) roll(player int) bool {
+func (g *serverGame) roll(player int8) bool {
 	if g.client1 == nil || g.client2 == nil || g.Winner != 0 {
 		return false
 	}
@@ -49,12 +49,12 @@ func (g *serverGame) roll(player int) bool {
 			if g.Roll1 != 0 {
 				return false
 			}
-			g.Roll1 = RandInt(6) + 1
+			g.Roll1 = int8(RandInt(6) + 1)
 		} else {
 			if g.Roll2 != 0 {
 				return false
 			}
-			g.Roll2 = RandInt(6) + 1
+			g.Roll2 = int8(RandInt(6) + 1)
 		}
 
 		// Only allow the same players to rejoin the game.
@@ -72,8 +72,8 @@ func (g *serverGame) roll(player int) bool {
 		return false
 	}
 
-	g.Roll1 = RandInt(6) + 1
-	g.Roll2 = RandInt(6) + 1
+	g.Roll1 = int8(RandInt(6) + 1)
+	g.Roll2 = int8(RandInt(6) + 1)
 
 	return true
 }
@@ -126,7 +126,7 @@ func (g *serverGame) sendBoard(client *serverClient) {
 			}
 
 			// Flip board.
-			for space := 1; space <= 24; space++ {
+			for space := int8(1); space <= 24; space++ {
 				ev.Board[space] = g.Game.Board[bgammon.FlipSpace(space, client.playerNumber)] * -1
 			}
 			ev.Board[bgammon.SpaceHomePlayer], ev.Board[bgammon.SpaceHomeOpponent] = ev.Board[bgammon.SpaceHomeOpponent]*-1, ev.Board[bgammon.SpaceHomePlayer]*-1
@@ -153,8 +153,8 @@ func (g *serverGame) sendBoard(client *serverClient) {
 	}
 }
 
-func (g *serverGame) playerCount() int {
-	c := 0
+func (g *serverGame) playerCount() int8 {
+	var c int8
 	if g.client1 != nil {
 		c++
 	}
@@ -200,7 +200,7 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 		return spectator
 	}
 
-	var playerNumber int
+	var playerNumber int8
 	defer func() {
 		ev := &bgammon.EventJoined{
 			GameID:       g.id,
@@ -361,7 +361,7 @@ func (g *serverGame) listing(playerName []byte) *bgammon.GameListing {
 		return nil
 	}
 
-	var playerCount int
+	var playerCount int8
 	if len(g.allowed1) != 0 && (len(playerName) == 0 || (!bytes.Equal(g.allowed1, playerName) && !bytes.Equal(g.allowed2, playerName))) {
 		playerCount = 2
 	} else {

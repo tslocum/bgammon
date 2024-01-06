@@ -41,8 +41,8 @@ type EventSay struct {
 type GameListing struct {
 	ID       int
 	Password bool
-	Points   int
-	Players  int
+	Points   int8
+	Players  int8
 	Name     string
 }
 
@@ -54,7 +54,7 @@ type EventList struct {
 type EventJoined struct {
 	Event
 	GameID       int
-	PlayerNumber int
+	PlayerNumber int8
 }
 
 type EventFailedJoin struct {
@@ -78,8 +78,8 @@ type EventBoard struct {
 
 type EventRolled struct {
 	Event
-	Roll1    int
-	Roll2    int
+	Roll1    int8
+	Roll2    int8
 	Selected bool // Whether the roll is selected by the player (used in acey-deucey games).
 }
 
@@ -90,13 +90,13 @@ type EventFailedRoll struct {
 
 type EventMoved struct {
 	Event
-	Moves [][]int
+	Moves [][]int8
 }
 
 type EventFailedMove struct {
 	Event
-	From   int
-	To     int
+	From   int8
+	To     int8
 	Reason string
 }
 
@@ -107,7 +107,7 @@ type EventFailedOk struct {
 
 type EventWin struct {
 	Event
-	Points int
+	Points int8
 }
 
 type EventSettings struct {
@@ -127,9 +127,9 @@ type EventReplay struct {
 type HistoryMatch struct {
 	ID        int
 	Timestamp int64
-	Points    int
+	Points    int8
 	Opponent  string
-	Winner    int
+	Winner    int8
 }
 
 type EventHistory struct {

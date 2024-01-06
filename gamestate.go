@@ -6,8 +6,8 @@ import (
 
 type GameState struct {
 	*Game
-	PlayerNumber int
-	Available    [][]int // Legal moves.
+	PlayerNumber int8
+	Available    [][]int8 // Legal moves.
 	Spectating   bool
 }
 
@@ -25,12 +25,12 @@ func (g *GameState) LocalPlayer() Player {
 	return g.Player2
 }
 
-func (g *GameState) SpaceAt(x int, y int) int {
+func (g *GameState) SpaceAt(x int8, y int8) int8 {
 	if (x < 0 || x > 12) || (y < 0 || y > 9) {
 		return -1
 	}
 
-	space := -1
+	var space int8 = -1
 	if x <= 5 {
 		space = x + 1
 	} else if x == 6 {
@@ -58,19 +58,19 @@ func (g *GameState) SpaceAt(x int, y int) int {
 }
 
 // Pips returns the pip count for the specified player.
-func (g *GameState) Pips(player int) int {
+func (g *GameState) Pips(player int8) int {
 	var pips int
 	var spaceValue int
 	if player == 1 {
-		pips += PlayerCheckers(g.Board[SpaceBarPlayer], player) * 25
+		pips += int(PlayerCheckers(g.Board[SpaceBarPlayer], player)) * 25
 	} else {
-		pips += PlayerCheckers(g.Board[SpaceBarOpponent], player) * 25
+		pips += int(PlayerCheckers(g.Board[SpaceBarOpponent], player)) * 25
 	}
 	if g.Acey {
 		if player == 1 && !g.Player1.Entered {
-			pips += PlayerCheckers(g.Board[SpaceHomePlayer], player) * 25
+			pips += int(PlayerCheckers(g.Board[SpaceHomePlayer], player)) * 25
 		} else if player == 2 && !g.Player2.Entered {
-			pips += PlayerCheckers(g.Board[SpaceHomeOpponent], player) * 25
+			pips += int(PlayerCheckers(g.Board[SpaceHomeOpponent], player)) * 25
 		}
 	}
 	for i := 1; i < 25; i++ {
@@ -79,7 +79,7 @@ func (g *GameState) Pips(player int) int {
 		} else {
 			spaceValue = 25 - i
 		}
-		pips += PlayerCheckers(g.Board[i], player) * spaceValue
+		pips += int(PlayerCheckers(g.Board[i], player)) * spaceValue
 	}
 	return pips
 }

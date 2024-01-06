@@ -1031,7 +1031,7 @@ COMMANDS:
 
 			g := newServerGame(<-s.newGameIDs, acey)
 			g.name = gameName
-			g.Points = points
+			g.Points = int8(points)
 			g.password = gamePassword
 			g.addClient(cmd.client)
 
@@ -1442,7 +1442,7 @@ COMMANDS:
 				continue
 			}
 
-			var moves [][]int
+			var moves [][]int8
 			for i := range params {
 				split := bytes.Split(params[i], []byte("/"))
 				if len(split) != 2 {
@@ -1470,7 +1470,7 @@ COMMANDS:
 				}
 
 				from, to = bgammon.FlipSpace(from, cmd.client.playerNumber), bgammon.FlipSpace(to, cmd.client.playerNumber)
-				moves = append(moves, []int{from, to})
+				moves = append(moves, []int8{from, to})
 			}
 
 			ok, expandedMoves := clientGame.AddMoves(moves, false)
@@ -1485,7 +1485,7 @@ COMMANDS:
 
 			var winEvent *bgammon.EventWin
 			if clientGame.Winner != 0 {
-				opponent := 1
+				var opponent int8 = 1
 				opponentHome := bgammon.SpaceHomePlayer
 				opponentEntered := clientGame.Player1.Entered
 				playerBar := bgammon.SpaceBarPlayer
@@ -1499,14 +1499,14 @@ COMMANDS:
 				backgammon := bgammon.PlayerCheckers(clientGame.Board[playerBar], opponent) != 0
 				if !backgammon {
 					homeStart, homeEnd := bgammon.HomeRange(clientGame.Winner)
-					bgammon.IterateSpaces(homeStart, homeEnd, clientGame.Acey, func(space, spaceCount int) {
+					bgammon.IterateSpaces(homeStart, homeEnd, clientGame.Acey, func(space int8, spaceCount int8) {
 						if bgammon.PlayerCheckers(clientGame.Board[space], opponent) != 0 {
 							backgammon = true
 						}
 					})
 				}
 
-				var winPoints int
+				var winPoints int8
 				if !clientGame.Acey {
 					if backgammon {
 						winPoints = 3 // Award backgammon.
@@ -1516,7 +1516,7 @@ COMMANDS:
 						winPoints = 1
 					}
 				} else {
-					for space := 0; space < bgammon.BoardSpaces; space++ {
+					for space := int8(0); space < bgammon.BoardSpaces; space++ {
 						if (space == bgammon.SpaceHomePlayer || space == bgammon.SpaceHomeOpponent) && opponentEntered {
 							continue
 						}
@@ -1613,9 +1613,9 @@ COMMANDS:
 			}
 
 			l := len(clientGame.Moves)
-			undoMoves := make([][]int, l)
+			undoMoves := make([][]int8, l)
 			for i, move := range clientGame.Moves {
-				undoMoves[l-1-i] = []int{move[1], move[0]}
+				undoMoves[l-1-i] = []int8{move[1], move[0]}
 			}
 			ok, _ := clientGame.AddMoves(undoMoves, false)
 			if !ok {
@@ -1714,7 +1714,7 @@ COMMANDS:
 
 				recordEvent()
 				clientGame.NextTurn(true)
-				clientGame.Roll1, clientGame.Roll2 = doubles, doubles
+				clientGame.Roll1, clientGame.Roll2 = int8(doubles), int8(doubles)
 				clientGame.Reroll = true
 
 				clientGame.eachClient(func(client *serverClient) {
@@ -1986,7 +1986,7 @@ COMMANDS:
 			clientGame.Turn = 1
 			clientGame.Roll1 = 6
 			clientGame.Roll2 = 6
-			clientGame.Board = []int{1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, 0, 0}
+			clientGame.Board = []int8{1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)
@@ -2007,7 +2007,7 @@ func RandInt(max int) int {
 }
 
 func gnubgPosition(g *bgammon.Game) string {
-	opponent := 2
+	var opponent int8 = 2
 	start := 0
 	end := 25
 	boardStart := 1
@@ -2033,26 +2033,26 @@ func gnubgPosition(g *bgammon.Game) string {
 	var buf []byte
 	for space := boardStart; space != end; space += delta {
 		playerCheckers := bgammon.PlayerCheckers(g.Board[space], g.Turn)
-		for i := 0; i < playerCheckers; i++ {
+		for i := int8(0); i < playerCheckers; i++ {
 			buf = append(buf, '1')
 		}
 		buf = append(buf, '0')
 	}
 	playerCheckers := bgammon.PlayerCheckers(g.Board[playerBarSpace], g.Turn)
-	for i := 0; i < playerCheckers; i++ {
+	for i := int8(0); i < playerCheckers; i++ {
 		buf = append(buf, '1')
 	}
 	buf = append(buf, '0')
 
 	for space := boardEnd; space != start; space -= delta {
 		opponentCheckers := bgammon.PlayerCheckers(g.Board[space], opponent)
-		for i := 0; i < opponentCheckers; i++ {
+		for i := int8(0); i < opponentCheckers; i++ {
 			buf = append(buf, '1')
 		}
 		buf = append(buf, '0')
 	}
 	opponentCheckers := bgammon.PlayerCheckers(g.Board[opponentBarSpace], opponent)
-	for i := 0; i < opponentCheckers; i++ {
+	for i := int8(0); i < opponentCheckers; i++ {
 		buf = append(buf, '1')
 	}
 	buf = append(buf, '0')
