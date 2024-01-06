@@ -728,20 +728,21 @@ func (g *Game) BoardState(player int8, local bool) []byte {
 		return g.RenderSpace(player, space, spaceValue, legalMoves)
 	}
 
+	const verticalBar rune = '│'
 	for i := int8(0); i < 11; i++ {
-		t.WriteRune(VerticalBar)
+		t.WriteRune(verticalBar)
 		t.Write([]byte(""))
 		for j := int8(0); j < 12; j++ {
 			t.Write(space(i, j))
 
 			if j == 5 {
-				t.WriteRune(VerticalBar)
+				t.WriteRune(verticalBar)
 				t.Write(space(i, -1))
-				t.WriteRune(VerticalBar)
+				t.WriteRune(verticalBar)
 			}
 		}
 
-		t.Write([]byte("" + string(VerticalBar) + "  "))
+		t.Write([]byte("" + string(verticalBar) + "  "))
 
 		if i == 0 {
 			t.Write([]byte(opponentColor + " " + opponentName + " (" + opponentRating + ")"))
@@ -758,14 +759,14 @@ func (g *Game) BoardState(player int8, local bool) []byte {
 					if opponentRoll != 0 {
 						t.Write([]byte(fmt.Sprintf("  %d", opponentRoll)))
 					} else {
-						t.Write([]byte(fmt.Sprintf("  -")))
+						t.Write([]byte("  -"))
 					}
 				}
 			} else if g.Turn != player {
 				if g.Roll1 > 0 {
 					t.Write([]byte(fmt.Sprintf("  %d  %d  ", g.Roll1, g.Roll2)))
 				} else if opponentName != "" {
-					t.Write([]byte(fmt.Sprintf("  -  -  ")))
+					t.Write([]byte("  -  -  "))
 				}
 			}
 		} else if i == 8 {
@@ -774,14 +775,14 @@ func (g *Game) BoardState(player int8, local bool) []byte {
 					if playerRoll != 0 {
 						t.Write([]byte(fmt.Sprintf("  %d", playerRoll)))
 					} else {
-						t.Write([]byte(fmt.Sprintf("  -")))
+						t.Write([]byte("  -"))
 					}
 				}
 			} else if g.Turn == player {
 				if g.Roll1 > 0 {
 					t.Write([]byte(fmt.Sprintf("  %d  %d  ", g.Roll1, g.Roll2)))
 				} else if playerName != "" {
-					t.Write([]byte(fmt.Sprintf("  -  -  ")))
+					t.Write([]byte("  -  -  "))
 				}
 			}
 		} else if i == 10 {
@@ -958,7 +959,3 @@ func FormatAndFlipMoves(moves [][]int8, player int8) []byte {
 func ValidSpace(space int8) bool {
 	return space >= 0 && space <= 27
 }
-
-const (
-	VerticalBar rune = '\u2502' // │
-)
