@@ -54,6 +54,10 @@ type server struct {
 	gamesCacheTime time.Time
 	gamesCacheLock sync.Mutex
 
+	statsCache     [4][]byte
+	statsCacheTime time.Time
+	statsCacheLock sync.Mutex
+
 	leaderboardCache     [8][]byte
 	leaderboardCacheTime time.Time
 	leaderboardCacheLock sync.Mutex
@@ -223,6 +227,58 @@ func (s *server) cachedLeaderboard(matchType int, acey bool, multiPoint bool) []
 	return s.leaderboardCache[i]
 }
 
+func (s *server) cachedStats(statsType int) []byte {
+	s.statsCacheLock.Lock()
+	defer s.statsCacheLock.Unlock()
+
+	if time.Since(s.statsCacheTime) < 5*time.Minute {
+		return s.statsCache[statsType]
+	}
+	s.statsCacheTime = time.Now()
+
+	{
+		stats, err := dailyStats(s.tz)
+		if err != nil {
+			log.Fatalf("failed to fetch server statistics: %s", err)
+		}
+		s.statsCache[0], err = json.Marshal(stats)
+		if err != nil {
+			log.Fatalf("failed to marshal %+v: %s", stats, err)
+		}
+
+		stats, err = cumulativeStats(s.tz)
+		if err != nil {
+			log.Fatalf("failed to fetch server statistics: %s", err)
+		}
+		s.statsCache[1], err = json.Marshal(stats)
+		if err != nil {
+			log.Fatalf("failed to fetch serialize server statistics: %s", err)
+		}
+	}
+
+	{
+		stats, err := botStats("BOT_tabula", s.tz)
+		if err != nil {
+			log.Fatalf("failed to fetch tabula statistics: %s", err)
+		}
+		s.statsCache[2], err = json.Marshal(stats)
+		if err != nil {
+			log.Fatalf("failed to fetch serialize tabula statistics: %s", err)
+		}
+
+		stats, err = botStats("BOT_wildbg", s.tz)
+		if err != nil {
+			log.Fatalf("failed to fetch wildbg statistics: %s", err)
+		}
+		s.statsCache[3], err = json.Marshal(stats)
+		if err != nil {
+			log.Fatalf("failed to fetch serialize wildbg statistics: %s", err)
+		}
+	}
+
+	return s.statsCache[statsType]
+}
+
 func (s *server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -309,58 +365,22 @@ func (s *server) handleLeaderboardRatedAceyMulti(w http.ResponseWriter, r *http.
 
 func (s *server) handlePrintDailyStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	stats, err := dailyStats(s.tz)
-	if err != nil {
-		log.Fatalf("failed to fetch server statistics: %s", err)
-	}
-	buf, err := json.Marshal(stats)
-	if err != nil {
-		log.Fatalf("failed to fetch serialize server statistics: %s", err)
-	}
-	w.Write(buf)
+	w.Write(s.cachedStats(0))
 }
 
 func (s *server) handlePrintCumulativeStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	stats, err := cumulativeStats(s.tz)
-	if err != nil {
-		log.Fatalf("failed to fetch server statistics: %s", err)
-	}
-	buf, err := json.Marshal(stats)
-	if err != nil {
-		log.Fatalf("failed to fetch serialize server statistics: %s", err)
-	}
-	w.Write(buf)
+	w.Write(s.cachedStats(1))
 }
 
 func (s *server) handlePrintTabulaStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	stats, err := botStats("BOT_tabula", s.tz)
-	if err != nil {
-		log.Fatalf("failed to fetch tabula statistics: %s", err)
-	}
-	buf, err := json.Marshal(stats)
-	if err != nil {
-		log.Fatalf("failed to fetch serialize tabula statistics: %s", err)
-	}
-	w.Write(buf)
+	w.Write(s.cachedStats(2))
 }
 
 func (s *server) handlePrintWildBGStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	stats, err := botStats("BOT_wildbg", s.tz)
-	if err != nil {
-		log.Fatalf("failed to fetch wildbg statistics: %s", err)
-	}
-	buf, err := json.Marshal(stats)
-	if err != nil {
-		log.Fatalf("failed to fetch serialize wildbg statistics: %s", err)
-	}
-	w.Write(buf)
+	w.Write(s.cachedStats(3))
 }
 
 func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
