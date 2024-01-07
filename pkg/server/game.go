@@ -11,7 +11,7 @@ import (
 type serverGame struct {
 	id         int
 	created    int64
-	lastActive int64
+	active     int64
 	name       []byte
 	password   []byte
 	client1    *serverClient
@@ -32,10 +32,10 @@ type serverGame struct {
 func newServerGame(id int, variant int8) *serverGame {
 	now := time.Now().Unix()
 	return &serverGame{
-		id:         id,
-		created:    now,
-		lastActive: now,
-		Game:       bgammon.NewGame(variant),
+		id:      id,
+		created: now,
+		active:  now,
+		Game:    bgammon.NewGame(variant),
 	}
 }
 

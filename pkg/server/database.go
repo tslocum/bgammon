@@ -54,7 +54,7 @@ CREATE TABLE account (
 );
 CREATE TABLE game (
 	id       serial PRIMARY KEY,
-	variant  integer NOT NULL,
+	variant  smallint NOT NULL,
 	started  bigint NOT NULL,
 	ended    bigint NOT NULL,
 	player1  text NOT NULL,
@@ -359,6 +359,11 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 	} else if !match {
 		return nil, nil
 	}
+
+	_, err = tx.Exec(context.Background(), "UPDATE account SET active = $1 WHERE id = $2", time.Now().Unix(), a.id)
+	if err != nil {
+		return nil, nil
+	}
 	return a, nil
 }
 
@@ -445,7 +450,23 @@ func recordGameResult(g *bgammon.Game, winType int8, account1 int, account2 int,
 	defer tx.Commit(context.Background())
 
 	_, err = tx.Exec(context.Background(), "INSERT INTO game (variant, started, ended, player1, account1, player2, account2, points, winner, wintype, replay) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", g.Variant, g.Started.Unix(), ended.Unix(), g.Player1.Name, account1, g.Player2.Name, account2, g.Points, g.Winner, winType, bytes.Join(replay, []byte("\n")))
-	return err
+	if err != nil {
+		return err
+	}
+
+	if account1 != 0 {
+		_, err = tx.Exec(context.Background(), "UPDATE account SET active = $1 WHERE id = $2", time.Now().Unix(), account1)
+		if err != nil {
+			return err
+		}
+	}
+	if account2 != 0 {
+		_, err = tx.Exec(context.Background(), "UPDATE account SET active = $1 WHERE id = $2", time.Now().Unix(), account2)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func recordMatchResult(g *bgammon.Game, matchType int, account1 int, account2 int) error {
@@ -485,12 +506,12 @@ func recordMatchResult(g *bgammon.Game, matchType int, account1 int, account2 in
 	rating1New, _, _ := glicko2.Rank(rating1, 50, 0.06, []glicko2.Opponent{ratingPlayer{rating2, 30, 0.06, outcome1}}, 0.6)
 	rating2New, _, _ := glicko2.Rank(rating2, 50, 0.06, []glicko2.Opponent{ratingPlayer{rating1, 30, 0.06, outcome2}}, 0.6)
 
-	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1 WHERE id = $2", int(rating1New*100), account1)
+	active := time.Now().Unix()
+	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1, active = $2 WHERE id = $3", int(rating1New*100), active, account1)
 	if err != nil {
 		return err
 	}
-
-	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1 WHERE id = $2", int(rating2New*100), account2)
+	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1, active = $2 WHERE id = $3", int(rating2New*100), active, account2)
 	return err
 }
 

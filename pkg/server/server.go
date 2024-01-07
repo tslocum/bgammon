@@ -172,12 +172,12 @@ func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().Unix()
 
 	c := &serverClient{
-		id:         <-s.newClientIDs,
-		account:    -1,
-		connected:  now,
-		lastActive: now,
-		commands:   commands,
-		Client:     wsClient,
+		id:        <-s.newClientIDs,
+		account:   -1,
+		connected: now,
+		active:    now,
+		commands:  commands,
+		Client:    wsClient,
 	}
 	s.handleClient(c)
 }
@@ -277,12 +277,12 @@ func (s *server) handleConnection(conn net.Conn) {
 	now := time.Now().Unix()
 
 	c := &serverClient{
-		id:         <-s.newClientIDs,
-		account:    -1,
-		connected:  now,
-		lastActive: now,
-		commands:   commands,
-		Client:     newSocketClient(conn, commands, events, s.verbose),
+		id:        <-s.newClientIDs,
+		account:   -1,
+		connected: now,
+		active:    now,
+		commands:  commands,
+		Client:    newSocketClient(conn, commands, events, s.verbose),
 	}
 	s.sendHello(c)
 	s.handleClient(c)

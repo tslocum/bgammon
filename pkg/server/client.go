@@ -17,7 +17,7 @@ type serverClient struct {
 	name         []byte
 	account      int
 	connected    int64
-	lastActive   int64
+	active       int64
 	lastPing     int64
 	commands     chan []byte
 	playerNumber int8
