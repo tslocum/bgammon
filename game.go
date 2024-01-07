@@ -14,6 +14,12 @@ var boardBottomBlack = []byte("+12-11-10--9--8--7-+---+-6--5--4--3--2--1-+")
 var boardTopWhite = []byte("+24-23-22-21-20-19-+---+18-17-16-15-14-13-+")
 var boardBottomWhite = []byte("+-1--2--3--4--5--6-+---+-7--8--9-10-11-12-+")
 
+const (
+	VariantBackgammon int8 = 0
+	VariantAceyDeucey int8 = 1
+	VariantTabula     int8 = 2
+)
+
 type Game struct {
 	Started time.Time
 	Ended   time.Time
@@ -21,13 +27,13 @@ type Game struct {
 	Player1 Player
 	Player2 Player
 
-	Acey   bool // Acey-deucey.
-	Board  []int8
-	Turn   int8
-	Roll1  int8
-	Roll2  int8
-	Moves  [][]int8 // Pending moves.
-	Winner int8
+	Variant int8 // 0 - Backgammon, 1 - Acey-deucey, 2 - Tabula.
+	Board   []int8
+	Turn    int8
+	Roll1   int8
+	Roll2   int8
+	Moves   [][]int8 // Pending moves.
+	Winner  int8
 
 	Points        int8 // Points required to win the match.
 	DoubleValue   int8 // Doubling cube value.
@@ -37,20 +43,26 @@ type Game struct {
 	Reroll bool // Used in acey-deucey.
 
 	boardStates [][]int8 // One board state for each move to allow undoing a move.
+
+	// Fields after this point are provided for backwards-compatibility only and will eventually be removed.
+	Acey bool // For Boxcars v1.2.1 and earlier.
 }
 
-func NewGame(acey bool) *Game {
+func NewGame(variant int8) *Game {
 	g := &Game{
-		Acey:        acey,
-		Board:       NewBoard(acey),
+		Variant:     variant,
+		Board:       NewBoard(variant),
 		Player1:     NewPlayer(1),
 		Player2:     NewPlayer(2),
 		Points:      1,
 		DoubleValue: 1,
 	}
-	if !g.Acey {
+	if variant == VariantBackgammon {
 		g.Player1.Entered = true
 		g.Player2.Entered = true
+	} else {
+		// Set backwards-compatible field.
+		g.Acey = true
 	}
 	return g
 }
@@ -63,13 +75,13 @@ func (g *Game) Copy() *Game {
 		Player1: g.Player1,
 		Player2: g.Player2,
 
-		Acey:   g.Acey,
-		Board:  make([]int8, len(g.Board)),
-		Turn:   g.Turn,
-		Roll1:  g.Roll1,
-		Roll2:  g.Roll2,
-		Moves:  make([][]int8, len(g.Moves)),
-		Winner: g.Winner,
+		Variant: g.Variant,
+		Board:   make([]int8, len(g.Board)),
+		Turn:    g.Turn,
+		Roll1:   g.Roll1,
+		Roll2:   g.Roll2,
+		Moves:   make([][]int8, len(g.Moves)),
+		Winner:  g.Winner,
 
 		Points:        g.Points,
 		DoubleValue:   g.DoubleValue,
@@ -91,7 +103,8 @@ func (g *Game) NextTurn(replay bool) {
 		return
 	}
 
-	if g.Acey {
+	// Check whether the players have finished entering the board.
+	if g.Variant != VariantBackgammon {
 		if !g.Player1.Entered && PlayerCheckers(g.Board[SpaceHomePlayer], 1) == 0 {
 			g.Player1.Entered = true
 		}
@@ -114,11 +127,11 @@ func (g *Game) NextTurn(replay bool) {
 }
 
 func (g *Game) Reset() {
-	if g.Acey {
+	if g.Variant != VariantBackgammon {
 		g.Player1.Entered = false
 		g.Player2.Entered = false
 	}
-	g.Board = NewBoard(g.Acey)
+	g.Board = NewBoard(g.Variant)
 	g.Turn = 0
 	g.Roll1 = 0
 	g.Roll2 = 0
@@ -324,7 +337,7 @@ ADDMOVES:
 		}
 
 		var foundChecker bool
-		if g.Acey && !entered {
+		if g.Variant != VariantBackgammon && !entered {
 			foundChecker = true
 		} else {
 			for space := 1; space <= 24; space++ {
@@ -361,7 +374,7 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 	}
 
 	haveDiceRoll := func(from, to int8) int8 {
-		diff := SpaceDiff(from, to, g.Acey)
+		diff := SpaceDiff(from, to, g.Variant)
 		var c int8
 		for _, roll := range rolls {
 			if roll == diff {
@@ -374,7 +387,7 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 	haveBearOffDiceRoll := func(diff int8) int8 {
 		var c int8
 		for _, roll := range rolls {
-			if roll == diff || (roll > diff && !g.Acey) {
+			if roll == diff || (roll > diff && g.Variant == VariantBackgammon) {
 				c++
 			}
 		}
@@ -402,7 +415,7 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 			return false
 		}
 
-		diff := SpaceDiff(from, to, g.Acey)
+		diff := SpaceDiff(from, to, g.Variant)
 		for i, roll := range rolls {
 			if roll == diff {
 				rolls = append(rolls[:i], rolls[i+1:]...)
@@ -432,7 +445,7 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 	}
 	if mustEnter { // Must enter from bar.
 		from, to := HomeRange(g.opponentPlayer().Number)
-		IterateSpaces(from, to, g.Acey, func(homeSpace int8, spaceCount int8) {
+		IterateSpaces(from, to, g.Variant, func(homeSpace int8, spaceCount int8) {
 			if movesFound[barSpace*100+homeSpace] {
 				return
 			}
@@ -459,7 +472,7 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 					homeSpace = SpaceHomeOpponent
 					entered = g.Player2.Entered
 				}
-				if !g.Acey || space != homeSpace || entered {
+				if g.Variant == VariantBackgammon || space != homeSpace || entered {
 					continue
 				}
 			}
@@ -478,7 +491,7 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 				if movesFound[space*100+homeSpace] {
 					continue
 				}
-				available := haveBearOffDiceRoll(SpaceDiff(space, homeSpace, g.Acey))
+				available := haveBearOffDiceRoll(SpaceDiff(space, homeSpace, g.Variant))
 				if available > 0 {
 					ok := true
 					if haveDiceRoll(space, homeSpace) == 0 {
@@ -528,11 +541,11 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 				}
 			}
 			if space == SpaceHomePlayer {
-				IterateSpaces(25, lastSpace, g.Acey, f)
+				IterateSpaces(25, lastSpace, g.Variant, f)
 			} else if space == SpaceHomeOpponent {
-				IterateSpaces(1, lastSpace, g.Acey, f)
+				IterateSpaces(1, lastSpace, g.Variant, f)
 			} else {
-				IterateSpaces(space, lastSpace, g.Acey, f)
+				IterateSpaces(space, lastSpace, g.Variant, f)
 			}
 		}
 	}
@@ -810,13 +823,13 @@ func (g *Game) BoardState(player int8, local bool) []byte {
 	return t.Bytes()
 }
 
-func SpaceDiff(from int8, to int8, acey bool) int8 {
+func SpaceDiff(from int8, to int8, variant int8) int8 {
 	if from < 0 || from > 27 || to < 0 || to > 27 {
 		return 0
 	} else if to == SpaceBarPlayer || to == SpaceBarOpponent {
 		return 0
 	} else if from == SpaceHomePlayer || from == SpaceHomeOpponent {
-		if acey {
+		if variant != VariantBackgammon {
 			if from == SpaceHomePlayer {
 				return 25 - to
 			} else {
@@ -849,10 +862,10 @@ func SpaceDiff(from int8, to int8, acey bool) int8 {
 	return diff
 }
 
-func IterateSpaces(from int8, to int8, acey bool, f func(space int8, spaceCount int8)) {
+func IterateSpaces(from int8, to int8, variant int8, f func(space int8, spaceCount int8)) {
 	if from == to || from < 0 || from > 25 || to < 0 || to > 25 {
 		return
-	} else if !acey && (from == 0 || from == 25 || to == 0 || to == 25) {
+	} else if variant == VariantBackgammon && (from == 0 || from == 25 || to == 0 || to == 25) {
 		return
 	}
 	var i int8 = 1

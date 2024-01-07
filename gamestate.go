@@ -66,7 +66,7 @@ func (g *GameState) Pips(player int8) int {
 	} else {
 		pips += int(PlayerCheckers(g.Board[SpaceBarOpponent], player)) * 25
 	}
-	if g.Acey {
+	if g.Variant != VariantBackgammon {
 		if player == 1 && !g.Player1.Entered {
 			pips += int(PlayerCheckers(g.Board[SpaceHomePlayer], player)) * 25
 		} else if player == 2 && !g.Player2.Entered {
@@ -86,7 +86,7 @@ func (g *GameState) Pips(player int8) int {
 
 // MayDouble returns whether the player may send the 'double' command.
 func (g *GameState) MayDouble() bool {
-	if g.Spectating || g.Winner != 0 || g.Acey {
+	if g.Spectating || g.Winner != 0 || g.Variant != VariantBackgammon {
 		return false
 	}
 	return g.Points != 1 && g.Turn != 0 && g.Turn == g.PlayerNumber && g.Roll1 == 0 && !g.DoubleOffered && (g.DoublePlayer == 0 || g.DoublePlayer == g.PlayerNumber)
@@ -118,7 +118,7 @@ func (g *GameState) MayRoll() bool {
 // MayChooseRoll returns whether the player may send the 'ok' command, supplying
 // the chosen roll. This command only applies to acey-deucey games.
 func (g *GameState) MayChooseRoll() bool {
-	return g.Acey && g.Turn != 0 && g.Turn == g.PlayerNumber && ((g.Roll1 == 1 && g.Roll2 == 2) || (g.Roll1 == 2 && g.Roll2 == 1))
+	return g.Variant == VariantAceyDeucey && g.Turn != 0 && g.Turn == g.PlayerNumber && ((g.Roll1 == 1 && g.Roll2 == 2) || (g.Roll1 == 2 && g.Roll2 == 1))
 }
 
 // MayOK returns whether the player may send the 'ok' command.

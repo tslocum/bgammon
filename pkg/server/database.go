@@ -37,12 +37,16 @@ CREATE TABLE account (
 	password                 text NOT NULL,
 	casual_backgammon_single integer NOT NULL DEFAULT 150000,
 	casual_backgammon_multi  integer NOT NULL DEFAULT 150000,
-	casual_acey_single integer NOT NULL DEFAULT 150000,
-	casual_acey_multi  integer NOT NULL DEFAULT 150000,
+	casual_acey_single       integer NOT NULL DEFAULT 150000,
+	casual_acey_multi        integer NOT NULL DEFAULT 150000,
+	casual_tabula_single     integer NOT NULL DEFAULT 150000,
+	casual_tabula_multi      integer NOT NULL DEFAULT 150000,
 	rated_backgammon_single  integer NOT NULL DEFAULT 150000,
 	rated_backgammon_multi   integer NOT NULL DEFAULT 150000,
 	rated_acey_single        integer NOT NULL DEFAULT 150000,
 	rated_acey_multi         integer NOT NULL DEFAULT 150000,
+	rated_tabula_single      integer NOT NULL DEFAULT 150000,
+	rated_tabula_multi       integer NOT NULL DEFAULT 150000,
 	highlight                smallint NOT NULL DEFAULT 1,
 	pips                     smallint NOT NULL DEFAULT 1,
 	moves                    smallint NOT NULL DEFAULT 0,
@@ -50,7 +54,7 @@ CREATE TABLE account (
 );
 CREATE TABLE game (
 	id       serial PRIMARY KEY,
-	acey     integer NOT NULL,
+	variant  integer NOT NULL,
 	started  bigint NOT NULL,
 	ended    bigint NOT NULL,
 	player1  text NOT NULL,
@@ -440,11 +444,7 @@ func recordGameResult(g *bgammon.Game, winType int8, account1 int, account2 int,
 	}
 	defer tx.Commit(context.Background())
 
-	acey := 0
-	if g.Acey {
-		acey = 1
-	}
-	_, err = tx.Exec(context.Background(), "INSERT INTO game (acey, started, ended, player1, account1, player2, account2, points, winner, wintype, replay) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", acey, g.Started.Unix(), ended.Unix(), g.Player1.Name, account1, g.Player2.Name, account2, g.Points, g.Winner, winType, bytes.Join(replay, []byte("\n")))
+	_, err = tx.Exec(context.Background(), "INSERT INTO game (variant, started, ended, player1, account1, player2, account2, points, winner, wintype, replay) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", g.Variant, g.Started.Unix(), ended.Unix(), g.Player1.Name, account1, g.Player2.Name, account2, g.Points, g.Winner, winType, bytes.Join(replay, []byte("\n")))
 	return err
 }
 
@@ -462,39 +462,7 @@ func recordMatchResult(g *bgammon.Game, matchType int, account1 int, account2 in
 	}
 	defer tx.Commit(context.Background())
 
-	var columnName string
-	switch matchType {
-	case matchTypeCasual:
-		if !g.Acey {
-			if g.Points == 1 {
-				columnName = "casual_backgammon_single"
-			} else {
-				columnName = "casual_backgammon_multi"
-			}
-		} else {
-			if g.Points == 1 {
-				columnName = "casual_acey_single"
-			} else {
-				columnName = "casual_acey_multi"
-			}
-		}
-	case matchTypeRated:
-		if !g.Acey {
-			if g.Points == 1 {
-				columnName = "rated_backgammon_single"
-			} else {
-				columnName = "rated_backgammon_multi"
-			}
-		} else {
-			if g.Points == 1 {
-				columnName = "rated_acey_single"
-			} else {
-				columnName = "rated_acey_multi"
-			}
-		}
-	default:
-		log.Panicf("unknown match type: %d", matchType)
-	}
+	columnName := ratingColumn(matchType, g.Variant, g.Points != 1)
 
 	var rating1i int
 	err = tx.QueryRow(context.Background(), "SELECT "+columnName+" FROM account WHERE id = $1", account1).Scan(&rating1i)
@@ -614,7 +582,7 @@ func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {
 	return matches, nil
 }
 
-func getLeaderboard(matchType int, acey bool, multiPoint bool) (*leaderboardResult, error) {
+func getLeaderboard(matchType int, variant int8, multiPoint bool) (*leaderboardResult, error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
@@ -624,39 +592,7 @@ func getLeaderboard(matchType int, acey bool, multiPoint bool) (*leaderboardResu
 	}
 	defer tx.Commit(context.Background())
 
-	var columnName string
-	switch matchType {
-	case matchTypeCasual:
-		if !acey {
-			if !multiPoint {
-				columnName = "casual_backgammon_single"
-			} else {
-				columnName = "casual_backgammon_multi"
-			}
-		} else {
-			if !multiPoint {
-				columnName = "casual_acey_single"
-			} else {
-				columnName = "casual_acey_multi"
-			}
-		}
-	case matchTypeRated:
-		if !acey {
-			if !multiPoint {
-				columnName = "rated_backgammon_single"
-			} else {
-				columnName = "rated_backgammon_multi"
-			}
-		} else {
-			if !multiPoint {
-				columnName = "rated_acey_single"
-			} else {
-				columnName = "rated_acey_multi"
-			}
-		}
-	default:
-		log.Panicf("unknown match type: %d", matchType)
-	}
+	columnName := ratingColumn(matchType, variant, multiPoint)
 
 	result := &leaderboardResult{}
 	rows, err := tx.Query(context.Background(), "SELECT username, "+columnName+" FROM account ORDER BY "+columnName+" DESC LIMIT 100")
@@ -878,6 +814,32 @@ func botStats(name string, tz *time.Location) (*botStatsResult, error) {
 		}
 	}
 	return result, nil
+}
+
+func ratingColumn(matchType int, variant int8, multiPoint bool) string {
+	var columnStart = "casual_"
+	if matchType == matchTypeRated {
+		columnStart = "rated_"
+	}
+
+	var columnMid string
+	switch variant {
+	case bgammon.VariantBackgammon:
+		columnMid = "backgammon_"
+	case bgammon.VariantAceyDeucey:
+		columnMid = "acey_"
+	case bgammon.VariantTabula:
+		columnMid = "tabula_"
+	default:
+		log.Panicf("unknown variant: %d", variant)
+	}
+
+	columnEnd := "single"
+	if multiPoint {
+		columnEnd = "multi"
+	}
+
+	return columnStart + columnMid + columnEnd
 }
 
 func midnight(t time.Time) time.Time {

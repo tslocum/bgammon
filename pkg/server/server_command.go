@@ -328,13 +328,18 @@ COMMANDS:
 				continue
 			}
 
-			var acey bool
+			variant := bgammon.VariantBackgammon
 
-			// Backwards-compatible acey-deucey parameter. Added in v1.1.5.
-			noAcey := bytes.HasPrefix(gameName, []byte("0 ")) || bytes.Equal(gameName, []byte("0"))
-			yesAcey := bytes.HasPrefix(gameName, []byte("1 ")) || bytes.Equal(gameName, []byte("1"))
-			if noAcey || yesAcey {
-				acey = yesAcey
+			// Backwards-compatible acey-deucey and tabula parameter. Acey-deucey added in v1.1.5. Tabula added in v1.2.2.
+			variantNone := bytes.HasPrefix(gameName, []byte("0 ")) || bytes.Equal(gameName, []byte("0"))
+			variantAcey := bytes.HasPrefix(gameName, []byte("1 ")) || bytes.Equal(gameName, []byte("1"))
+			variantTabula := bytes.HasPrefix(gameName, []byte("2 ")) || bytes.Equal(gameName, []byte("2"))
+			if variantNone || variantAcey || variantTabula {
+				if variantAcey {
+					variant = bgammon.VariantAceyDeucey
+				} else if variantTabula {
+					variant = bgammon.VariantTabula
+				}
 				if len(gameName) > 1 {
 					gameName = gameName[2:]
 				} else {
@@ -358,7 +363,7 @@ COMMANDS:
 				gameName = []byte(fmt.Sprintf("%s%s match", cmd.client.name, abbr))
 			}
 
-			g := newServerGame(<-s.newGameIDs, acey)
+			g := newServerGame(<-s.newGameIDs, variant)
 			g.name = gameName
 			g.Points = int8(points)
 			g.password = gamePassword
@@ -545,11 +550,7 @@ COMMANDS:
 			cmd.client.sendNotice("Declined double offer")
 			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf("%s declined double offer.", cmd.client.name))
 
-			acey := 0
-			if clientGame.Acey {
-				acey = 1
-			}
-			clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, clientGame.DoubleValue, acey))}, clientGame.replay...)
+			clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, clientGame.DoubleValue, clientGame.Variant))}, clientGame.replay...)
 
 			clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d d %d 0", clientGame.Turn, clientGame.DoubleValue*2)))
 
@@ -670,12 +671,12 @@ COMMANDS:
 
 				if clientGame.Roll1 > clientGame.Roll2 {
 					clientGame.Turn = 1
-					if clientGame.Acey {
+					if clientGame.Variant != bgammon.VariantBackgammon {
 						reroll()
 					}
 				} else if clientGame.Roll2 > clientGame.Roll1 {
 					clientGame.Turn = 2
-					if clientGame.Acey {
+					if clientGame.Variant != bgammon.VariantBackgammon {
 						reroll()
 					}
 				} else {
@@ -713,13 +714,13 @@ COMMANDS:
 						})
 						if clientGame.Roll1 > clientGame.Roll2 {
 							clientGame.Turn = 1
-							if clientGame.Acey {
+							if clientGame.Variant != bgammon.VariantBackgammon {
 								reroll()
 							}
 							break
 						} else if clientGame.Roll2 > clientGame.Roll1 {
 							clientGame.Turn = 2
-							if clientGame.Acey {
+							if clientGame.Variant != bgammon.VariantBackgammon {
 								reroll()
 							}
 							break
@@ -828,7 +829,7 @@ COMMANDS:
 				backgammon := bgammon.PlayerCheckers(clientGame.Board[playerBar], opponent) != 0
 				if !backgammon {
 					homeStart, homeEnd := bgammon.HomeRange(clientGame.Winner)
-					bgammon.IterateSpaces(homeStart, homeEnd, clientGame.Acey, func(space int8, spaceCount int8) {
+					bgammon.IterateSpaces(homeStart, homeEnd, clientGame.Variant, func(space int8, spaceCount int8) {
 						if bgammon.PlayerCheckers(clientGame.Board[space], opponent) != 0 {
 							backgammon = true
 						}
@@ -836,7 +837,17 @@ COMMANDS:
 				}
 
 				var winPoints int8
-				if !clientGame.Acey {
+				switch clientGame.Variant {
+				case bgammon.VariantAceyDeucey:
+					for space := int8(0); space < bgammon.BoardSpaces; space++ {
+						if (space == bgammon.SpaceHomePlayer || space == bgammon.SpaceHomeOpponent) && opponentEntered {
+							continue
+						}
+						winPoints += bgammon.PlayerCheckers(clientGame.Board[space], opponent)
+					}
+				case bgammon.VariantTabula:
+					winPoints = 1
+				default:
 					if backgammon {
 						winPoints = 3 // Award backgammon.
 					} else if clientGame.Board[opponentHome] == 0 {
@@ -844,20 +855,9 @@ COMMANDS:
 					} else {
 						winPoints = 1
 					}
-				} else {
-					for space := int8(0); space < bgammon.BoardSpaces; space++ {
-						if (space == bgammon.SpaceHomePlayer || space == bgammon.SpaceHomeOpponent) && opponentEntered {
-							continue
-						}
-						winPoints += bgammon.PlayerCheckers(clientGame.Board[space], opponent)
-					}
 				}
 
-				acey := 0
-				if clientGame.Acey {
-					acey = 1
-				}
-				clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, winPoints, acey))}, clientGame.replay...)
+				clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, winPoints, clientGame.Variant))}, clientGame.replay...)
 
 				r1, r2 := clientGame.Roll1, clientGame.Roll2
 				if r2 > r1 {
@@ -892,7 +892,7 @@ COMMANDS:
 				}
 
 				winType := winPoints
-				if clientGame.Acey {
+				if clientGame.Variant != bgammon.VariantBackgammon {
 					winType = 1
 				}
 				err := recordGameResult(clientGame.Game, winType, clientGame.client1.account, clientGame.client2.account, clientGame.replay)
@@ -1029,7 +1029,7 @@ COMMANDS:
 				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d r %d-%d%s", clientGame.Turn, r1, r2, movesFormatted)))
 			}
 
-			if clientGame.Acey && ((clientGame.Roll1 == 1 && clientGame.Roll2 == 2) || (clientGame.Roll1 == 2 && clientGame.Roll2 == 1)) && len(clientGame.Moves) == 2 {
+			if clientGame.Variant == bgammon.VariantAceyDeucey && ((clientGame.Roll1 == 1 && clientGame.Roll2 == 2) || (clientGame.Roll1 == 2 && clientGame.Roll2 == 1)) && len(clientGame.Moves) == 2 {
 				var doubles int
 				if len(params) > 0 {
 					doubles, _ = strconv.Atoi(string(params[0]))
@@ -1055,7 +1055,7 @@ COMMANDS:
 					ev.Player = string(cmd.client.name)
 					client.sendEvent(ev)
 				})
-			} else if clientGame.Acey && clientGame.Reroll {
+			} else if clientGame.Variant == bgammon.VariantAceyDeucey && clientGame.Reroll {
 				recordEvent()
 				clientGame.NextTurn(true)
 				clientGame.Roll1, clientGame.Roll2 = 0, 0
@@ -1125,7 +1125,7 @@ COMMANDS:
 			} else if clientGame.rematch != 0 && clientGame.rematch != cmd.client.playerNumber {
 				s.gamesLock.Lock()
 
-				newGame := newServerGame(<-s.newGameIDs, clientGame.Acey)
+				newGame := newServerGame(<-s.newGameIDs, clientGame.Variant)
 				newGame.name = clientGame.name
 				newGame.Points = clientGame.Points
 				newGame.password = clientGame.password
@@ -1315,7 +1315,7 @@ COMMANDS:
 			clientGame.Turn = 1
 			clientGame.Roll1 = 6
 			clientGame.Roll2 = 6
-			clientGame.Board = []int8{1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, 0, 0}
+			clientGame.Board = []int8{7, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -7, -7, 0, 0}
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)

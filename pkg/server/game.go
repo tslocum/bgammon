@@ -29,13 +29,13 @@ type serverGame struct {
 	*bgammon.Game
 }
 
-func newServerGame(id int, acey bool) *serverGame {
+func newServerGame(id int, variant int8) *serverGame {
 	now := time.Now().Unix()
 	return &serverGame{
 		id:         id,
 		created:    now,
 		lastActive: now,
-		Game:       bgammon.NewGame(acey),
+		Game:       bgammon.NewGame(variant),
 	}
 }
 
@@ -369,8 +369,11 @@ func (g *serverGame) listing(playerName []byte) *bgammon.GameListing {
 	}
 
 	name := string(g.name)
-	if g.Acey {
+	switch g.Variant {
+	case bgammon.VariantAceyDeucey:
 		name = "(Acey-deucey) " + name
+	case bgammon.VariantTabula:
+		name = "(Tabula) " + name
 	}
 
 	return &bgammon.GameListing{

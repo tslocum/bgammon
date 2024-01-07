@@ -1,6 +1,7 @@
 package bgammon
 
 import (
+	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -21,15 +22,18 @@ const BoardSpaces = 28
 // player 2's checkers. The board's space numbering is always from the
 // perspective of the current player (i.e. the 1 space will always be in the
 // current player's home board).
-func NewBoard(acey bool) []int8 {
+func NewBoard(variant int8) []int8 {
 	space := make([]int8, BoardSpaces)
-	if acey {
-		space[SpaceHomePlayer], space[SpaceHomeOpponent] = 15, -15
-	} else {
+	switch variant {
+	case VariantBackgammon:
 		space[24], space[1] = 2, -2
 		space[19], space[6] = -5, 5
 		space[17], space[8] = -3, 3
 		space[13], space[12] = 5, -5
+	case VariantAceyDeucey, VariantTabula:
+		space[SpaceHomePlayer], space[SpaceHomeOpponent] = 15, -15
+	default:
+		log.Panicf("failed to initialize board: unknown variant: %d", variant)
 	}
 	return space
 }
@@ -43,14 +47,14 @@ func HomeRange(player int8) (from int8, to int8) {
 }
 
 // RollForMove returns the roll needed to move a checker from the provided spaces.
-func RollForMove(from int8, to int8, player int8, acey bool) int8 {
+func RollForMove(from int8, to int8, player int8, variant int8) int8 {
 	if !ValidSpace(from) || !ValidSpace(to) {
 		return 0
 	}
 
 	// Handle standard moves.
 	if from >= 1 && from <= 24 && to >= 1 && to <= 24 {
-		return SpaceDiff(from, to, acey)
+		return SpaceDiff(from, to, variant)
 	}
 
 	playerHome := SpaceHomePlayer
