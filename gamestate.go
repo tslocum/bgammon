@@ -74,7 +74,7 @@ func (g *GameState) Pips(player int8) int {
 		}
 	}
 	for i := 1; i < 25; i++ {
-		if player == g.PlayerNumber {
+		if player == g.PlayerNumber && g.Variant != VariantTabula {
 			spaceValue = i
 		} else {
 			spaceValue = 25 - i
