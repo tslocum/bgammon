@@ -637,6 +637,7 @@ COMMANDS:
 				ev := &bgammon.EventRolled{
 					Roll1: clientGame.Roll1,
 					Roll2: clientGame.Roll2,
+					Roll3: clientGame.Roll3,
 				}
 				ev.Player = string(cmd.client.name)
 				if clientGame.Turn == 0 && client.playerNumber == 2 {
@@ -651,12 +652,13 @@ COMMANDS:
 					clientGame.Roll1 = 0
 					clientGame.Roll2 = 0
 					if !clientGame.roll(clientGame.Turn) {
-						log.Fatal("failed to re-roll while starting acey-deucey game")
+						log.Fatal("failed to re-roll while starting game")
 					}
 
 					ev := &bgammon.EventRolled{
 						Roll1: clientGame.Roll1,
 						Roll2: clientGame.Roll2,
+						Roll3: clientGame.Roll3,
 					}
 					ev.Player = string(clientGame.Player1.Name)
 					if clientGame.Turn == 2 {
@@ -789,7 +791,6 @@ COMMANDS:
 					sendUsage()
 					continue COMMANDS
 				}
-
 				if !bgammon.ValidSpace(from) || !bgammon.ValidSpace(to) {
 					cmd.client.sendEvent(&bgammon.EventFailedMove{
 						From:   from,
@@ -799,7 +800,7 @@ COMMANDS:
 					continue COMMANDS
 				}
 
-				from, to = bgammon.FlipSpace(from, cmd.client.playerNumber), bgammon.FlipSpace(to, cmd.client.playerNumber)
+				from, to = bgammon.FlipSpace(from, cmd.client.playerNumber, clientGame.Variant), bgammon.FlipSpace(to, cmd.client.playerNumber, clientGame.Variant)
 				moves = append(moves, []int8{from, to})
 			}
 
@@ -828,7 +829,7 @@ COMMANDS:
 
 				backgammon := bgammon.PlayerCheckers(clientGame.Board[playerBar], opponent) != 0
 				if !backgammon {
-					homeStart, homeEnd := bgammon.HomeRange(clientGame.Winner)
+					homeStart, homeEnd := bgammon.HomeRange(clientGame.Winner, clientGame.Variant)
 					bgammon.IterateSpaces(homeStart, homeEnd, clientGame.Variant, func(space int8, spaceCount int8) {
 						if bgammon.PlayerCheckers(clientGame.Board[space], opponent) != 0 {
 							backgammon = true
@@ -859,15 +860,26 @@ COMMANDS:
 
 				clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, winPoints, clientGame.Variant))}, clientGame.replay...)
 
-				r1, r2 := clientGame.Roll1, clientGame.Roll2
+				r1, r2, r3 := clientGame.Roll1, clientGame.Roll2, clientGame.Roll3
 				if r2 > r1 {
 					r1, r2 = r2, r1
+				}
+				if r3 > r1 {
+					r1, r3 = r3, r1
+				}
+				if r3 > r2 {
+					r2, r3 = r3, r2
 				}
 				var movesFormatted []byte
 				if len(clientGame.Moves) != 0 {
 					movesFormatted = append([]byte(" "), bgammon.FormatMoves(clientGame.Moves)...)
 				}
-				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d r %d-%d%s", clientGame.Turn, r1, r2, movesFormatted)))
+				line := []byte(fmt.Sprintf("%d r %d-%d", clientGame.Turn, r1, r2))
+				if r3 > 0 {
+					line = append(line, []byte(fmt.Sprintf("-%d", r3))...)
+				}
+				line = append(line, movesFormatted...)
+				clientGame.replay = append(clientGame.replay, line)
 
 				winEvent = &bgammon.EventWin{
 					Points: winPoints * clientGame.DoubleValue,
@@ -913,7 +925,7 @@ COMMANDS:
 
 			clientGame.eachClient(func(client *serverClient) {
 				ev := &bgammon.EventMoved{
-					Moves: bgammon.FlipMoves(expandedMoves, client.playerNumber),
+					Moves: bgammon.FlipMoves(expandedMoves, client.playerNumber, clientGame.Variant),
 				}
 				ev.Player = string(cmd.client.name)
 				client.sendEvent(ev)
@@ -952,7 +964,7 @@ COMMANDS:
 			} else {
 				clientGame.eachClient(func(client *serverClient) {
 					ev := &bgammon.EventMoved{
-						Moves: bgammon.FlipMoves(undoMoves, client.playerNumber),
+						Moves: bgammon.FlipMoves(undoMoves, client.playerNumber, clientGame.Variant),
 					}
 					ev.Player = string(cmd.client.name)
 
@@ -1009,7 +1021,7 @@ COMMANDS:
 
 			legalMoves := clientGame.LegalMoves(false)
 			if len(legalMoves) != 0 {
-				available := bgammon.FlipMoves(legalMoves, cmd.client.playerNumber)
+				available := bgammon.FlipMoves(legalMoves, cmd.client.playerNumber, clientGame.Variant)
 				bgammon.SortMoves(available)
 				cmd.client.sendEvent(&bgammon.EventFailedOk{
 					Reason: fmt.Sprintf("The following legal moves are available: %s", bgammon.FormatMoves(available)),
@@ -1018,15 +1030,26 @@ COMMANDS:
 			}
 
 			recordEvent := func() {
-				r1, r2 := clientGame.Roll1, clientGame.Roll2
+				r1, r2, r3 := clientGame.Roll1, clientGame.Roll2, clientGame.Roll3
 				if r2 > r1 {
 					r1, r2 = r2, r1
+				}
+				if r3 > r1 {
+					r1, r3 = r3, r1
+				}
+				if r3 > r2 {
+					r2, r3 = r3, r2
 				}
 				var movesFormatted []byte
 				if len(clientGame.Moves) != 0 {
 					movesFormatted = append([]byte(" "), bgammon.FormatMoves(clientGame.Moves)...)
 				}
-				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d r %d-%d%s", clientGame.Turn, r1, r2, movesFormatted)))
+				line := []byte(fmt.Sprintf("%d r %d-%d", clientGame.Turn, r1, r2))
+				if r3 > 0 {
+					line = append(line, []byte(fmt.Sprintf("-%d", r3))...)
+				}
+				line = append(line, movesFormatted...)
+				clientGame.replay = append(clientGame.replay, line)
 			}
 
 			if clientGame.Variant == bgammon.VariantAceyDeucey && ((clientGame.Roll1 == 1 && clientGame.Roll2 == 2) || (clientGame.Roll1 == 2 && clientGame.Roll2 == 1)) && len(clientGame.Moves) == 2 {
@@ -1094,6 +1117,7 @@ COMMANDS:
 							ev := &bgammon.EventRolled{
 								Roll1: clientGame.Roll1,
 								Roll2: clientGame.Roll2,
+								Roll3: clientGame.Roll3,
 							}
 							if clientGame.Turn == 1 {
 								ev.Player = gameState.Player1.Name
@@ -1314,8 +1338,14 @@ COMMANDS:
 
 			clientGame.Turn = 1
 			clientGame.Roll1 = 6
-			clientGame.Roll2 = 6
-			clientGame.Board = []int8{7, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -7, -7, 0, 0}
+			clientGame.Roll2 = 1
+			clientGame.Roll3 = 1
+			clientGame.Variant = 2
+			clientGame.Player1.Entered = true
+			clientGame.Player2.Entered = true
+			clientGame.Board = []int8{0, 0, 0, 0, 0, -3, 0, 0, -3, -2, -2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 9, 3, 1, -5, 1, 1, 0}
+
+			log.Println(clientGame.Board[0:28])
 
 			clientGame.eachClient(func(client *serverClient) {
 				clientGame.sendBoard(client)

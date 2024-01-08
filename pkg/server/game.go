@@ -74,6 +74,9 @@ func (g *serverGame) roll(player int8) bool {
 
 	g.Roll1 = int8(RandInt(6) + 1)
 	g.Roll2 = int8(RandInt(6) + 1)
+	if g.Variant == bgammon.VariantTabula {
+		g.Roll3 = int8(RandInt(6) + 1)
+	}
 
 	return true
 }
@@ -126,17 +129,21 @@ func (g *serverGame) sendBoard(client *serverClient) {
 			}
 
 			// Flip board.
-			for space := int8(1); space <= 24; space++ {
-				ev.Board[space] = g.Game.Board[bgammon.FlipSpace(space, client.playerNumber)] * -1
+			if g.Variant == bgammon.VariantTabula {
+				for space := int8(1); space <= 24; space++ {
+					ev.Board[space] = g.Game.Board[space] * -1
+				}
+			} else {
+				for space := int8(1); space <= 24; space++ {
+					ev.Board[space] = g.Game.Board[bgammon.FlipSpace(space, client.playerNumber, g.Variant)] * -1
+				}
 			}
 			ev.Board[bgammon.SpaceHomePlayer], ev.Board[bgammon.SpaceHomeOpponent] = ev.Board[bgammon.SpaceHomeOpponent]*-1, ev.Board[bgammon.SpaceHomePlayer]*-1
 			ev.Board[bgammon.SpaceBarPlayer], ev.Board[bgammon.SpaceBarOpponent] = ev.Board[bgammon.SpaceBarOpponent]*-1, ev.Board[bgammon.SpaceBarPlayer]*-1
-
-			ev.Moves = bgammon.FlipMoves(g.Game.Moves, client.playerNumber)
-
-			legalMoves := g.LegalMoves(false)
+			ev.Moves = bgammon.FlipMoves(g.Game.Moves, client.playerNumber, g.Variant)
+			ev.GameState.Available = g.LegalMoves(false)
 			for i := range ev.GameState.Available {
-				ev.GameState.Available[i][0], ev.GameState.Available[i][1] = bgammon.FlipSpace(legalMoves[i][0], client.playerNumber), bgammon.FlipSpace(legalMoves[i][1], client.playerNumber)
+				ev.GameState.Available[i][0], ev.GameState.Available[i][1] = bgammon.FlipSpace(ev.GameState.Available[i][0], client.playerNumber, g.Variant), bgammon.FlipSpace(ev.GameState.Available[i][1], client.playerNumber, g.Variant)
 			}
 		}
 

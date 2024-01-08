@@ -80,6 +80,7 @@ type EventRolled struct {
 	Event
 	Roll1    int8
 	Roll2    int8
+	Roll3    int8 // Used in tabula games.
 	Selected bool // Whether the roll is selected by the player (used in acey-deucey games).
 }
 

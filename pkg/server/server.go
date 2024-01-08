@@ -112,6 +112,25 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 
 	allowDebugCommands = allowDebug
 
+	/*gm := bgammon.NewGame(bgammon.VariantBackgammon)
+	gm.Turn = 1
+	gm.Roll1 = 2
+	gm.Roll2 = 3
+	log.Println(gm.MayBearOff(1, false))
+	gm.Player1.Entered = true
+	gm.Player2.Entered = true
+	log.Println(gm.Board)
+	//ok, expanded := gm.AddMoves([][]int8{{3, 1}}, false)
+	//log.Println(ok, expanded, "!")
+	log.Println(gm.MayBearOff(1, false))
+	gs := &bgammon.GameState{
+		Game:         gm,
+		PlayerNumber: 1,
+		Available:    gm.LegalMoves(false),
+	}
+	log.Printf("%+v", gs)
+	os.Exit(0)*/
+
 	go s.handleNewGameIDs()
 	go s.handleNewClientIDs()
 	go s.handleCommands()
