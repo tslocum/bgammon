@@ -6,6 +6,8 @@ import (
 	"log"
 	"strconv"
 	"time"
+
+	"code.rocket9labs.com/tslocum/tabula"
 )
 
 var boardTopBlack = []byte("+13-14-15-16-17-18-+---+19-20-21-22-23-24-+")
@@ -71,7 +73,7 @@ func NewGame(variant int8) *Game {
 	return g
 }
 
-func (g *Game) Copy() *Game {
+func (g *Game) Copy(shallow bool) *Game {
 	newGame := &Game{
 		Started: g.Started,
 		Ended:   g.Ended,
@@ -94,14 +96,15 @@ func (g *Game) Copy() *Game {
 		DoubleOffered: g.DoubleOffered,
 
 		Reroll: g.Reroll,
-
-		boardStates:   make([][]int8, len(g.boardStates)),
-		enteredStates: make([][2]bool, len(g.enteredStates)),
 	}
 	copy(newGame.Board, g.Board)
 	copy(newGame.Moves, g.Moves)
-	copy(newGame.boardStates, g.boardStates)
-	copy(newGame.enteredStates, g.enteredStates)
+	if !shallow {
+		newGame.boardStates = make([][]int8, len(g.boardStates))
+		newGame.enteredStates = make([][2]bool, len(g.enteredStates))
+		copy(newGame.boardStates, g.boardStates)
+		copy(newGame.enteredStates, g.enteredStates)
+	}
 	return newGame
 }
 
@@ -276,7 +279,7 @@ func (g *Game) ExpandMove(move []int8, currentSpace int8, moves [][]int8, local 
 
 			currentSpace = lm[1]
 
-			gc := g.Copy()
+			gc := g.Copy(true)
 			gc.addMove(lm)
 			m, ok := gc.ExpandMove(move, currentSpace, newMoves, local)
 			if ok {
@@ -296,7 +299,7 @@ func (g *Game) AddMoves(moves [][]int8, local bool) (bool, [][]int8) {
 	var addMoves [][]int8
 	var undoMoves [][]int8
 
-	gameCopy := g.Copy()
+	gameCopy := g.Copy(false)
 
 	validateOffset := 0
 VALIDATEMOVES:
@@ -493,240 +496,35 @@ func (g *Game) HaveBearOffDiceRoll(diff int8) int8 {
 	return c
 }
 
-// totalMoves tries all legal moves in a game and returns all of the possible combinations of moves that a player may make.
-func (g *Game) TotalMoves(local bool) [][][]int8 {
-	var maxMoves int
-	var allMoves [][][]int8
-	for _, move := range g.LegalMoves(local) {
-		for _, newMoves := range g._totalMoves(g.Moves, move, local) {
-			if len(newMoves) > maxMoves {
-				maxMoves = len(newMoves)
-			} else if len(newMoves) < maxMoves {
-				continue
-			}
-			allMoves = append(allMoves, newMoves)
-		}
-	}
-	var newMoves [][][]int8
-	for _, moves := range allMoves {
-		if len(moves) == maxMoves {
-			newMoves = append(newMoves, moves)
-		}
-	}
-	return newMoves
-}
-
-// totalMoves tries all legal moves in a game and returns all of the possible combinations of moves that a player may make.
-func (g *Game) _totalMoves(moves [][]int8, move []int8, local bool) [][][]int8 {
-	gc := g.Copy()
-	if !gc.addMove(move) {
-		log.Panicf("failed to add move %+v to game %+v", move, g)
-	}
-
-	var allMoves [][][]int8
-	{
-		newMoves := append([][]int8{}, moves...)
-		newMoves = append(newMoves, move)
-		allMoves = append(allMoves, newMoves)
-		maxMoves := len(newMoves)
-		for _, m := range gc.LegalMoves(local) {
-			for _, newMoves := range gc._totalMoves(newMoves, m, local) {
-				if len(newMoves) > maxMoves {
-					maxMoves = len(newMoves)
-				} else if len(newMoves) < maxMoves {
-					continue
-				}
-				allMoves = append(allMoves, newMoves)
-			}
-		}
-	}
-
-	var newMoves [][][]int8
-TOTALMOVES:
-	for _, m1 := range allMoves {
-		for _, m2 := range newMoves {
-			if movesEqual(m1, m2) {
-				continue TOTALMOVES
-			}
-		}
-		newMoves = append(newMoves, m1)
-	}
-	return allMoves
-}
-
 func (g *Game) LegalMoves(local bool) [][]int8 {
-	if g.Winner != 0 || g.Roll1 == 0 || g.Roll2 == 0 {
+	if g.Turn == 0 {
 		return nil
 	}
-
+	b, ok := g.TabulaBoard()
+	if !ok {
+		return nil
+	}
+	available, _ := b.Available(g.Turn)
 	var moves [][]int8
-	var movesFound = make(map[int8]bool)
-
-	var mustEnter bool
-	var barSpace int8
-	if PlayerCheckers(g.Board[SpaceBarPlayer], g.Turn) > 0 {
-		mustEnter = true
-		barSpace = SpaceBarPlayer
-	} else if PlayerCheckers(g.Board[SpaceBarOpponent], g.Turn) > 0 {
-		mustEnter = true
-		barSpace = SpaceBarOpponent
-	}
-	if mustEnter { // Must enter from bar.
-		from, to := HomeRange(g.opponentPlayer().Number, g.Variant)
-		if g.Variant == VariantTabula {
-			from, to = 1, 6
-		}
-		IterateSpaces(from, to, g.Variant, func(homeSpace int8, spaceCount int8) {
-			if false && movesFound[barSpace*100+homeSpace] {
-				return
+	for i := range available {
+		for j := range available[i] {
+			if available[i][j][0] == 0 && available[i][j][1] == 0 {
+				break
 			}
-			available := g.HaveDiceRoll(barSpace, homeSpace)
-			if available == 0 {
-				return
-			}
-			opponentCheckers := OpponentCheckers(g.Board[homeSpace], g.Turn)
-			if opponentCheckers <= 1 {
-				moves = append(moves, []int8{barSpace, homeSpace})
-				movesFound[barSpace*100+homeSpace] = true
-			}
-		})
-	} else {
-		mayBearOff := g.MayBearOff(g.Turn, false)
-		for sp := range g.Board {
-			space := int8(sp)
-			if space == SpaceBarPlayer || space == SpaceBarOpponent { // Handled above.
-				continue
-			} else if space == SpaceHomePlayer || space == SpaceHomeOpponent {
-				homeSpace := SpaceHomePlayer
-				entered := g.Player1.Entered
-				if g.Turn == 2 {
-					homeSpace = SpaceHomeOpponent
-					entered = g.Player2.Entered
-				}
-				if g.Variant == VariantBackgammon || space != homeSpace || entered {
-					continue
-				}
-			}
-
-			checkers := g.Board[space]
-			playerCheckers := PlayerCheckers(checkers, g.Turn)
-			if playerCheckers == 0 {
-				continue
-			}
-
-			if mayBearOff {
-				homeSpace := SpaceHomePlayer
-				if g.Turn == 2 {
-					homeSpace = SpaceHomeOpponent
-				}
-				if false && movesFound[space*100+homeSpace] {
-					continue
-				}
-				available := g.HaveBearOffDiceRoll(SpaceDiff(space, homeSpace, g.Variant))
-				if available > 0 {
-					ok := true
-					if g.Variant == VariantBackgammon && g.HaveDiceRoll(space, homeSpace) == 0 {
-						_, homeEnd := HomeRange(g.Turn, g.Variant)
-						if g.Turn == 2 && g.Variant != VariantTabula {
-							for homeSpace := space - 1; homeSpace >= homeEnd; homeSpace-- {
-								if PlayerCheckers(g.Board[homeSpace], g.Turn) != 0 {
-									ok = false
-									break
-								}
-							}
-						} else {
-							for homeSpace := space + 1; homeSpace <= homeEnd; homeSpace++ {
-								if PlayerCheckers(g.Board[homeSpace], g.Turn) != 0 {
-									ok = false
-									break
-								}
-							}
-						}
-					}
-					if ok {
-						moves = append(moves, []int8{space, homeSpace})
-						movesFound[space*100+homeSpace] = true
+			if PlayerCheckers(g.Board[available[i][j][0]], g.Turn) != 0 {
+				var found bool
+				for _, m := range moves {
+					if m[0] == available[i][j][0] && m[1] == available[i][j][1] {
+						found = true
+						break
 					}
 				}
-			}
-
-			// Move normally.
-			var lastSpace int8 = 0
-			if g.Turn == 2 || g.Variant == VariantTabula {
-				lastSpace = 25
-			}
-
-			f := func(to int8, spaceCount int8) {
-				if false && movesFound[space*100+to] {
-					return
-				}
-				available := g.HaveDiceRoll(space, to)
-				if available == 0 {
-					return
-				}
-
-				opponentCheckers := OpponentCheckers(g.Board[to], g.Turn)
-				if opponentCheckers <= 1 {
-					moves = append(moves, []int8{space, to})
-					movesFound[space*100+to] = true
+				if !found {
+					moves = append(moves, []int8{available[i][j][0], available[i][j][1]})
 				}
 			}
-			if space == SpaceHomePlayer {
-				iterateSpace := int8(25)
-				if g.Variant == VariantTabula {
-					iterateSpace = 1
-				}
-				IterateSpaces(iterateSpace, lastSpace, g.Variant, f)
-			} else if space == SpaceHomeOpponent {
-				IterateSpaces(1, lastSpace, g.Variant, f)
-			} else {
-				IterateSpaces(space, lastSpace, g.Variant, f)
-			}
 		}
 	}
-
-	// Simulate all possible moves to their final value and only allow moves that will achieve the maximum total moves.
-	var maxMoves int8
-	moveCounts := make([]int8, len(moves))
-	for i, move := range moves {
-		var moveCount int
-		allMoves := g._totalMoves(g.Moves, move, local)
-		if len(allMoves) > 0 {
-			moveCount = len(allMoves[0])
-		}
-		moveCounts[i] = int8(moveCount)
-		if moveCounts[i] > maxMoves {
-			maxMoves = moveCounts[i]
-		}
-	}
-	if maxMoves > 1 {
-		var newMoves [][]int8
-		for i, move := range moves {
-			if moveCounts[i] >= maxMoves {
-				newMoves = append(newMoves, move)
-			}
-		}
-		moves = newMoves
-	}
-
-	replaceSpace := func(i int8) int8 {
-		if g.Turn == 1 && i == SpaceHomeOpponent {
-			return SpaceHomePlayer
-		} else if g.Turn == 1 && i == SpaceBarOpponent {
-			return SpaceBarPlayer
-		} else if g.Turn == 2 && i == SpaceHomePlayer {
-			return SpaceHomeOpponent
-		} else if g.Turn == 2 && i == SpaceBarPlayer {
-			return SpaceBarOpponent
-		}
-		return i
-	}
-	for i := range moves {
-		for j := range moves[i] {
-			moves[i][j] = replaceSpace(moves[i][j])
-		}
-	}
-
 	return moves
 }
 
@@ -1153,123 +951,57 @@ func ValidSpace(space int8) bool {
 	return space >= 0 && space <= 27
 }
 
-func movesEqual(a [][]int8, b [][]int8) bool {
-	l := len(a)
-	if len(b) != l {
-		return false
+func (g *Game) TabulaBoard() (tabula.Board, bool) {
+	var roll1, roll2, roll3, roll4 int8
+	roll1, roll2 = int8(g.Roll1), int8(g.Roll2)
+	if g.Variant == VariantTabula {
+		roll3 = int8(g.Roll3)
+	} else if roll1 == roll2 {
+		roll3, roll4 = int8(g.Roll1), int8(g.Roll2)
 	}
-	switch l {
-	case 0:
-		return true
-	case 1:
-		return a[0][0] == b[0][0] && a[0][1] == b[0][1]
-	case 2:
-		return (a[0][0] == b[0][0] && a[0][1] == b[0][1] && a[1][0] == b[1][0] && a[1][1] == b[1][1]) || // 1, 2
-			(a[0][0] == b[1][0] && a[0][1] == b[1][1] && a[1][0] == b[0][0] && a[1][1] == b[0][1]) // 2, 1
-	case 3:
-		if a[0][0] == b[0][0] && a[0][1] == b[0][1] { // 1
-			if (a[1][0] == b[1][0] && a[1][1] == b[1][1] && a[2][0] == b[2][0] && a[2][1] == b[2][1]) || // 2, 3
-				(a[1][0] == b[2][0] && a[1][1] == b[2][1] && a[2][0] == b[1][0] && a[2][1] == b[1][1]) { // 3, 2
-				return true
-			}
+	entered1, entered2 := int8(1), int8(1)
+	if g.Variant != VariantBackgammon {
+		if !g.Player1.Entered {
+			entered1 = 0
 		}
-		if a[0][0] == b[1][0] && a[0][1] == b[1][1] { // 2
-			if (a[1][0] == b[0][0] && a[1][1] == b[0][1] && a[2][0] == b[2][0] && a[2][1] == b[2][1]) ||
-				(a[1][0] == b[2][0] && a[1][1] == b[2][1] && a[2][0] == b[0][0] && a[2][1] == b[0][1]) {
-				return true
-			}
+		if !g.Player2.Entered {
+			entered2 = 0
 		}
-		if a[0][0] == b[2][0] && a[0][1] == b[2][1] { // 3
-			if (a[1][0] == b[0][0] && a[1][1] == b[0][1] && a[2][0] == b[1][0] && a[2][1] == b[1][1]) || // 1, 2
-				(a[1][0] == b[1][0] && a[1][1] == b[1][1] && a[2][0] == b[0][0] && a[2][1] == b[0][1]) { // 2, 1
-				return true
-			}
-		}
-		return false
-	case 4:
-		if a[0][0] == b[0][0] && a[0][1] == b[0][1] { // 1
-			if a[1][0] == b[1][0] && a[1][1] == b[1][1] { // 2
-				if (a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) || // 3,4
-					(a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) { // 4,3
-					return true
-				}
-			}
-			if a[1][0] == b[2][0] && a[1][1] == b[2][1] { // 3
-				if (a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) || // 2,4
-					(a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) { // 4,2
-					return true
-				}
-			}
-			if a[1][0] == b[3][0] && a[1][1] == b[3][1] { // 4
-				if (a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) || // 3,2
-					(a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) { // 2,3
-					return true
-				}
-			}
-		}
-		if a[0][0] == b[1][0] && a[0][1] == b[1][1] { // 2
-			if a[1][0] == b[0][0] && a[1][1] == b[0][1] { // 1
-				if (a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) || // 3,4
-					(a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) { // 4,3
-					return true
-				}
-			}
-			if a[1][0] == b[2][0] && a[1][1] == b[2][1] { // 3
-				if (a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) || // 4,1
-					(a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) { // 1,4
-					return true
-				}
-			}
-			if a[1][0] == b[3][0] && a[1][1] == b[3][1] { // 4
-				if (a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) || // 3,1
-					(a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) { // 1,3
-					return true
-				}
-			}
-		}
-		if a[0][0] == b[2][0] && a[0][1] == b[2][1] { // 3
-			if a[1][0] == b[0][0] && a[1][1] == b[0][1] { // 1
-				if (a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) || // 2,4
-					(a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) { // 4,2
-					return true
-				}
-			}
-			if a[1][0] == b[1][0] && a[1][1] == b[1][1] { // 2
-				if (a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) || // 1,4
-					(a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) { // 4,1
-					return true
-				}
-			}
-			if a[1][0] == b[3][0] && a[1][1] == b[3][1] { // 4
-				if (a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) || // 2,1
-					(a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) { // 1,2
-					return true
-				}
-			}
-		}
-		if a[0][0] == b[3][0] && a[0][1] == b[3][1] { // 4
-			if a[1][0] == b[0][0] && a[1][1] == b[0][1] { // 1
-				if (a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) || // 3,2
-					(a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) { // 2,3
-					return true
-				}
-			}
-			if a[1][0] == b[1][0] && a[1][1] == b[1][1] { // 2
-				if (a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) || // 1,3
-					(a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) { // 3,1
-					return true
-				}
-			}
-			if a[1][0] == b[2][0] && a[1][1] == b[2][1] { // 3
-				if (a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) || // 1,2
-					(a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) { // 2,1
-					return true
-				}
-			}
-		}
-		return false
-	default:
-		log.Panicf("more than 4 moves were provided: %+v %+v", a, b)
-		return false
 	}
+	b := g.Board
+	tb := tabula.Board{b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15], b[16], b[17], b[18], b[19], b[20], b[21], b[22], b[23], b[24], b[25], b[26], b[27], roll1, roll2, roll3, roll4, entered1, entered2, g.Variant}
+	for _, move := range g.Moves {
+		diff := SpaceDiff(move[0], move[1], g.Variant)
+		if diff == 0 {
+			return tabula.Board{}, false
+		}
+		if tb[tabula.SpaceRoll1] == diff {
+			tb[tabula.SpaceRoll1] = 0
+			continue
+		} else if tb[tabula.SpaceRoll2] == diff {
+			tb[tabula.SpaceRoll2] = 0
+			continue
+		} else if tb[tabula.SpaceRoll3] == diff {
+			tb[tabula.SpaceRoll3] = 0
+			continue
+		} else if tb[tabula.SpaceRoll4] == diff {
+			tb[tabula.SpaceRoll4] = 0
+			continue
+		}
+		var highest = tabula.SpaceRoll1
+		if tb[tabula.SpaceRoll2] > tb[tabula.SpaceRoll1] {
+			highest = tabula.SpaceRoll2
+		}
+		if tb[tabula.SpaceRoll3] > tb[highest] {
+			highest = tabula.SpaceRoll3
+		}
+		if tb[tabula.SpaceRoll4] > tb[highest] {
+			highest = tabula.SpaceRoll4
+		}
+		if tb[highest] < diff {
+			return tabula.Board{}, false
+		}
+		tb[highest] = 0
+	}
+	return tb, true
 }

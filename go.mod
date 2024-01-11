@@ -3,6 +3,7 @@ module code.rocket9labs.com/tslocum/bgammon
 go 1.17
 
 require (
+	code.rocket9labs.com/tslocum/tabula v0.0.0-20240108183445-695ea428ae21
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/gobwas/ws v1.3.2
 	github.com/gorilla/mux v1.8.1
@@ -12,6 +13,7 @@ require (
 )
 
 require (
+	code.rocket9labs.com/tslocum/bei v0.0.0-20240108012722-6db380cc190b // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect

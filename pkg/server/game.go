@@ -64,20 +64,36 @@ func (g *serverGame) playForcedMoves() bool {
 	case 0:
 		return false
 	}
-	allMoves := g.TotalMoves(false)
+	tb, ok := g.TabulaBoard()
+	if !ok {
+		return false
+	}
+	allMoves, _ := tb.Available(g.Turn)
 	if len(allMoves) == 0 {
 		return false
 	}
-	var forcedMoves [][]int8
+	var forcedMoves [][2]int8
 	if len(allMoves) == 1 {
-		forcedMoves = allMoves[0]
+		for i := range allMoves {
+			for j := 0; j < 4; j++ {
+				if allMoves[i][j][0] == 0 && allMoves[i][j][1] == 0 {
+					break
+				}
+				forcedMoves = append(forcedMoves, allMoves[i][j])
+			}
+		}
 	} else {
 	FORCEDMOVES:
 		for _, m1 := range allMoves[0] {
-			for _, moves2 := range allMoves[1:] {
+			for i := range allMoves {
+				if i == 0 {
+					continue
+				}
 				var found bool
-				for _, m2 := range moves2 {
-					if m1[0] == m2[0] && m1[1] == m2[1] {
+				for j := 0; j < 4; j++ {
+					if allMoves[i][j][0] == 0 && allMoves[i][j][1] == 0 {
+						break
+					} else if allMoves[i][j][0] == m1[0] && allMoves[i][j][1] == m1[1] {
 						found = true
 						break
 					}
@@ -99,13 +115,13 @@ func (g *serverGame) playForcedMoves() bool {
 		if g.HaveDiceRoll(move[0], move[1]) == 0 {
 			break
 		}
-		ok, _ := g.AddMoves([][]int8{move}, false)
+		ok, _ := g.AddMoves([][]int8{{move[0], move[1]}}, false)
 		if !ok {
 			log.Fatalf("failed to play forced move %v: %v %v (%v) (%v)", move, forcedMoves, g.DiceRolls(), g.Game, g.Board)
 		}
 		g.eachClient(func(client *serverClient) {
 			ev := &bgammon.EventMoved{
-				Moves: bgammon.FlipMoves([][]int8{move}, client.playerNumber, g.Variant),
+				Moves: bgammon.FlipMoves([][]int8{{move[0], move[1]}}, client.playerNumber, g.Variant),
 			}
 			ev.Player = playerName
 			client.sendEvent(ev)
@@ -173,7 +189,7 @@ func (g *serverGame) sendBoard(client *serverClient, forcedMove bool) {
 
 		// Reverse spaces for white.
 		if client.playerNumber == 2 {
-			ev.GameState.Game = ev.GameState.Copy()
+			ev.GameState.Game = ev.GameState.Copy(true)
 
 			ev.GameState.PlayerNumber = 1
 			ev.GameState.Player1, ev.GameState.Player2 = ev.GameState.Player2, ev.GameState.Player1
