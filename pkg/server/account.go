@@ -5,6 +5,7 @@ type account struct {
 	email     []byte
 	username  []byte
 	password  []byte
+	autoplay  bool
 	highlight bool
 	pips      bool
 	moves     bool

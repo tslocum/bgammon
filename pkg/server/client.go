@@ -20,6 +20,7 @@ type serverClient struct {
 	active       int64
 	lastPing     int64
 	commands     chan []byte
+	autoplay     bool
 	playerNumber int8
 	terminating  bool
 	bgammon.Client

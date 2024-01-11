@@ -167,7 +167,9 @@ COMMANDS:
 
 					cmd.client.account = a.id
 					cmd.client.name = name
+					cmd.client.autoplay = a.autoplay
 					cmd.client.sendEvent(&bgammon.EventSettings{
+						AutoPlay:  a.autoplay,
 						Highlight: a.highlight,
 						Pips:      a.pips,
 						Moves:     a.moves,
@@ -520,7 +522,7 @@ COMMANDS:
 
 			clientGame.eachClient(func(client *serverClient) {
 				if client.json {
-					clientGame.sendBoard(client)
+					clientGame.sendBoard(client, false)
 				}
 			})
 		case bgammon.CommandResign:
@@ -603,7 +605,7 @@ COMMANDS:
 			}
 
 			clientGame.eachClient(func(client *serverClient) {
-				clientGame.sendBoard(client)
+				clientGame.sendBoard(client, false)
 				if winEvent != nil {
 					client.sendEvent(winEvent)
 				}
@@ -646,7 +648,7 @@ COMMANDS:
 				client.sendEvent(ev)
 			})
 
-			var skipBoard bool
+			// Re-roll automatically when players roll the same value when starting a game.
 			if clientGame.Turn == 0 && clientGame.Roll1 != 0 && clientGame.Roll2 != 0 {
 				reroll := func() {
 					clientGame.Roll1 = 0
@@ -665,10 +667,8 @@ COMMANDS:
 						ev.Player = string(clientGame.Player2.Name)
 					}
 					clientGame.eachClient(func(client *serverClient) {
-						clientGame.sendBoard(client)
 						client.sendEvent(ev)
 					})
-					skipBoard = true
 				}
 
 				if clientGame.Roll1 > clientGame.Roll2 {
@@ -730,13 +730,22 @@ COMMANDS:
 					}
 				}
 			}
-			if !skipBoard {
-				clientGame.eachClient(func(client *serverClient) {
-					if clientGame.Turn != 0 || !client.json {
-						clientGame.sendBoard(client)
-					}
-				})
+
+			forcedMove := clientGame.playForcedMoves()
+			if forcedMove && len(clientGame.LegalMoves(false)) == 0 {
+				chooseRoll := clientGame.Variant == bgammon.VariantAceyDeucey && ((clientGame.Roll1 == 1 && clientGame.Roll2 == 2) || (clientGame.Roll1 == 2 && clientGame.Roll2 == 1)) && len(clientGame.Moves) == 2
+				if clientGame.Variant != bgammon.VariantAceyDeucey || !chooseRoll {
+					clientGame.recordEvent()
+					clientGame.nextTurn(false)
+					continue
+				}
 			}
+
+			clientGame.eachClient(func(client *serverClient) {
+				if clientGame.Turn != 0 || !client.json {
+					clientGame.sendBoard(client, false)
+				}
+			})
 		case bgammon.CommandMove, "m", "mv":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
@@ -744,7 +753,7 @@ COMMANDS:
 				})
 				continue
 			} else if clientGame.Winner != 0 {
-				clientGame.sendBoard(cmd.client)
+				clientGame.sendBoard(cmd.client, false)
 				continue
 			}
 
@@ -814,115 +823,6 @@ COMMANDS:
 				continue
 			}
 
-			var winEvent *bgammon.EventWin
-			if clientGame.Winner != 0 {
-				var opponent int8 = 1
-				opponentHome := bgammon.SpaceHomePlayer
-				opponentEntered := clientGame.Player1.Entered
-				playerBar := bgammon.SpaceBarPlayer
-				if clientGame.Winner == 1 {
-					opponent = 2
-					opponentHome = bgammon.SpaceHomeOpponent
-					opponentEntered = clientGame.Player2.Entered
-					playerBar = bgammon.SpaceBarOpponent
-				}
-
-				backgammon := bgammon.PlayerCheckers(clientGame.Board[playerBar], opponent) != 0
-				if !backgammon {
-					homeStart, homeEnd := bgammon.HomeRange(clientGame.Winner, clientGame.Variant)
-					bgammon.IterateSpaces(homeStart, homeEnd, clientGame.Variant, func(space int8, spaceCount int8) {
-						if bgammon.PlayerCheckers(clientGame.Board[space], opponent) != 0 {
-							backgammon = true
-						}
-					})
-				}
-
-				var winPoints int8
-				switch clientGame.Variant {
-				case bgammon.VariantAceyDeucey:
-					for space := int8(0); space < bgammon.BoardSpaces; space++ {
-						if (space == bgammon.SpaceHomePlayer || space == bgammon.SpaceHomeOpponent) && opponentEntered {
-							continue
-						}
-						winPoints += bgammon.PlayerCheckers(clientGame.Board[space], opponent)
-					}
-				case bgammon.VariantTabula:
-					winPoints = 1
-				default:
-					if backgammon {
-						winPoints = 3 // Award backgammon.
-					} else if clientGame.Board[opponentHome] == 0 {
-						winPoints = 2 // Award gammon.
-					} else {
-						winPoints = 1
-					}
-				}
-
-				clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, winPoints, clientGame.Variant))}, clientGame.replay...)
-
-				r1, r2, r3 := clientGame.Roll1, clientGame.Roll2, clientGame.Roll3
-				if r2 > r1 {
-					r1, r2 = r2, r1
-				}
-				if r3 > r1 {
-					r1, r3 = r3, r1
-				}
-				if r3 > r2 {
-					r2, r3 = r3, r2
-				}
-				var movesFormatted []byte
-				if len(clientGame.Moves) != 0 {
-					movesFormatted = append([]byte(" "), bgammon.FormatMoves(clientGame.Moves)...)
-				}
-				line := []byte(fmt.Sprintf("%d r %d-%d", clientGame.Turn, r1, r2))
-				if r3 > 0 {
-					line = append(line, []byte(fmt.Sprintf("-%d", r3))...)
-				}
-				line = append(line, movesFormatted...)
-				clientGame.replay = append(clientGame.replay, line)
-
-				winEvent = &bgammon.EventWin{
-					Points: winPoints * clientGame.DoubleValue,
-				}
-				var reset bool
-				if clientGame.Winner == 1 {
-					winEvent.Player = clientGame.Player1.Name
-					clientGame.Player1.Points = clientGame.Player1.Points + winPoints*clientGame.DoubleValue
-					if clientGame.Player1.Points < clientGame.Points {
-						reset = true
-					} else {
-						clientGame.Ended = time.Now()
-					}
-				} else {
-					winEvent.Player = clientGame.Player2.Name
-					clientGame.Player2.Points = clientGame.Player2.Points + winPoints*clientGame.DoubleValue
-					if clientGame.Player2.Points < clientGame.Points {
-						reset = true
-					} else {
-						clientGame.Ended = time.Now()
-					}
-				}
-
-				winType := winPoints
-				if clientGame.Variant != bgammon.VariantBackgammon {
-					winType = 1
-				}
-				err := recordGameResult(clientGame.Game, winType, clientGame.client1.account, clientGame.client2.account, clientGame.replay)
-				if err != nil {
-					log.Fatalf("failed to record game result: %s", err)
-				}
-
-				if !reset {
-					err := recordMatchResult(clientGame.Game, matchTypeCasual, clientGame.client1.account, clientGame.client2.account)
-					if err != nil {
-						log.Fatalf("failed to record match result: %s", err)
-					}
-				} else {
-					clientGame.Reset()
-					clientGame.replay = clientGame.replay[:0]
-				}
-			}
-
 			clientGame.eachClient(func(client *serverClient) {
 				ev := &bgammon.EventMoved{
 					Moves: bgammon.FlipMoves(expandedMoves, client.playerNumber, clientGame.Variant),
@@ -930,12 +830,10 @@ COMMANDS:
 				ev.Player = string(cmd.client.name)
 				client.sendEvent(ev)
 
-				clientGame.sendBoard(client)
-
-				if winEvent != nil {
-					client.sendEvent(winEvent)
-				}
+				clientGame.sendBoard(client, false)
 			})
+
+			clientGame.handleWin()
 		case bgammon.CommandReset:
 			if clientGame == nil {
 				cmd.client.sendNotice("You are not currently in a match.")
@@ -969,7 +867,7 @@ COMMANDS:
 					ev.Player = string(cmd.client.name)
 
 					client.sendEvent(ev)
-					clientGame.sendBoard(client)
+					clientGame.sendBoard(client, false)
 				})
 			}
 		case bgammon.CommandOk, "k":
@@ -1003,7 +901,7 @@ COMMANDS:
 
 					clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d d %d 1", clientGame.Turn, clientGame.DoubleValue)))
 					clientGame.eachClient(func(client *serverClient) {
-						clientGame.sendBoard(client)
+						clientGame.sendBoard(client, false)
 					})
 				} else {
 					cmd.client.sendNotice("Waiting for response from opponent.")
@@ -1029,29 +927,6 @@ COMMANDS:
 				continue
 			}
 
-			recordEvent := func() {
-				r1, r2, r3 := clientGame.Roll1, clientGame.Roll2, clientGame.Roll3
-				if r2 > r1 {
-					r1, r2 = r2, r1
-				}
-				if r3 > r1 {
-					r1, r3 = r3, r1
-				}
-				if r3 > r2 {
-					r2, r3 = r3, r2
-				}
-				var movesFormatted []byte
-				if len(clientGame.Moves) != 0 {
-					movesFormatted = append([]byte(" "), bgammon.FormatMoves(clientGame.Moves)...)
-				}
-				line := []byte(fmt.Sprintf("%d r %d-%d", clientGame.Turn, r1, r2))
-				if r3 > 0 {
-					line = append(line, []byte(fmt.Sprintf("-%d", r3))...)
-				}
-				line = append(line, movesFormatted...)
-				clientGame.replay = append(clientGame.replay, line)
-			}
-
 			if clientGame.Variant == bgammon.VariantAceyDeucey && ((clientGame.Roll1 == 1 && clientGame.Roll2 == 2) || (clientGame.Roll1 == 2 && clientGame.Roll2 == 1)) && len(clientGame.Moves) == 2 {
 				var doubles int
 				if len(params) > 0 {
@@ -1064,8 +939,8 @@ COMMANDS:
 					continue
 				}
 
-				recordEvent()
-				clientGame.NextTurn(true)
+				clientGame.recordEvent()
+				clientGame.nextTurn(true)
 				clientGame.Roll1, clientGame.Roll2 = int8(doubles), int8(doubles)
 				clientGame.Reroll = true
 
@@ -1077,10 +952,11 @@ COMMANDS:
 					}
 					ev.Player = string(cmd.client.name)
 					client.sendEvent(ev)
+					clientGame.sendBoard(client, false)
 				})
 			} else if clientGame.Variant == bgammon.VariantAceyDeucey && clientGame.Reroll {
-				recordEvent()
-				clientGame.NextTurn(true)
+				clientGame.recordEvent()
+				clientGame.nextTurn(true)
 				clientGame.Roll1, clientGame.Roll2 = 0, 0
 				if !clientGame.roll(cmd.client.playerNumber) {
 					cmd.client.Terminate("Server error")
@@ -1096,43 +972,12 @@ COMMANDS:
 					}
 					ev.Player = string(cmd.client.name)
 					client.sendEvent(ev)
-					clientGame.sendBoard(client)
+					clientGame.sendBoard(client, false)
 				})
 			} else {
-				recordEvent()
-				clientGame.NextTurn(false)
-				if clientGame.Winner == 0 {
-					gameState := &bgammon.GameState{
-						Game:         clientGame.Game,
-						PlayerNumber: clientGame.Turn,
-						Available:    clientGame.LegalMoves(false),
-					}
-					if !gameState.MayDouble() {
-						if !clientGame.roll(clientGame.Turn) {
-							cmd.client.Terminate("Server error")
-							opponent.Terminate("Server error")
-							continue
-						}
-						clientGame.eachClient(func(client *serverClient) {
-							ev := &bgammon.EventRolled{
-								Roll1: clientGame.Roll1,
-								Roll2: clientGame.Roll2,
-								Roll3: clientGame.Roll3,
-							}
-							if clientGame.Turn == 1 {
-								ev.Player = gameState.Player1.Name
-							} else {
-								ev.Player = gameState.Player2.Name
-							}
-							client.sendEvent(ev)
-						})
-					}
-				}
+				clientGame.recordEvent()
+				clientGame.nextTurn(false)
 			}
-
-			clientGame.eachClient(func(client *serverClient) {
-				clientGame.sendBoard(client)
-			})
 		case bgammon.CommandRematch, "rm":
 			if clientGame == nil {
 				cmd.client.sendNotice("You are not currently in a match.")
@@ -1184,7 +1029,7 @@ COMMANDS:
 					ev2.Player = newGame.Player2.Name
 					newGame.client1.sendEvent(ev1)
 					newGame.client1.sendEvent(ev2)
-					newGame.sendBoard(newGame.client1)
+					newGame.sendBoard(newGame.client1, false)
 				}
 
 				{
@@ -1200,11 +1045,11 @@ COMMANDS:
 					ev2.Player = newGame.Player1.Name
 					newGame.client2.sendEvent(ev1)
 					newGame.client2.sendEvent(ev2)
-					newGame.sendBoard(newGame.client2)
+					newGame.sendBoard(newGame.client2, false)
 				}
 
 				for _, spectator := range newGame.spectators {
-					newGame.sendBoard(spectator)
+					newGame.sendBoard(spectator, false)
 				}
 			} else {
 				clientGame.rematch = cmd.client.playerNumber
@@ -1219,7 +1064,7 @@ COMMANDS:
 				continue
 			}
 
-			clientGame.sendBoard(cmd.client)
+			clientGame.sendBoard(cmd.client, false)
 		case bgammon.CommandPassword:
 			if cmd.client.account == 0 {
 				cmd.client.sendNotice("Failed to change password: you are logged in as a guest.")
@@ -1242,15 +1087,13 @@ COMMANDS:
 			}
 			cmd.client.sendNotice("Password changed successfully.")
 		case bgammon.CommandSet:
-			if cmd.client.account == 0 {
-				continue
-			} else if len(params) < 2 {
+			if len(params) < 2 {
 				cmd.client.sendNotice("Please specify the setting name and value as follows: set <name> <value>")
 				continue
 			}
 
 			name := string(bytes.ToLower(params[0]))
-			settings := []string{"highlight", "pips", "moves", "flip"}
+			settings := []string{"autoplay", "highlight", "pips", "moves", "flip"}
 			var found bool
 			for i := range settings {
 				if name == settings[i] {
@@ -1266,6 +1109,14 @@ COMMANDS:
 			value, err := strconv.Atoi(string(params[1]))
 			if err != nil || value < 0 {
 				cmd.client.sendNotice("Invalid setting value provided.")
+				continue
+			}
+
+			if name == "autoplay" {
+				cmd.client.autoplay = value == 1
+			}
+
+			if cmd.client.account == 0 {
 				continue
 			}
 			_ = setAccountSetting(cmd.client.account, name, value)
@@ -1348,7 +1199,7 @@ COMMANDS:
 			log.Println(clientGame.Board[0:28])
 
 			clientGame.eachClient(func(client *serverClient) {
-				clientGame.sendBoard(client)
+				clientGame.sendBoard(client, false)
 			})
 		default:
 			log.Printf("Received unknown command from client %s: %s", cmd.client.label(), cmd.command)

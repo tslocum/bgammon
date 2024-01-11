@@ -8,6 +8,7 @@ type GameState struct {
 	*Game
 	PlayerNumber int8
 	Available    [][]int8 // Legal moves.
+	Forced       bool     // A forced move is being played automatically.
 	Spectating   bool
 }
 
@@ -118,7 +119,7 @@ func (g *GameState) MayRoll() bool {
 // MayChooseRoll returns whether the player may send the 'ok' command, supplying
 // the chosen roll. This command only applies to acey-deucey games.
 func (g *GameState) MayChooseRoll() bool {
-	return g.Variant == VariantAceyDeucey && g.Turn != 0 && g.Turn == g.PlayerNumber && ((g.Roll1 == 1 && g.Roll2 == 2) || (g.Roll1 == 2 && g.Roll2 == 1))
+	return g.Variant == VariantAceyDeucey && g.Turn != 0 && g.Turn == g.PlayerNumber && ((g.Roll1 == 1 && g.Roll2 == 2) || (g.Roll1 == 2 && g.Roll2 == 1)) && len(g.Moves) == 2
 }
 
 // MayOK returns whether the player may send the 'ok' command.

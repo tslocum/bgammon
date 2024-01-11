@@ -196,6 +196,7 @@ func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		connected: now,
 		active:    now,
 		commands:  commands,
+		autoplay:  true,
 		Client:    wsClient,
 	}
 	s.handleClient(c)
@@ -301,6 +302,7 @@ func (s *server) handleConnection(conn net.Conn) {
 		connected: now,
 		active:    now,
 		commands:  commands,
+		autoplay:  true,
 		Client:    newSocketClient(conn, commands, events, s.verbose),
 	}
 	s.sendHello(c)

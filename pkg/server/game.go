@@ -3,6 +3,8 @@ package server
 import (
 	"bufio"
 	"bytes"
+	"fmt"
+	"log"
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
@@ -37,6 +39,82 @@ func newServerGame(id int, variant int8) *serverGame {
 		active:  now,
 		Game:    bgammon.NewGame(variant),
 	}
+}
+
+func (g *serverGame) playForcedMoves() bool {
+	if g.Winner != 0 || len(g.Moves) != 0 || g.client1 == nil || g.client2 == nil {
+		return false
+	}
+	rolls := g.DiceRolls()
+	if len(rolls) == 0 {
+		return false
+	}
+	var playerName string
+	switch g.Turn {
+	case 1:
+		if !g.client1.autoplay {
+			return false
+		}
+		playerName = g.Player1.Name
+	case 2:
+		if !g.client2.autoplay {
+			return false
+		}
+		playerName = g.Player2.Name
+	case 0:
+		return false
+	}
+	allMoves := g.TotalMoves(false)
+	if len(allMoves) == 0 {
+		return false
+	}
+	var forcedMoves [][]int8
+	if len(allMoves) == 1 {
+		forcedMoves = allMoves[0]
+	} else {
+	FORCEDMOVES:
+		for _, m1 := range allMoves[0] {
+			for _, moves2 := range allMoves[1:] {
+				var found bool
+				for _, m2 := range moves2 {
+					if m1[0] == m2[0] && m1[1] == m2[1] {
+						found = true
+						break
+					}
+				}
+				if !found {
+					continue FORCEDMOVES
+				}
+			}
+			forcedMoves = append(forcedMoves, m1)
+		}
+	}
+	if len(forcedMoves) == 0 {
+		return false
+	}
+	g.eachClient(func(client *serverClient) {
+		g.sendBoard(client, true)
+	})
+	for _, move := range forcedMoves {
+		if g.HaveDiceRoll(move[0], move[1]) == 0 {
+			break
+		}
+		ok, _ := g.AddMoves([][]int8{move}, false)
+		if !ok {
+			log.Fatalf("failed to play forced move %v: %v %v (%v) (%v)", move, forcedMoves, g.DiceRolls(), g.Game, g.Board)
+		}
+		g.eachClient(func(client *serverClient) {
+			ev := &bgammon.EventMoved{
+				Moves: bgammon.FlipMoves([][]int8{move}, client.playerNumber, g.Variant),
+			}
+			ev.Player = playerName
+			client.sendEvent(ev)
+		})
+		if g.handleWin() {
+			return true
+		}
+	}
+	return true
 }
 
 func (g *serverGame) roll(player int8) bool {
@@ -81,17 +159,16 @@ func (g *serverGame) roll(player int8) bool {
 	return true
 }
 
-func (g *serverGame) sendBoard(client *serverClient) {
+func (g *serverGame) sendBoard(client *serverClient, forcedMove bool) {
 	if client.json {
 		ev := &bgammon.EventBoard{
 			GameState: bgammon.GameState{
 				Game:         g.Game,
 				PlayerNumber: client.playerNumber,
 				Available:    g.LegalMoves(false),
+				Forced:       forcedMove,
+				Spectating:   g.client1 != client && g.client2 != client,
 			},
-		}
-		if g.client1 != client && g.client2 != client {
-			ev.Spectating = true
 		}
 
 		// Reverse spaces for white.
@@ -203,7 +280,7 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 		}
 		ev.Player = string(client.name)
 		client.sendEvent(ev)
-		g.sendBoard(client)
+		g.sendBoard(client, false)
 		return spectator
 	}
 
@@ -215,7 +292,7 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 		}
 		ev.Player = string(client.name)
 		client.sendEvent(ev)
-		g.sendBoard(client)
+		g.sendBoard(client, false)
 
 		if playerNumber == 0 {
 			return
@@ -229,7 +306,7 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 			}
 			ev.Player = string(client.name)
 			opponent.sendEvent(ev)
-			g.sendBoard(opponent)
+			g.sendBoard(opponent, false)
 		}
 
 		{
@@ -240,7 +317,7 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 			ev.Player = string(client.name)
 			for _, spectator := range g.spectators {
 				spectator.sendEvent(ev)
-				g.sendBoard(spectator)
+				g.sendBoard(spectator, false)
 			}
 		}
 
@@ -293,7 +370,7 @@ func (g *serverGame) removeClient(client *serverClient) {
 
 		client.sendEvent(ev)
 		if !client.json {
-			g.sendBoard(client)
+			g.sendBoard(client, false)
 		}
 
 		var opponent *serverClient
@@ -305,14 +382,14 @@ func (g *serverGame) removeClient(client *serverClient) {
 		if opponent != nil {
 			opponent.sendEvent(ev)
 			if !opponent.json {
-				g.sendBoard(opponent)
+				g.sendBoard(opponent, false)
 			}
 		}
 
 		for _, spectator := range g.spectators {
 			spectator.sendEvent(ev)
 			if !spectator.json {
-				g.sendBoard(spectator)
+				g.sendBoard(spectator, false)
 			}
 		}
 
@@ -343,7 +420,7 @@ func (g *serverGame) removeClient(client *serverClient) {
 
 				client.sendEvent(ev)
 				if !client.json {
-					g.sendBoard(client)
+					g.sendBoard(client, false)
 				}
 
 				client.playerNumber = 0
@@ -390,6 +467,196 @@ func (g *serverGame) listing(playerName []byte) *bgammon.GameListing {
 		Players:  playerCount,
 		Name:     name,
 	}
+}
+
+func (g *serverGame) recordEvent() {
+	r1, r2, r3 := g.Roll1, g.Roll2, g.Roll3
+	if r2 > r1 {
+		r1, r2 = r2, r1
+	}
+	if r3 > r1 {
+		r1, r3 = r3, r1
+	}
+	if r3 > r2 {
+		r2, r3 = r3, r2
+	}
+	var movesFormatted []byte
+	if len(g.Moves) != 0 {
+		movesFormatted = append([]byte(" "), bgammon.FormatMoves(g.Moves)...)
+	}
+	line := []byte(fmt.Sprintf("%d r %d-%d", g.Turn, r1, r2))
+	if r3 > 0 {
+		line = append(line, []byte(fmt.Sprintf("-%d", r3))...)
+	}
+	line = append(line, movesFormatted...)
+	g.replay = append(g.replay, line)
+}
+
+func (g *serverGame) nextTurn(reroll bool) {
+	g.Game.NextTurn(reroll)
+	if reroll {
+		return
+	}
+
+	// Roll automatically.
+	if g.Winner == 0 {
+		gameState := &bgammon.GameState{
+			Game:         g.Game,
+			PlayerNumber: g.Turn,
+			Available:    g.LegalMoves(false),
+		}
+		if !gameState.MayDouble() {
+			if !g.roll(g.Turn) {
+				g.eachClient(func(client *serverClient) {
+					client.Terminate("Server error")
+				})
+				return
+			}
+			ev := &bgammon.EventRolled{
+				Roll1: g.Roll1,
+				Roll2: g.Roll2,
+				Roll3: g.Roll3,
+			}
+			if g.Turn == 1 {
+				ev.Player = gameState.Player1.Name
+			} else {
+				ev.Player = gameState.Player2.Name
+			}
+			g.eachClient(func(client *serverClient) {
+				client.sendEvent(ev)
+			})
+
+			// Play forced moves automatically.
+			forcedMove := g.playForcedMoves()
+			if forcedMove && len(g.LegalMoves(false)) == 0 {
+				chooseRoll := g.Variant == bgammon.VariantAceyDeucey && ((g.Roll1 == 1 && g.Roll2 == 2) || (g.Roll1 == 2 && g.Roll2 == 1)) && len(g.Moves) == 2
+				if g.Variant != bgammon.VariantAceyDeucey || !chooseRoll {
+					g.recordEvent()
+					g.nextTurn(false)
+					return
+				}
+			}
+		}
+	}
+
+	g.eachClient(func(client *serverClient) {
+		g.sendBoard(client, false)
+	})
+}
+
+func (g *serverGame) handleWin() bool {
+	if g.Winner == 0 {
+		return false
+	}
+	var opponent int8 = 1
+	opponentHome := bgammon.SpaceHomePlayer
+	opponentEntered := g.Player1.Entered
+	playerBar := bgammon.SpaceBarPlayer
+	if g.Winner == 1 {
+		opponent = 2
+		opponentHome = bgammon.SpaceHomeOpponent
+		opponentEntered = g.Player2.Entered
+		playerBar = bgammon.SpaceBarOpponent
+	}
+
+	backgammon := bgammon.PlayerCheckers(g.Board[playerBar], opponent) != 0
+	if !backgammon {
+		homeStart, homeEnd := bgammon.HomeRange(g.Winner, g.Variant)
+		bgammon.IterateSpaces(homeStart, homeEnd, g.Variant, func(space int8, spaceCount int8) {
+			if bgammon.PlayerCheckers(g.Board[space], opponent) != 0 {
+				backgammon = true
+			}
+		})
+	}
+
+	var winPoints int8
+	switch g.Variant {
+	case bgammon.VariantAceyDeucey:
+		for space := int8(0); space < bgammon.BoardSpaces; space++ {
+			if (space == bgammon.SpaceHomePlayer || space == bgammon.SpaceHomeOpponent) && opponentEntered {
+				continue
+			}
+			winPoints += bgammon.PlayerCheckers(g.Board[space], opponent)
+		}
+	case bgammon.VariantTabula:
+		winPoints = 1
+	default:
+		if backgammon {
+			winPoints = 3 // Award backgammon.
+		} else if g.Board[opponentHome] == 0 {
+			winPoints = 2 // Award gammon.
+		} else {
+			winPoints = 1
+		}
+	}
+
+	g.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", g.Started.Unix(), g.Player1.Name, g.Player2.Name, g.Points, g.Player1.Points, g.Player2.Points, g.Winner, winPoints, g.Variant))}, g.replay...)
+
+	r1, r2, r3 := g.Roll1, g.Roll2, g.Roll3
+	if r2 > r1 {
+		r1, r2 = r2, r1
+	}
+	if r3 > r1 {
+		r1, r3 = r3, r1
+	}
+	if r3 > r2 {
+		r2, r3 = r3, r2
+	}
+	var movesFormatted []byte
+	if len(g.Moves) != 0 {
+		movesFormatted = append([]byte(" "), bgammon.FormatMoves(g.Moves)...)
+	}
+	line := []byte(fmt.Sprintf("%d r %d-%d", g.Turn, r1, r2))
+	if r3 > 0 {
+		line = append(line, []byte(fmt.Sprintf("-%d", r3))...)
+	}
+	line = append(line, movesFormatted...)
+	g.replay = append(g.replay, line)
+
+	winEvent := &bgammon.EventWin{
+		Points: winPoints * g.DoubleValue,
+	}
+	var reset bool
+	if g.Winner == 1 {
+		winEvent.Player = g.Player1.Name
+		g.Player1.Points = g.Player1.Points + winPoints*g.DoubleValue
+		if g.Player1.Points < g.Points {
+			reset = true
+		} else {
+			g.Ended = time.Now()
+		}
+	} else {
+		winEvent.Player = g.Player2.Name
+		g.Player2.Points = g.Player2.Points + winPoints*g.DoubleValue
+		if g.Player2.Points < g.Points {
+			reset = true
+		} else {
+			g.Ended = time.Now()
+		}
+	}
+
+	winType := winPoints
+	if g.Variant != bgammon.VariantBackgammon {
+		winType = 1
+	}
+	err := recordGameResult(g.Game, winType, g.client1.account, g.client2.account, g.replay)
+	if err != nil {
+		log.Fatalf("failed to record game result: %s", err)
+	}
+
+	if !reset {
+		err := recordMatchResult(g.Game, matchTypeCasual, g.client1.account, g.client2.account)
+		if err != nil {
+			log.Fatalf("failed to record match result: %s", err)
+		}
+	} else {
+		g.Reset()
+		g.replay = g.replay[:0]
+	}
+	g.eachClient(func(client *serverClient) {
+		client.sendEvent(winEvent)
+	})
+	return true
 }
 
 func (g *serverGame) terminated() bool {

@@ -47,6 +47,7 @@ CREATE TABLE account (
 	rated_acey_multi         integer NOT NULL DEFAULT 150000,
 	rated_tabula_single      integer NOT NULL DEFAULT 150000,
 	rated_tabula_multi       integer NOT NULL DEFAULT 150000,
+	autoplay                 smallint NOT NULL DEFAULT 1,
 	highlight                smallint NOT NULL DEFAULT 1,
 	pips                     smallint NOT NULL DEFAULT 1,
 	moves                    smallint NOT NULL DEFAULT 0,
@@ -341,13 +342,14 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 	defer tx.Commit(context.Background())
 
 	a := &account{}
-	var highlight, pips, moves, flip int
-	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, highlight, pips, moves, flip FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &highlight, &pips, &moves, &flip)
+	var autoplay, highlight, pips, moves, flip int
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, autoplay, highlight, pips, moves, flip FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &autoplay, &highlight, &pips, &moves, &flip)
 	if err != nil {
 		return nil, nil
 	} else if len(a.password) == 0 {
 		return nil, fmt.Errorf("account disabled")
 	}
+	a.autoplay = autoplay == 1
 	a.highlight = highlight == 1
 	a.pips = pips == 1
 	a.moves = moves == 1

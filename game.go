@@ -105,12 +105,12 @@ func (g *Game) Copy() *Game {
 	return newGame
 }
 
-func (g *Game) NextTurn(replay bool) {
+func (g *Game) NextTurn(reroll bool) {
 	if g.Winner != 0 {
 		return
 	}
 
-	if !replay {
+	if !reroll {
 		var nextTurn int8 = 1
 		if g.Turn == 1 {
 			nextTurn = 2
@@ -410,11 +410,7 @@ ADDMOVES:
 	}
 }
 
-func (g *Game) LegalMoves(local bool) [][]int8 {
-	if g.Winner != 0 || g.Roll1 == 0 || g.Roll2 == 0 {
-		return nil
-	}
-
+func (g *Game) DiceRolls() []int8 {
 	rolls := []int8{
 		g.Roll1,
 		g.Roll2,
@@ -423,38 +419,6 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 		rolls = append(rolls, g.Roll3)
 	} else if g.Roll1 == g.Roll2 {
 		rolls = append(rolls, g.Roll1, g.Roll2)
-	}
-
-	haveDiceRoll := func(from, to int8) int8 {
-		if g.Variant == VariantTabula && to > 12 && to < 25 && ((g.Turn == 1 && !g.Player1.Entered) || (g.Turn == 2 && !g.Player2.Entered)) {
-			return 0
-		} else if (to == SpaceHomePlayer || to == SpaceHomeOpponent) && !g.MayBearOff(g.Turn, false) {
-			return 0
-		}
-		diff := SpaceDiff(from, to, g.Variant)
-		if diff == 0 {
-			return 0
-		}
-		var c int8
-		for _, roll := range rolls {
-			if roll == diff {
-				c++
-			}
-		}
-		return c
-	}
-
-	haveBearOffDiceRoll := func(diff int8) int8 {
-		if diff == 0 {
-			return 0
-		}
-		var c int8
-		for _, roll := range rolls {
-			if roll == diff || (roll > diff && g.Variant == VariantBackgammon) {
-				c++
-			}
-		}
-		return c
 	}
 
 	useDiceRoll := func(from, to int8) bool {
@@ -494,6 +458,107 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 		}
 	}
 
+	return rolls
+}
+
+func (g *Game) HaveDiceRoll(from int8, to int8) int8 {
+	if g.Variant == VariantTabula && to > 12 && to < 25 && ((g.Turn == 1 && !g.Player1.Entered) || (g.Turn == 2 && !g.Player2.Entered)) {
+		return 0
+	} else if (to == SpaceHomePlayer || to == SpaceHomeOpponent) && !g.MayBearOff(g.Turn, false) {
+		return 0
+	}
+	diff := SpaceDiff(from, to, g.Variant)
+	if diff == 0 {
+		return 0
+	}
+	var c int8
+	for _, roll := range g.DiceRolls() {
+		if roll == diff {
+			c++
+		}
+	}
+	return c
+}
+
+func (g *Game) HaveBearOffDiceRoll(diff int8) int8 {
+	if diff == 0 {
+		return 0
+	}
+	var c int8
+	for _, roll := range g.DiceRolls() {
+		if roll == diff || (roll > diff && g.Variant == VariantBackgammon) {
+			c++
+		}
+	}
+	return c
+}
+
+// totalMoves tries all legal moves in a game and returns all of the possible combinations of moves that a player may make.
+func (g *Game) TotalMoves(local bool) [][][]int8 {
+	var maxMoves int
+	var allMoves [][][]int8
+	for _, move := range g.LegalMoves(local) {
+		for _, newMoves := range g._totalMoves(g.Moves, move, local) {
+			if len(newMoves) > maxMoves {
+				maxMoves = len(newMoves)
+			} else if len(newMoves) < maxMoves {
+				continue
+			}
+			allMoves = append(allMoves, newMoves)
+		}
+	}
+	var newMoves [][][]int8
+	for _, moves := range allMoves {
+		if len(moves) == maxMoves {
+			newMoves = append(newMoves, moves)
+		}
+	}
+	return newMoves
+}
+
+// totalMoves tries all legal moves in a game and returns all of the possible combinations of moves that a player may make.
+func (g *Game) _totalMoves(moves [][]int8, move []int8, local bool) [][][]int8 {
+	gc := g.Copy()
+	if !gc.addMove(move) {
+		log.Panicf("failed to add move %+v to game %+v", move, g)
+	}
+
+	var allMoves [][][]int8
+	{
+		newMoves := append([][]int8{}, moves...)
+		newMoves = append(newMoves, move)
+		allMoves = append(allMoves, newMoves)
+		maxMoves := len(newMoves)
+		for _, m := range gc.LegalMoves(local) {
+			for _, newMoves := range gc._totalMoves(newMoves, m, local) {
+				if len(newMoves) > maxMoves {
+					maxMoves = len(newMoves)
+				} else if len(newMoves) < maxMoves {
+					continue
+				}
+				allMoves = append(allMoves, newMoves)
+			}
+		}
+	}
+
+	var newMoves [][][]int8
+TOTALMOVES:
+	for _, m1 := range allMoves {
+		for _, m2 := range newMoves {
+			if movesEqual(m1, m2) {
+				continue TOTALMOVES
+			}
+		}
+		newMoves = append(newMoves, m1)
+	}
+	return allMoves
+}
+
+func (g *Game) LegalMoves(local bool) [][]int8 {
+	if g.Winner != 0 || g.Roll1 == 0 || g.Roll2 == 0 {
+		return nil
+	}
+
 	var moves [][]int8
 	var movesFound = make(map[int8]bool)
 
@@ -515,7 +580,7 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 			if false && movesFound[barSpace*100+homeSpace] {
 				return
 			}
-			available := haveDiceRoll(barSpace, homeSpace)
+			available := g.HaveDiceRoll(barSpace, homeSpace)
 			if available == 0 {
 				return
 			}
@@ -557,10 +622,10 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 				if false && movesFound[space*100+homeSpace] {
 					continue
 				}
-				available := haveBearOffDiceRoll(SpaceDiff(space, homeSpace, g.Variant))
+				available := g.HaveBearOffDiceRoll(SpaceDiff(space, homeSpace, g.Variant))
 				if available > 0 {
 					ok := true
-					if g.Variant == VariantBackgammon && haveDiceRoll(space, homeSpace) == 0 {
+					if g.Variant == VariantBackgammon && g.HaveDiceRoll(space, homeSpace) == 0 {
 						_, homeEnd := HomeRange(g.Turn, g.Variant)
 						if g.Turn == 2 && g.Variant != VariantTabula {
 							for homeSpace := space - 1; homeSpace >= homeEnd; homeSpace-- {
@@ -595,7 +660,7 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 				if false && movesFound[space*100+to] {
 					return
 				}
-				available := haveDiceRoll(space, to)
+				available := g.HaveDiceRoll(space, to)
 				if available == 0 {
 					return
 				}
@@ -620,29 +685,16 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 		}
 	}
 
-	// totalMoves tries all legal moves in a game and returns the maximum total number of moves that a player may consecutively make.
-	var totalMoves func(in *Game, move []int8) int8
-	totalMoves = func(in *Game, move []int8) int8 {
-		gc := in.Copy()
-		if !gc.addMove(move) {
-			log.Panicf("failed to add move %+v to game %+v", move, in)
-		}
-
-		var maxTotal int8 = 1
-		for _, m := range gc.LegalMoves(local) {
-			total := totalMoves(gc, m)
-			if total+1 > maxTotal {
-				maxTotal = total + 1
-			}
-		}
-		return maxTotal
-	}
-
 	// Simulate all possible moves to their final value and only allow moves that will achieve the maximum total moves.
 	var maxMoves int8
 	moveCounts := make([]int8, len(moves))
 	for i, move := range moves {
-		moveCounts[i] = totalMoves(g, move)
+		var moveCount int
+		allMoves := g._totalMoves(g.Moves, move, local)
+		if len(allMoves) > 0 {
+			moveCount = len(allMoves[0])
+		}
+		moveCounts[i] = int8(moveCount)
 		if moveCounts[i] > maxMoves {
 			maxMoves = moveCounts[i]
 		}
@@ -1099,4 +1151,125 @@ func FormatAndFlipMoves(moves [][]int8, player int8, variant int8) []byte {
 
 func ValidSpace(space int8) bool {
 	return space >= 0 && space <= 27
+}
+
+func movesEqual(a [][]int8, b [][]int8) bool {
+	l := len(a)
+	if len(b) != l {
+		return false
+	}
+	switch l {
+	case 0:
+		return true
+	case 1:
+		return a[0][0] == b[0][0] && a[0][1] == b[0][1]
+	case 2:
+		return (a[0][0] == b[0][0] && a[0][1] == b[0][1] && a[1][0] == b[1][0] && a[1][1] == b[1][1]) || // 1, 2
+			(a[0][0] == b[1][0] && a[0][1] == b[1][1] && a[1][0] == b[0][0] && a[1][1] == b[0][1]) // 2, 1
+	case 3:
+		if a[0][0] == b[0][0] && a[0][1] == b[0][1] { // 1
+			if (a[1][0] == b[1][0] && a[1][1] == b[1][1] && a[2][0] == b[2][0] && a[2][1] == b[2][1]) || // 2, 3
+				(a[1][0] == b[2][0] && a[1][1] == b[2][1] && a[2][0] == b[1][0] && a[2][1] == b[1][1]) { // 3, 2
+				return true
+			}
+		}
+		if a[0][0] == b[1][0] && a[0][1] == b[1][1] { // 2
+			if (a[1][0] == b[0][0] && a[1][1] == b[0][1] && a[2][0] == b[2][0] && a[2][1] == b[2][1]) ||
+				(a[1][0] == b[2][0] && a[1][1] == b[2][1] && a[2][0] == b[0][0] && a[2][1] == b[0][1]) {
+				return true
+			}
+		}
+		if a[0][0] == b[2][0] && a[0][1] == b[2][1] { // 3
+			if (a[1][0] == b[0][0] && a[1][1] == b[0][1] && a[2][0] == b[1][0] && a[2][1] == b[1][1]) || // 1, 2
+				(a[1][0] == b[1][0] && a[1][1] == b[1][1] && a[2][0] == b[0][0] && a[2][1] == b[0][1]) { // 2, 1
+				return true
+			}
+		}
+		return false
+	case 4:
+		if a[0][0] == b[0][0] && a[0][1] == b[0][1] { // 1
+			if a[1][0] == b[1][0] && a[1][1] == b[1][1] { // 2
+				if (a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) || // 3,4
+					(a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) { // 4,3
+					return true
+				}
+			}
+			if a[1][0] == b[2][0] && a[1][1] == b[2][1] { // 3
+				if (a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) || // 2,4
+					(a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) { // 4,2
+					return true
+				}
+			}
+			if a[1][0] == b[3][0] && a[1][1] == b[3][1] { // 4
+				if (a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) || // 3,2
+					(a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) { // 2,3
+					return true
+				}
+			}
+		}
+		if a[0][0] == b[1][0] && a[0][1] == b[1][1] { // 2
+			if a[1][0] == b[0][0] && a[1][1] == b[0][1] { // 1
+				if (a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) || // 3,4
+					(a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) { // 4,3
+					return true
+				}
+			}
+			if a[1][0] == b[2][0] && a[1][1] == b[2][1] { // 3
+				if (a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) || // 4,1
+					(a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) { // 1,4
+					return true
+				}
+			}
+			if a[1][0] == b[3][0] && a[1][1] == b[3][1] { // 4
+				if (a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) || // 3,1
+					(a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) { // 1,3
+					return true
+				}
+			}
+		}
+		if a[0][0] == b[2][0] && a[0][1] == b[2][1] { // 3
+			if a[1][0] == b[0][0] && a[1][1] == b[0][1] { // 1
+				if (a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) || // 2,4
+					(a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) { // 4,2
+					return true
+				}
+			}
+			if a[1][0] == b[1][0] && a[1][1] == b[1][1] { // 2
+				if (a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[3][0] && a[3][1] == b[3][1]) || // 1,4
+					(a[2][0] == b[3][0] && a[2][1] == b[3][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) { // 4,1
+					return true
+				}
+			}
+			if a[1][0] == b[3][0] && a[1][1] == b[3][1] { // 4
+				if (a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) || // 2,1
+					(a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) { // 1,2
+					return true
+				}
+			}
+		}
+		if a[0][0] == b[3][0] && a[0][1] == b[3][1] { // 4
+			if a[1][0] == b[0][0] && a[1][1] == b[0][1] { // 1
+				if (a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) || // 3,2
+					(a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) { // 2,3
+					return true
+				}
+			}
+			if a[1][0] == b[1][0] && a[1][1] == b[1][1] { // 2
+				if (a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[2][0] && a[3][1] == b[2][1]) || // 1,3
+					(a[2][0] == b[2][0] && a[2][1] == b[2][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) { // 3,1
+					return true
+				}
+			}
+			if a[1][0] == b[2][0] && a[1][1] == b[2][1] { // 3
+				if (a[2][0] == b[0][0] && a[2][1] == b[0][1] && a[3][0] == b[1][0] && a[3][1] == b[1][1]) || // 1,2
+					(a[2][0] == b[1][0] && a[2][1] == b[1][1] && a[3][0] == b[0][0] && a[3][1] == b[0][1]) { // 2,1
+					return true
+				}
+			}
+		}
+		return false
+	default:
+		log.Panicf("more than 4 moves were provided: %+v %+v", a, b)
+		return false
+	}
 }

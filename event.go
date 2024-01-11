@@ -113,6 +113,7 @@ type EventWin struct {
 
 type EventSettings struct {
 	Event
+	AutoPlay  bool
 	Highlight bool
 	Pips      bool
 	Moves     bool
