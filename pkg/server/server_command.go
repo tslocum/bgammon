@@ -175,6 +175,7 @@ COMMANDS:
 						Moves:     a.moves,
 						Flip:      a.flip,
 						Advanced:  a.advanced,
+						Speed:     a.speed,
 					})
 				} else {
 					cmd.client.account = 0
@@ -1094,7 +1095,7 @@ COMMANDS:
 			}
 
 			name := string(bytes.ToLower(params[0]))
-			settings := []string{"autoplay", "highlight", "pips", "moves", "flip", "advanced"}
+			settings := []string{"autoplay", "highlight", "pips", "moves", "flip", "advanced", "speed"}
 			var found bool
 			for i := range settings {
 				if name == settings[i] {
@@ -1108,7 +1109,7 @@ COMMANDS:
 			}
 
 			value, err := strconv.Atoi(string(params[1]))
-			if err != nil || value < 0 {
+			if err != nil || value < 0 || (name == "speed" && value > 3) || (name != "speed" && value > 1) {
 				cmd.client.sendNotice("Invalid setting value provided.")
 				continue
 			}

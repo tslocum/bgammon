@@ -52,7 +52,8 @@ CREATE TABLE account (
 	pips                     smallint NOT NULL DEFAULT 1,
 	moves                    smallint NOT NULL DEFAULT 0,
 	flip                     smallint NOT NULL DEFAULT 0,
-	advanced                 smallint NOT NULL DEFAULT 0
+	advanced                 smallint NOT NULL DEFAULT 0,
+	speed                    smallint NOT NULL DEFAULT 0
 );
 CREATE TABLE game (
 	id       serial PRIMARY KEY,
@@ -344,7 +345,7 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 
 	a := &account{}
 	var autoplay, highlight, pips, moves, flip, advanced int
-	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, autoplay, highlight, pips, moves, flip, advanced FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &autoplay, &highlight, &pips, &moves, &flip, &advanced)
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, autoplay, highlight, pips, moves, flip, advanced FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &autoplay, &highlight, &pips, &moves, &flip, &advanced, &a.speed)
 	if err != nil {
 		return nil, nil
 	} else if len(a.password) == 0 {

@@ -5,6 +5,13 @@ import (
 	"fmt"
 )
 
+const (
+	SpeedSlow    int8 = 0
+	SpeedMedium  int8 = 1
+	SpeedFast    int8 = 2
+	SpeedInstant int8 = 3
+)
+
 type Event struct {
 	Type   string
 	Player string
@@ -119,6 +126,7 @@ type EventSettings struct {
 	Moves     bool
 	Flip      bool
 	Advanced  bool
+	Speed     int8
 }
 
 type EventReplay struct {

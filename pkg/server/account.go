@@ -11,4 +11,5 @@ type account struct {
 	moves     bool
 	flip      bool
 	advanced  bool
+	speed     int8
 }
