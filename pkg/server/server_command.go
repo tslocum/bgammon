@@ -174,6 +174,7 @@ COMMANDS:
 						Pips:      a.pips,
 						Moves:     a.moves,
 						Flip:      a.flip,
+						Advanced:  a.advanced,
 					})
 				} else {
 					cmd.client.account = 0
@@ -1093,7 +1094,7 @@ COMMANDS:
 			}
 
 			name := string(bytes.ToLower(params[0]))
-			settings := []string{"autoplay", "highlight", "pips", "moves", "flip"}
+			settings := []string{"autoplay", "highlight", "pips", "moves", "flip", "advanced"}
 			var found bool
 			for i := range settings {
 				if name == settings[i] {

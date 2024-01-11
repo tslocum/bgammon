@@ -10,4 +10,5 @@ type account struct {
 	pips      bool
 	moves     bool
 	flip      bool
+	advanced  bool
 }

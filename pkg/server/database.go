@@ -51,7 +51,8 @@ CREATE TABLE account (
 	highlight                smallint NOT NULL DEFAULT 1,
 	pips                     smallint NOT NULL DEFAULT 1,
 	moves                    smallint NOT NULL DEFAULT 0,
-	flip                     smallint NOT NULL DEFAULT 0
+	flip                     smallint NOT NULL DEFAULT 0,
+	advanced                 smallint NOT NULL DEFAULT 0
 );
 CREATE TABLE game (
 	id       serial PRIMARY KEY,
@@ -342,8 +343,8 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 	defer tx.Commit(context.Background())
 
 	a := &account{}
-	var autoplay, highlight, pips, moves, flip int
-	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, autoplay, highlight, pips, moves, flip FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &autoplay, &highlight, &pips, &moves, &flip)
+	var autoplay, highlight, pips, moves, flip, advanced int
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, autoplay, highlight, pips, moves, flip, advanced FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &autoplay, &highlight, &pips, &moves, &flip, &advanced)
 	if err != nil {
 		return nil, nil
 	} else if len(a.password) == 0 {
@@ -354,6 +355,7 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 	a.pips = pips == 1
 	a.moves = moves == 1
 	a.flip = flip == 1
+	a.advanced = advanced == 1
 
 	match, err := argon2id.ComparePasswordAndHash(string(password)+passwordSalt, string(a.password))
 	if err != nil {

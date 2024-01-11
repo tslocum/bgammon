@@ -118,6 +118,7 @@ type EventSettings struct {
 	Pips      bool
 	Moves     bool
 	Flip      bool
+	Advanced  bool
 }
 
 type EventReplay struct {
