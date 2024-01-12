@@ -504,6 +504,11 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 	if !ok {
 		return nil
 	}
+	barSpace := SpaceBarPlayer
+	if g.Turn == 2 {
+		barSpace = SpaceBarOpponent
+	}
+	onBar := g.Board[barSpace] != 0
 	available, _ := b.Available(g.Turn)
 	var moves [][]int8
 	for i := range available {
@@ -511,7 +516,7 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 			if available[i][j][0] == 0 && available[i][j][1] == 0 {
 				break
 			}
-			if PlayerCheckers(g.Board[available[i][j][0]], g.Turn) != 0 {
+			if (!onBar || (onBar && available[i][j][0] == barSpace)) && PlayerCheckers(g.Board[available[i][j][0]], g.Turn) != 0 {
 				var found bool
 				for _, m := range moves {
 					if m[0] == available[i][j][0] && m[1] == available[i][j][1] {
