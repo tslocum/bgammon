@@ -159,7 +159,12 @@ func (g *serverGame) roll(player int8) bool {
 		// Store account IDs.
 		if g.Started.IsZero() && g.Roll1 != 0 && g.Roll2 != 0 {
 			g.Started = time.Now()
-			g.account1, g.account2 = g.client1.account, g.client2.account
+			if g.client1.account != nil {
+				g.account1 = g.client1.account.id
+			}
+			if g.client2.account != nil {
+				g.account2 = g.client2.account.id
+			}
 		}
 		return true
 	} else if player != g.Turn || g.Roll1 != 0 || g.Roll2 != 0 {
@@ -468,6 +473,17 @@ func (g *serverGame) listing(playerName []byte) *bgammon.GameListing {
 		playerCount = g.playerCount()
 	}
 
+	var rating int
+	if g.client1 != nil && g.client1.account != nil {
+		rating = g.client1.account.casual.getRating(g.Variant, g.Points > 1)
+	}
+	if g.client2 != nil && g.client2.account != nil {
+		r := g.client2.account.casual.getRating(g.Variant, g.Points > 1)
+		if r > rating {
+			rating = r
+		}
+	}
+
 	name := string(g.name)
 	switch g.Variant {
 	case bgammon.VariantAceyDeucey:
@@ -481,6 +497,7 @@ func (g *serverGame) listing(playerName []byte) *bgammon.GameListing {
 		Points:   g.Points,
 		Password: len(g.password) != 0,
 		Players:  playerCount,
+		Rating:   rating / 100,
 		Name:     name,
 	}
 }
@@ -655,13 +672,13 @@ func (g *serverGame) handleWin() bool {
 	if g.Variant != bgammon.VariantBackgammon {
 		winType = 1
 	}
-	err := recordGameResult(g.Game, winType, g.client1.account, g.client2.account, g.replay)
+	err := recordGameResult(g, winType, g.replay)
 	if err != nil {
 		log.Fatalf("failed to record game result: %s", err)
 	}
 
 	if !reset {
-		err := recordMatchResult(g.Game, matchTypeCasual, g.client1.account, g.client2.account)
+		err := recordMatchResult(g, matchTypeCasual)
 		if err != nil {
 			log.Fatalf("failed to record match result: %s", err)
 		}

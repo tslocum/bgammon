@@ -50,6 +50,7 @@ type GameListing struct {
 	Password bool
 	Points   int8
 	Players  int8
+	Rating   int
 	Name     string
 }
 

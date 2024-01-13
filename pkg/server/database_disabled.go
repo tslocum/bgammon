@@ -51,11 +51,11 @@ func replayByID(id int) ([]byte, error) {
 	return nil, nil
 }
 
-func recordGameResult(g *bgammon.Game, winType int8, account1 int, account2 int, replay [][]byte) error {
+func recordGameResult(g *serverGame, winType int8, replay [][]byte) error {
 	return nil
 }
 
-func recordMatchResult(g *bgammon.Game, matchType int, account1 int, account2 int) error {
+func recordMatchResult(g *serverGame, matchType int) error {
 	return nil
 }
 

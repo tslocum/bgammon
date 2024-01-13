@@ -343,9 +343,12 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 	}
 	defer tx.Commit(context.Background())
 
-	a := &account{}
+	a := &account{
+		casual:      &clientRating{},
+		competitive: &clientRating{},
+	}
 	var autoplay, highlight, pips, moves, flip, advanced int
-	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, autoplay, highlight, pips, moves, flip, advanced, speed FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &autoplay, &highlight, &pips, &moves, &flip, &advanced, &a.speed)
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, autoplay, highlight, pips, moves, flip, advanced, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &autoplay, &highlight, &pips, &moves, &flip, &advanced, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
 	if err != nil {
 		return nil, nil
 	} else if len(a.password) == 0 {
@@ -435,7 +438,7 @@ func setAccountSetting(id int, name string, value int) error {
 	return err
 }
 
-func recordGameResult(g *bgammon.Game, winType int8, account1 int, account2 int, replay [][]byte) error {
+func recordGameResult(g *serverGame, winType int8, replay [][]byte) error {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
@@ -454,19 +457,19 @@ func recordGameResult(g *bgammon.Game, winType int8, account1 int, account2 int,
 	}
 	defer tx.Commit(context.Background())
 
-	_, err = tx.Exec(context.Background(), "INSERT INTO game (variant, started, ended, player1, account1, player2, account2, points, winner, wintype, replay) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", g.Variant, g.Started.Unix(), ended.Unix(), g.Player1.Name, account1, g.Player2.Name, account2, g.Points, g.Winner, winType, bytes.Join(replay, []byte("\n")))
+	_, err = tx.Exec(context.Background(), "INSERT INTO game (variant, started, ended, player1, account1, player2, account2, points, winner, wintype, replay) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", g.Variant, g.Started.Unix(), ended.Unix(), g.Player1.Name, g.account1, g.Player2.Name, g.account2, g.Points, g.Winner, winType, bytes.Join(replay, []byte("\n")))
 	if err != nil {
 		return err
 	}
 
-	if account1 != 0 {
-		_, err = tx.Exec(context.Background(), "UPDATE account SET active = $1 WHERE id = $2", time.Now().Unix(), account1)
+	if g.account1 != 0 {
+		_, err = tx.Exec(context.Background(), "UPDATE account SET active = $1 WHERE id = $2", time.Now().Unix(), g.account1)
 		if err != nil {
 			return err
 		}
 	}
-	if account2 != 0 {
-		_, err = tx.Exec(context.Background(), "UPDATE account SET active = $1 WHERE id = $2", time.Now().Unix(), account2)
+	if g.account2 != 0 {
+		_, err = tx.Exec(context.Background(), "UPDATE account SET active = $1 WHERE id = $2", time.Now().Unix(), g.account2)
 		if err != nil {
 			return err
 		}
@@ -474,11 +477,11 @@ func recordGameResult(g *bgammon.Game, winType int8, account1 int, account2 int,
 	return nil
 }
 
-func recordMatchResult(g *bgammon.Game, matchType int, account1 int, account2 int) error {
+func recordMatchResult(g *serverGame, matchType int) error {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
-	if db == nil || g.Started.IsZero() || g.Winner == 0 || account1 == 0 || account2 == 0 || account1 == account2 {
+	if db == nil || g.Started.IsZero() || g.Winner == 0 || g.account1 == 0 || g.account2 == 0 || g.account1 == g.account2 {
 		return nil
 	}
 
@@ -491,14 +494,14 @@ func recordMatchResult(g *bgammon.Game, matchType int, account1 int, account2 in
 	columnName := ratingColumn(matchType, g.Variant, g.Points != 1)
 
 	var rating1i int
-	err = tx.QueryRow(context.Background(), "SELECT "+columnName+" FROM account WHERE id = $1", account1).Scan(&rating1i)
+	err = tx.QueryRow(context.Background(), "SELECT "+columnName+" FROM account WHERE id = $1", g.account1).Scan(&rating1i)
 	if err != nil {
 		return err
 	}
 	rating1 := float64(rating1i) / 100
 
 	var rating2i int
-	err = tx.QueryRow(context.Background(), "SELECT "+columnName+" FROM account WHERE id = $1", account2).Scan(&rating2i)
+	err = tx.QueryRow(context.Background(), "SELECT "+columnName+" FROM account WHERE id = $1", g.account2).Scan(&rating2i)
 	if err != nil {
 		return err
 	}
@@ -512,12 +515,30 @@ func recordMatchResult(g *bgammon.Game, matchType int, account1 int, account2 in
 	rating2New, _, _ := glicko2.Rank(rating2, 50, 0.06, []glicko2.Opponent{ratingPlayer{rating1, 30, 0.06, outcome2}}, 0.6)
 
 	active := time.Now().Unix()
-	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1, active = $2 WHERE id = $3", int(rating1New*100), active, account1)
+	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1, active = $2 WHERE id = $3", int(rating1New*100), active, g.account1)
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1, active = $2 WHERE id = $3", int(rating2New*100), active, account2)
-	return err
+	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1, active = $2 WHERE id = $3", int(rating2New*100), active, g.account2)
+	if err != nil {
+		return err
+	}
+
+	if g.client1 != nil && g.client1.account != nil {
+		if matchType == matchTypeCasual {
+			g.client1.account.casual.setRating(g.Variant, g.Points > 1, int(rating1New*100))
+		} else {
+			g.client1.account.competitive.setRating(g.Variant, g.Points > 1, int(rating1New*100))
+		}
+	}
+	if g.client2 != nil && g.client2.account != nil {
+		if matchType == matchTypeCasual {
+			g.client2.account.casual.setRating(g.Variant, g.Points > 1, int(rating2New*100))
+		} else {
+			g.client2.account.competitive.setRating(g.Variant, g.Points > 1, int(rating2New*100))
+		}
+	}
+	return nil
 }
 
 func matchInfo(id int) (timestamp int64, player1 string, player2 string, replay []byte, err error) {

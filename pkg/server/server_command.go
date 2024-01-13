@@ -40,7 +40,7 @@ COMMANDS:
 		params := bytes.Fields(cmd.command[startParameters:])
 
 		// Require users to send login command first.
-		if cmd.client.account == -1 {
+		if cmd.client.accountID == -1 {
 			resetCommand := keyword == bgammon.CommandResetPassword
 			if resetCommand {
 				if len(params) > 0 {
@@ -165,7 +165,8 @@ COMMANDS:
 						continue
 					}
 
-					cmd.client.account = a.id
+					cmd.client.account = a
+					cmd.client.accountID = a.id
 					cmd.client.name = name
 					cmd.client.autoplay = a.autoplay
 					cmd.client.sendEvent(&bgammon.EventSettings{
@@ -178,7 +179,7 @@ COMMANDS:
 						Speed:     a.speed,
 					})
 				} else {
-					cmd.client.account = 0
+					cmd.client.accountID = 0
 					if !randomUsername && !bytes.HasPrefix(username, []byte("BOT_")) && !bytes.HasPrefix(username, []byte("Guest_")) {
 						username = append([]byte("Guest_"), username...)
 					}
@@ -588,13 +589,13 @@ COMMANDS:
 					winEvent.Player = clientGame.Player2.Name
 				}
 
-				err := recordGameResult(clientGame.Game, 4, clientGame.client1.account, clientGame.client2.account, clientGame.replay)
+				err := recordGameResult(clientGame, 4, clientGame.replay)
 				if err != nil {
 					log.Fatalf("failed to record game result: %s", err)
 				}
 
 				if !reset {
-					err := recordMatchResult(clientGame.Game, matchTypeCasual, clientGame.client1.account, clientGame.client2.account)
+					err := recordMatchResult(clientGame, matchTypeCasual)
 					if err != nil {
 						log.Fatalf("failed to record match result: %s", err)
 					}
@@ -1068,7 +1069,7 @@ COMMANDS:
 
 			clientGame.sendBoard(cmd.client, false)
 		case bgammon.CommandPassword:
-			if cmd.client.account == 0 {
+			if cmd.client.account == nil {
 				cmd.client.sendNotice("Failed to change password: you are logged in as a guest.")
 				continue
 			} else if len(params) < 2 {
@@ -1118,10 +1119,10 @@ COMMANDS:
 				cmd.client.autoplay = value == 1
 			}
 
-			if cmd.client.account == 0 {
+			if cmd.client.account == nil {
 				continue
 			}
-			_ = setAccountSetting(cmd.client.account, name, value)
+			_ = setAccountSetting(cmd.client.account.id, name, value)
 		case bgammon.CommandReplay:
 			var (
 				id     int

@@ -11,11 +11,68 @@ import (
 	"code.rocket9labs.com/tslocum/bgammon"
 )
 
+type clientRating struct {
+	backgammonSingle int
+	backgammonMulti  int
+	aceySingle       int
+	aceyMulti        int
+	tabulaSingle     int
+	tabulaMulti      int
+}
+
+func (r *clientRating) getRating(variant int8, multiPoint bool) int {
+	switch variant {
+	case bgammon.VariantBackgammon:
+		if !multiPoint {
+			return r.backgammonSingle
+		}
+		return r.backgammonMulti
+	case bgammon.VariantAceyDeucey:
+		if !multiPoint {
+			return r.aceySingle
+		}
+		return r.aceyMulti
+	case bgammon.VariantTabula:
+		if !multiPoint {
+			return r.tabulaSingle
+		}
+		return r.tabulaMulti
+	default:
+		log.Panicf("unknown variant: %d", variant)
+		return 0
+	}
+}
+
+func (r *clientRating) setRating(variant int8, multiPoint bool, rating int) {
+	switch variant {
+	case bgammon.VariantBackgammon:
+		if !multiPoint {
+			r.backgammonSingle = rating
+			return
+		}
+		r.backgammonMulti = rating
+	case bgammon.VariantAceyDeucey:
+		if !multiPoint {
+			r.aceySingle = rating
+			return
+		}
+		r.aceyMulti = rating
+	case bgammon.VariantTabula:
+		if !multiPoint {
+			r.tabulaSingle = rating
+		}
+		r.tabulaMulti = rating
+	default:
+		log.Panicf("unknown variant: %d", variant)
+	}
+}
+
 type serverClient struct {
 	id           int
 	json         bool
 	name         []byte
-	account      int
+	account      *account
+	accountID    int
 	connected    int64
 	active       int64
 	lastPing     int64

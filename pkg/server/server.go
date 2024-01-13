@@ -192,7 +192,7 @@ func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	c := &serverClient{
 		id:        <-s.newClientIDs,
-		account:   -1,
+		accountID: -1,
 		connected: now,
 		active:    now,
 		commands:  commands,
@@ -257,7 +257,7 @@ func (s *server) handleTerminatedGames() {
 				if g.forefeit == 1 {
 					g.Winner = 2
 				}
-				err := recordMatchResult(g.Game, matchTypeCasual, g.account1, g.account2)
+				err := recordMatchResult(g, matchTypeCasual)
 				if err != nil {
 					log.Fatalf("failed to record match result: %s", err)
 				}
@@ -297,7 +297,7 @@ func (s *server) handleConnection(conn net.Conn) {
 
 	c := &serverClient{
 		id:        <-s.newClientIDs,
-		account:   -1,
+		accountID: -1,
 		connected: now,
 		active:    now,
 		commands:  commands,
