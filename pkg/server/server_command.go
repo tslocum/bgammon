@@ -222,7 +222,7 @@ COMMANDS:
 		clientGame := s.gameByClient(cmd.client)
 		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
 			switch keyword {
-			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandDisconnect, bgammon.CommandPong:
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandDisconnect, bgammon.CommandPong:
 				// These commands are allowed to be used by spectators.
 			default:
 				cmd.client.sendNotice("Command ignored: You are spectating this match.")
