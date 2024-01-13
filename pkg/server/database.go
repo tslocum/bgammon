@@ -47,13 +47,13 @@ CREATE TABLE account (
 	rated_acey_multi         integer NOT NULL DEFAULT 150000,
 	rated_tabula_single      integer NOT NULL DEFAULT 150000,
 	rated_tabula_multi       integer NOT NULL DEFAULT 150000,
-	autoplay                 smallint NOT NULL DEFAULT 1,
+	autoplay                 smallint NOT NULL DEFAULT 0,
 	highlight                smallint NOT NULL DEFAULT 1,
 	pips                     smallint NOT NULL DEFAULT 1,
 	moves                    smallint NOT NULL DEFAULT 0,
 	flip                     smallint NOT NULL DEFAULT 0,
 	advanced                 smallint NOT NULL DEFAULT 0,
-	speed                    smallint NOT NULL DEFAULT 0
+	speed                    smallint NOT NULL DEFAULT 1
 );
 CREATE TABLE game (
 	id       serial PRIMARY KEY,
