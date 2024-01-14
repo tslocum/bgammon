@@ -352,26 +352,34 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 			g.forefeit = 0
 		}
 	}()
+	var rating int
+	if client.account != nil {
+		rating = client.account.casual.getRating(g.Variant, g.Points > 1) / 100
+	}
 	switch {
 	case g.client1 != nil:
 		g.client2 = client
 		g.Player2.Name = string(client.name)
+		g.Player2.Rating = rating
 		client.playerNumber = 2
 		playerNumber = 2
 	case g.client2 != nil:
 		g.client1 = client
 		g.Player1.Name = string(client.name)
+		g.Player1.Rating = rating
 		client.playerNumber = 1
 		playerNumber = 1
 	default:
 		if RandInt(2) == 0 {
 			g.client1 = client
 			g.Player1.Name = string(client.name)
+			g.Player1.Rating = rating
 			client.playerNumber = 1
 			playerNumber = 1
 		} else {
 			g.client2 = client
 			g.Player2.Name = string(client.name)
+			g.Player2.Rating = rating
 			client.playerNumber = 2
 			playerNumber = 2
 		}
@@ -426,10 +434,12 @@ func (g *serverGame) removeClient(client *serverClient) {
 	case g.client1 == client:
 		g.client1 = nil
 		g.Player1.Name = ""
+		g.Player1.Rating = 0
 		playerNumber = 1
 	case g.client2 == client:
 		g.client2 = nil
 		g.Player2.Name = ""
+		g.Player2.Rating = 0
 		playerNumber = 2
 	default:
 		for i, spectator := range g.spectators {
@@ -688,6 +698,16 @@ func (g *serverGame) handleWin() bool {
 	}
 	g.eachClient(func(client *serverClient) {
 		client.sendEvent(winEvent)
+	})
+
+	if g.client1 != nil && g.client1.account != nil {
+		g.Player1.Rating = g.client1.account.casual.getRating(g.Variant, g.Points > 1) / 100
+	}
+	if g.client2 != nil && g.client2.account != nil {
+		g.Player2.Rating = g.client2.account.casual.getRating(g.Variant, g.Points > 1) / 100
+	}
+	g.eachClient(func(client *serverClient) {
+		g.sendBoard(client, false)
 	})
 	return true
 }
