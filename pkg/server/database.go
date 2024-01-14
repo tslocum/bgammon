@@ -976,7 +976,7 @@ func sendEmail(mailServer string, emailAddress string, emailSubject string, emai
 	mixedWriter.Close()
 
 	if mailServer == "" {
-		fmt.Print(`From: bgammon.org <noreply@bgammon.org>
+		fmt.Print(`From: bgammon.org <noreply@rocket9labs.com>
 	To: <` + emailAddress + `>
 	Subject: ` + emailSubject + `
 	MIME-Version: 1.0
@@ -992,7 +992,7 @@ func sendEmail(mailServer string, emailAddress string, emailSubject string, emai
 	}
 	defer c.Close()
 
-	c.Mail("noreply@bgammon.org")
+	c.Mail("noreply@rocket9labs.com")
 	c.Rcpt(emailAddress)
 
 	wc, err := c.Data()
@@ -1001,7 +1001,7 @@ func sendEmail(mailServer string, emailAddress string, emailSubject string, emai
 	}
 	defer wc.Close()
 
-	fmt.Fprint(wc, `From: bgammon.org <noreply@bgammon.org>
+	fmt.Fprint(wc, `From: bgammon.org <noreply@rocket9labs.com>
 To: `+emailAddress+`
 Subject: `+emailSubject+`
 MIME-Version: 1.0
