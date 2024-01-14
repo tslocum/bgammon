@@ -31,6 +31,14 @@ func confirmResetAccount(resetSalt string, passwordSalt string, id int, key stri
 	return "", nil
 }
 
+func accountByID(id int) (*account, error) {
+	return nil, nil
+}
+
+func accountByUsername(username string) (*account, error) {
+	return nil, nil
+}
+
 func loginAccount(passwordSalt string, username []byte, password []byte) (*account, error) {
 	return nil, nil
 }

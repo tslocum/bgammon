@@ -1171,6 +1171,15 @@ COMMANDS:
 				Matches: matches,
 			}
 			ev.Player = string(params[0])
+			a, err := accountByUsername(string(params[0]))
+			if err == nil && a != nil {
+				ev.CasualBackgammonSingle = a.casual.backgammonSingle / 100
+				ev.CasualBackgammonMulti = a.casual.backgammonMulti / 100
+				ev.CasualAceyDeuceySingle = a.casual.aceySingle / 100
+				ev.CasualAceyDeuceyMulti = a.casual.aceyMulti / 100
+				ev.CasualTabulaSingle = a.casual.tabulaSingle / 100
+				ev.CasualTabulaMulti = a.casual.tabulaMulti / 100
+			}
 			cmd.client.sendEvent(ev)
 		case bgammon.CommandDisconnect:
 			if clientGame != nil {

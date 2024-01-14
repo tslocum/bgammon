@@ -325,6 +325,70 @@ func confirmResetAccount(resetSalt string, passwordSalt string, id int, key stri
 	return newPassword, err
 }
 
+func accountByID(id int) (*account, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil || id <= 0 {
+		return nil, nil
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	a := &account{
+		casual:      &clientRating{},
+		competitive: &clientRating{},
+	}
+	var autoplay, highlight, pips, moves, flip, advanced int
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, autoplay, highlight, pips, moves, flip, advanced, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE id = $1", id).Scan(&a.id, &a.email, &a.username, &a.password, &autoplay, &highlight, &pips, &moves, &flip, &advanced, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
+	if err != nil {
+		return nil, nil
+	}
+	a.autoplay = autoplay == 1
+	a.highlight = highlight == 1
+	a.pips = pips == 1
+	a.moves = moves == 1
+	a.flip = flip == 1
+	a.advanced = advanced == 1
+	return a, nil
+}
+
+func accountByUsername(username string) (*account, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil || len(strings.TrimSpace(username)) == 0 {
+		return nil, nil
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	a := &account{
+		casual:      &clientRating{},
+		competitive: &clientRating{},
+	}
+	var autoplay, highlight, pips, moves, flip, advanced int
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, autoplay, highlight, pips, moves, flip, advanced, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE username = $1", strings.ToLower(username)).Scan(&a.id, &a.email, &a.username, &a.password, &autoplay, &highlight, &pips, &moves, &flip, &advanced, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
+	if err != nil {
+		return nil, nil
+	}
+	a.autoplay = autoplay == 1
+	a.highlight = highlight == 1
+	a.pips = pips == 1
+	a.moves = moves == 1
+	a.flip = flip == 1
+	a.advanced = advanced == 1
+	return a, nil
+}
+
 func loginAccount(passwordSalt string, username []byte, password []byte) (*account, error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()

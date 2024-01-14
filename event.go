@@ -146,7 +146,13 @@ type HistoryMatch struct {
 
 type EventHistory struct {
 	Event
-	Matches []*HistoryMatch
+	Matches                []*HistoryMatch
+	CasualBackgammonSingle int
+	CasualBackgammonMulti  int
+	CasualAceyDeuceySingle int
+	CasualAceyDeuceyMulti  int
+	CasualTabulaSingle     int
+	CasualTabulaMulti      int
 }
 
 func DecodeEvent(message []byte) (interface{}, error) {
