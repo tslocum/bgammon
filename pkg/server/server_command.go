@@ -1161,15 +1161,39 @@ COMMANDS:
 				cmd.client.sendNotice("Please specify the player as follows: history <username>")
 				continue
 			}
+			const historyPageSize = 50
+
+			page := 1
+			if len(params) > 1 {
+				p, err := strconv.Atoi(string(params[1]))
+				if err == nil && p >= 1 {
+					page = p
+				}
+			}
 
 			matches, err := matchHistory(string(params[0]))
 			if err != nil {
 				cmd.client.sendNotice("Invalid replay ID provided.")
 				continue
 			}
-			ev := &bgammon.EventHistory{
-				Matches: matches,
+
+			pages := (len(matches) / historyPageSize)
+			if pages == 0 {
+				pages = 1
 			}
+
+			ev := &bgammon.EventHistory{
+				Page:  page,
+				Pages: pages,
+			}
+			if len(matches) > 0 && page <= pages {
+				max := page * historyPageSize
+				if max > len(matches) {
+					max = len(matches)
+				}
+				ev.Matches = matches[(page-1)*historyPageSize : max]
+			}
+
 			ev.Player = string(params[0])
 			a, err := accountByUsername(string(params[0]))
 			if err == nil && a != nil {

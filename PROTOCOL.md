@@ -54,7 +54,7 @@ formatted responses are more easily parsed by computers.
 - `replay <id>`
   - Retrieve replay of the specified game.
 
-- `history <username>`
+- `history <username> [page]`
   - Retrieve match history of the specified player.
 
 - `json <on/off>`

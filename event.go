@@ -146,6 +146,8 @@ type HistoryMatch struct {
 
 type EventHistory struct {
 	Event
+	Page                   int
+	Pages                  int
 	Matches                []*HistoryMatch
 	CasualBackgammonSingle int
 	CasualBackgammonMulti  int
