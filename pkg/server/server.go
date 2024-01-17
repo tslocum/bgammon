@@ -23,6 +23,8 @@ import (
 
 const clientTimeout = 40 * time.Second
 
+const inactiveLimit = 600 // 10 minutes.
+
 var allowDebugCommands bool
 
 var (
@@ -134,7 +136,7 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 	go s.handleNewGameIDs()
 	go s.handleNewClientIDs()
 	go s.handleCommands()
-	go s.handleTerminatedGames()
+	go s.handleGames()
 	return s
 }
 
@@ -242,20 +244,62 @@ func (s *server) removeClient(c *serverClient) {
 	}
 }
 
-func (s *server) handleTerminatedGames() {
+func (s *server) handleGames() {
 	t := time.NewTicker(time.Minute)
 	for range t.C {
 		s.gamesLock.Lock()
 
 		i := 0
 		for _, g := range s.games {
+			if !g.PartialHandled() && g.Player1.Rating != 0 && g.Player2.Rating != 0 {
+				partialTurn := g.PartialTurn()
+				if partialTurn != 0 {
+					total := g.PartialTime()
+					switch partialTurn {
+					case 1:
+						total += g.Player1.Inactive
+					case 2:
+						total += g.Player2.Inactive
+					}
+					if total >= inactiveLimit {
+						g.inactive = partialTurn
+						g.SetPartialHandled(true)
+						if !g.terminated() {
+							var player *serverClient
+							var opponent *serverClient
+							switch partialTurn {
+							case 1:
+								player = g.client1
+								opponent = g.client2
+							case 2:
+								player = g.client2
+								opponent = g.client1
+							}
+							if player != nil {
+								player.sendNotice("You have been inactive for more than ten minutes. If your opponent leaves the match they will receive a win.")
+							}
+							if opponent != nil {
+								opponent.sendNotice("Your opponent has been inactive for more than ten minutes. You may continue playing or leave the match at any time and receive a win.")
+							}
+						}
+					}
+				}
+			}
+
 			if !g.terminated() {
 				s.games[i] = g
 				i++
-			} else if g.forefeit != 0 && g.Winner == 0 {
-				g.Winner = 1
-				if g.forefeit == 1 {
-					g.Winner = 2
+			} else if g.Winner == 0 && (g.inactive != 0 || g.forefeit != 0) {
+				if g.inactive != 0 {
+					g.Winner = 1
+					if g.inactive == 1 {
+						g.Winner = 2
+					}
+				} else {
+					g.Winner = 1
+					if g.forefeit == 1 {
+						g.Winner = 2
+					}
 				}
 				err := recordMatchResult(g, matchTypeCasual)
 				if err != nil {

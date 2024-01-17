@@ -519,6 +519,7 @@ COMMANDS:
 			}
 
 			clientGame.DoubleOffered = true
+			clientGame.NextPartialTurn(opponent.playerNumber)
 
 			cmd.client.sendNotice(fmt.Sprintf("Double offered to opponent (%d points).", clientGame.DoubleValue*2))
 			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf("%s offers a double (%d points).", cmd.client.name, clientGame.DoubleValue*2))
@@ -551,6 +552,8 @@ COMMANDS:
 				cmd.client.sendNotice("You may not resign until your opponent rejoins the match.")
 				continue
 			}
+
+			clientGame.NextPartialTurn(opponent.playerNumber)
 
 			cmd.client.sendNotice("Declined double offer")
 			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf("%s declined double offer.", cmd.client.name))
@@ -734,6 +737,8 @@ COMMANDS:
 				}
 			}
 
+			clientGame.NextPartialTurn(clientGame.Turn)
+
 			forcedMove := clientGame.playForcedMoves()
 			if forcedMove && len(clientGame.LegalMoves(false)) == 0 {
 				chooseRoll := clientGame.Variant == bgammon.VariantAceyDeucey && ((clientGame.Roll1 == 1 && clientGame.Roll2 == 2) || (clientGame.Roll1 == 2 && clientGame.Roll2 == 1)) && len(clientGame.Moves) == 2
@@ -898,6 +903,7 @@ COMMANDS:
 					clientGame.DoubleOffered = false
 					clientGame.DoubleValue = clientGame.DoubleValue * 2
 					clientGame.DoublePlayer = cmd.client.playerNumber
+					clientGame.NextPartialTurn(opponent.playerNumber)
 
 					cmd.client.sendNotice("Accepted double.")
 					opponent.sendNotice(fmt.Sprintf("%s accepted double.", cmd.client.name))

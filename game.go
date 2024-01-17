@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"time"
 
@@ -46,6 +47,10 @@ type Game struct {
 	DoubleOffered bool // Whether the current player is offering a double.
 
 	Reroll bool // Used in acey-deucey.
+
+	partialTurn    int8
+	partialTime    time.Time
+	partialHandled bool
 
 	boardStates   [][]int8  // One board state for each move to allow undoing a move.
 	enteredStates [][2]bool // Player 1 entered state and Player 2 entered state for each move.
@@ -96,6 +101,10 @@ func (g *Game) Copy(shallow bool) *Game {
 		DoubleOffered: g.DoubleOffered,
 
 		Reroll: g.Reroll,
+
+		partialTurn:    g.partialTurn,
+		partialTime:    g.partialTime,
+		partialHandled: g.partialHandled,
 	}
 	copy(newGame.Board, g.Board)
 	copy(newGame.Moves, g.Moves)
@@ -106,6 +115,50 @@ func (g *Game) Copy(shallow bool) *Game {
 		copy(newGame.enteredStates, g.enteredStates)
 	}
 	return newGame
+}
+
+func (g *Game) PartialTurn() int8 {
+	return g.partialTurn
+}
+
+func (g *Game) PartialTime() int {
+	var delta time.Duration
+	if g.partialTime.IsZero() {
+		delta = time.Since(g.Started)
+	} else {
+		delta = time.Since(g.partialTime)
+	}
+	if delta <= 30*time.Second {
+		return 0
+	}
+	return int(math.Floor(delta.Seconds()))
+}
+
+func (g *Game) PartialHandled() bool {
+	return g.partialHandled
+}
+
+func (g *Game) SetPartialHandled(handled bool) {
+	g.partialHandled = handled
+}
+
+func (g *Game) NextPartialTurn(player int8) {
+	if g.Started.IsZero() || g.Winner != 0 {
+		return
+	}
+
+	delta := g.PartialTime()
+	if delta > 0 {
+		switch g.partialTurn {
+		case 1:
+			g.Player1.Inactive += delta
+		case 2:
+			g.Player2.Inactive += delta
+		}
+	}
+
+	g.partialTurn = player
+	g.partialTime = time.Now()
 }
 
 func (g *Game) NextTurn(reroll bool) {
@@ -121,6 +174,8 @@ func (g *Game) NextTurn(reroll bool) {
 		g.Turn = nextTurn
 	}
 
+	g.NextPartialTurn(g.Turn)
+
 	g.Roll1, g.Roll2, g.Roll3 = 0, 0, 0
 	g.Moves = g.Moves[:0]
 	g.boardStates = g.boardStates[:0]
@@ -128,6 +183,8 @@ func (g *Game) NextTurn(reroll bool) {
 }
 
 func (g *Game) Reset() {
+	g.Player1.Inactive = 0
+	g.Player2.Inactive = 0
 	if g.Variant != VariantBackgammon {
 		g.Player1.Entered = false
 		g.Player2.Entered = false
@@ -144,6 +201,8 @@ func (g *Game) Reset() {
 	g.Reroll = false
 	g.boardStates = nil
 	g.enteredStates = nil
+	g.partialTurn = 0
+	g.partialTime = time.Time{}
 }
 
 func (g *Game) turnPlayer() Player {

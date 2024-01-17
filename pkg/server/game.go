@@ -23,6 +23,7 @@ type serverGame struct {
 	allowed2   []byte
 	account1   int
 	account2   int
+	inactive   int8
 	forefeit   int8
 	rematch    int8
 	rejoin1    bool
@@ -130,6 +131,7 @@ func (g *serverGame) playForcedMoves() bool {
 			return true
 		}
 	}
+	g.NextPartialTurn(g.Turn)
 	return true
 }
 
