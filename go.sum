@@ -1,7 +1,7 @@
 code.rocket9labs.com/tslocum/bei v0.0.0-20240108012722-6db380cc190b h1:Y0a14Kf/hSYepSmp4ZfDeE4CZZGBGBS97CNjCbKJm0c=
 code.rocket9labs.com/tslocum/bei v0.0.0-20240108012722-6db380cc190b/go.mod h1:tS60/VNAJphKvDBkSLQhKALa15msIAuWWfEKNc4oFZc=
-code.rocket9labs.com/tslocum/tabula v0.0.0-20240108183445-695ea428ae21 h1:1VG88tdhCSVv7wGoIKQe8A8KfBXJsdz5pDsyP4ymDwk=
-code.rocket9labs.com/tslocum/tabula v0.0.0-20240108183445-695ea428ae21/go.mod h1:WEJXESKXqrMFLAArikQ79lpRibNeeE1C0VruxXYMF5M=
+code.rocket9labs.com/tslocum/tabula v0.0.0-20240118055336-21a3dea3f702 h1:NGZILSBynzLZF84WKZyAuoWsZFq37uvEcP2dFvPsY/8=
+code.rocket9labs.com/tslocum/tabula v0.0.0-20240118055336-21a3dea3f702/go.mod h1:WEJXESKXqrMFLAArikQ79lpRibNeeE1C0VruxXYMF5M=
 github.com/Masterminds/goutils v1.1.1 h1:5nUrii3FMTL5diU80unEVvNevw1nH4+ZV4DSLVJLSYI=
 github.com/Masterminds/goutils v1.1.1/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
 github.com/Masterminds/semver v1.4.2/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=

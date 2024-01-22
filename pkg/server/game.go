@@ -86,6 +86,9 @@ func (g *serverGame) playForcedMoves() bool {
 	} else {
 	FORCEDMOVES:
 		for _, m1 := range allMoves[0] {
+			if m1[0] == 0 && m1[1] == 0 {
+				break
+			}
 			for i := range allMoves {
 				if i == 0 {
 					continue
@@ -109,6 +112,19 @@ func (g *serverGame) playForcedMoves() bool {
 	if len(forcedMoves) == 0 {
 		return false
 	}
+	gc := g.Copy(true)
+	for _, move := range forcedMoves {
+		if gc.Winner != 0 {
+			break
+		} else if gc.HaveDiceRoll(move[0], move[1]) == 0 {
+			return false
+		}
+		ok, _ := gc.AddMoves([][]int8{{move[0], move[1]}}, false)
+		if !ok {
+			log.Printf("ERROR: failed to play forced move during validation %v: %v %v (%v) (%v) (%v)", move, forcedMoves, gc.DiceRolls(), gc, gc.Board, allMoves)
+			return false
+		}
+	}
 	g.eachClient(func(client *serverClient) {
 		g.sendBoard(client, true)
 	})
@@ -118,7 +134,11 @@ func (g *serverGame) playForcedMoves() bool {
 		}
 		ok, _ := g.AddMoves([][]int8{{move[0], move[1]}}, false)
 		if !ok {
-			log.Fatalf("failed to play forced move %v: %v %v (%v) (%v)", move, forcedMoves, g.DiceRolls(), g.Game, g.Board)
+			log.Printf("ERROR: failed to play forced move %v: %v %v (%v) (%v) (%v)", move, forcedMoves, g.DiceRolls(), g.Game, g.Board, allMoves)
+			g.eachClient(func(client *serverClient) {
+				g.sendBoard(client, false)
+			})
+			return false
 		}
 		g.eachClient(func(client *serverClient) {
 			ev := &bgammon.EventMoved{
