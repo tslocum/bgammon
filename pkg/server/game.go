@@ -69,45 +69,23 @@ func (g *serverGame) playForcedMoves() bool {
 	if !ok {
 		return false
 	}
-	allMoves, _ := tb.Available(g.Turn)
+	allMoves, allBoards := tb.Available(g.Turn)
 	if len(allMoves) == 0 {
 		return false
 	}
+	for i := range allBoards {
+		if i == 0 {
+			continue
+		} else if allBoards[i] != allBoards[0] {
+			return false
+		}
+	}
 	var forcedMoves [][2]int8
-	if len(allMoves) == 1 {
-		for i := range allMoves {
-			for j := 0; j < 4; j++ {
-				if allMoves[i][j][0] == 0 && allMoves[i][j][1] == 0 {
-					break
-				}
-				forcedMoves = append(forcedMoves, allMoves[i][j])
-			}
+	for _, m1 := range allMoves[0] {
+		if m1[0] == 0 && m1[1] == 0 {
+			break
 		}
-	} else {
-	FORCEDMOVES:
-		for _, m1 := range allMoves[0] {
-			if m1[0] == 0 && m1[1] == 0 {
-				break
-			}
-			for i := range allMoves {
-				if i == 0 {
-					continue
-				}
-				var found bool
-				for j := 0; j < 4; j++ {
-					if allMoves[i][j][0] == 0 && allMoves[i][j][1] == 0 {
-						break
-					} else if allMoves[i][j][0] == m1[0] && allMoves[i][j][1] == m1[1] {
-						found = true
-						break
-					}
-				}
-				if !found {
-					continue FORCEDMOVES
-				}
-			}
-			forcedMoves = append(forcedMoves, m1)
-		}
+		forcedMoves = append(forcedMoves, m1)
 	}
 	if len(forcedMoves) == 0 {
 		return false
