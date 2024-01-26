@@ -199,6 +199,7 @@ func (g *Game) Reset() {
 	g.DoublePlayer = 0
 	g.DoubleOffered = false
 	g.Reroll = false
+	g.Winner = 0
 	g.boardStates = nil
 	g.enteredStates = nil
 	g.partialTurn = 0
