@@ -3,7 +3,7 @@ module code.rocket9labs.com/tslocum/bgammon
 go 1.17
 
 require (
-	code.rocket9labs.com/tslocum/tabula v0.0.0-20240118055336-21a3dea3f702
+	code.rocket9labs.com/tslocum/tabula v0.0.0-20240124065607-37b7f72a0ff2
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/gobwas/ws v1.3.2
 	github.com/gorilla/mux v1.8.1
@@ -21,7 +21,7 @@ require (
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
-	github.com/google/uuid v1.5.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
@@ -32,7 +32,7 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rivo/uniseg v0.4.6 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/vanng822/css v1.0.1 // indirect

@@ -169,15 +169,6 @@ COMMANDS:
 					cmd.client.accountID = a.id
 					cmd.client.name = name
 					cmd.client.autoplay = a.autoplay
-					cmd.client.sendEvent(&bgammon.EventSettings{
-						AutoPlay:  a.autoplay,
-						Highlight: a.highlight,
-						Pips:      a.pips,
-						Moves:     a.moves,
-						Flip:      a.flip,
-						Advanced:  a.advanced,
-						Speed:     a.speed,
-					})
 				} else {
 					cmd.client.accountID = 0
 					if !randomUsername && !bytes.HasPrefix(username, []byte("BOT_")) && !bytes.HasPrefix(username, []byte("Guest_")) {
@@ -193,6 +184,20 @@ COMMANDS:
 				})
 
 				log.Printf("Client %d logged in as %s", cmd.client.id, cmd.client.name)
+
+				// Send user settings.
+				if cmd.client.account != nil {
+					a := cmd.client.account
+					cmd.client.sendEvent(&bgammon.EventSettings{
+						AutoPlay:  a.autoplay,
+						Highlight: a.highlight,
+						Pips:      a.pips,
+						Moves:     a.moves,
+						Flip:      a.flip,
+						Advanced:  a.advanced,
+						Speed:     a.speed,
+					})
+				}
 
 				// Rejoin match in progress.
 				s.gamesLock.RLock()
