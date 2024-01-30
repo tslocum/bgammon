@@ -6,8 +6,11 @@ const (
 )
 
 type leaderboardEntry struct {
-	User   string
-	Rating int
+	User    string
+	Rating  int
+	Percent float64
+	Wins    int
+	Losses  int
 }
 
 type leaderboardResult struct {

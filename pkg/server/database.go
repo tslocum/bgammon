@@ -704,9 +704,11 @@ func getLeaderboard(matchType int, variant int8, multiPoint bool) (*leaderboardR
 	defer tx.Commit(context.Background())
 
 	columnName := ratingColumn(matchType, variant, multiPoint)
+	ids := make(map[string]int)
 
+	var id int
 	result := &leaderboardResult{}
-	rows, err := tx.Query(context.Background(), "SELECT username, "+columnName+" FROM account ORDER BY "+columnName+" DESC LIMIT 100")
+	rows, err := tx.Query(context.Background(), "SELECT id, username, "+columnName+" FROM account ORDER BY "+columnName+" DESC LIMIT 100")
 	if err != nil {
 		return nil, err
 	}
@@ -715,18 +717,56 @@ func getLeaderboard(matchType int, variant int8, multiPoint bool) (*leaderboardR
 			continue
 		}
 		entry := &leaderboardEntry{}
-		err = rows.Scan(&entry.User, &entry.Rating)
+		err = rows.Scan(&id, &entry.User, &entry.Rating)
 		if err != nil {
 			continue
 		}
+		entry.Rating /= 100
+
 		if strings.HasPrefix(entry.User, "bot_") {
 			entry.User = "BOT_" + entry.User[4:]
 		}
-		entry.Rating /= 100
+
 		result.Leaderboard = append(result.Leaderboard, entry)
+		ids[entry.User] = id
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	pointsCondition := "= 1"
+	if multiPoint {
+		pointsCondition = "> 1"
+	}
+	for _, entry := range result.Leaderboard {
+		id := ids[entry.User]
+		if id == 0 {
+			continue
+		}
+		r2, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE ((account1 = $1 AND winner = 1) OR (account2 = $2 AND winner = 2)) AND variant = $3 AND points "+pointsCondition, id, id, variant)
+		if err != nil {
+			continue
+		}
+		for r2.Next() {
+			if err != nil {
+				continue
+			}
+			err = r2.Scan(&entry.Wins)
+		}
+		r2, err = tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE ((account1 = $1 AND winner = 2) OR (account2 = $2 AND winner = 1)) AND variant = $3 AND points "+pointsCondition, id, id, variant)
+		if err != nil {
+			continue
+		}
+		for r2.Next() {
+			if err != nil {
+				continue
+			}
+			err = r2.Scan(&entry.Losses)
+		}
+		if entry.Wins != 0 || entry.Losses != 0 {
+			entry.Percent = float64(entry.Wins) / float64(entry.Wins+entry.Losses)
+		}
+
 	}
 	return result, nil
 }
@@ -912,7 +952,7 @@ func botStats(name string, tz *time.Location) (*botStatsResult, error) {
 		if winCount != 0 || lossCount != 0 {
 			result.History = append(result.History, &botStatsEntry{
 				Date:    earliest.Format("2006-01-02"),
-				Percent: (float64(winCount) / float64(winCount+lossCount)),
+				Percent: float64(winCount) / float64(winCount+lossCount),
 				Wins:    winCount,
 				Losses:  lossCount,
 			})
