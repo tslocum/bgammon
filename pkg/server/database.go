@@ -743,7 +743,7 @@ func getLeaderboard(matchType int, variant int8, multiPoint bool) (*leaderboardR
 		if id == 0 {
 			continue
 		}
-		r2, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE ((account1 = $1 AND winner = 1) OR (account2 = $2 AND winner = 2)) AND variant = $3 AND points "+pointsCondition, id, id, variant)
+		r2, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE ((account1 = $1 AND winner = 1 AND account2 != 0) OR (account2 = $2 AND winner = 2 AND account1 != 0)) AND variant = $3 AND points "+pointsCondition, id, id, variant)
 		if err != nil {
 			continue
 		}
@@ -753,7 +753,7 @@ func getLeaderboard(matchType int, variant int8, multiPoint bool) (*leaderboardR
 			}
 			err = r2.Scan(&entry.Wins)
 		}
-		r2, err = tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE ((account1 = $1 AND winner = 2) OR (account2 = $2 AND winner = 1)) AND variant = $3 AND points "+pointsCondition, id, id, variant)
+		r2, err = tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE ((account1 = $1 AND winner = 2 AND account2 != 0) OR (account2 = $2 AND winner = 1 AND account1 != 0)) AND variant = $3 AND points "+pointsCondition, id, id, variant)
 		if err != nil {
 			continue
 		}
