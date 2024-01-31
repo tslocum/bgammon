@@ -3,7 +3,7 @@ module code.rocket9labs.com/tslocum/bgammon
 go 1.17
 
 require (
-	code.rocket9labs.com/tslocum/tabula v0.0.0-20240124065607-37b7f72a0ff2
+	code.rocket9labs.com/tslocum/tabula v0.0.0-20240131192843-6dafbdfa2aaa
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/gobwas/ws v1.3.2
 	github.com/gorilla/mux v1.8.1
