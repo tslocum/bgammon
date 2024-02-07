@@ -3,11 +3,11 @@ module code.rocket9labs.com/tslocum/bgammon
 go 1.17
 
 require (
-	code.rocket9labs.com/tslocum/tabula v0.0.0-20240131192843-6dafbdfa2aaa
+	code.rocket9labs.com/tslocum/tabula v0.0.0-20240207195947-691c7a5d5265
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/gobwas/ws v1.3.2
 	github.com/gorilla/mux v1.8.1
-	github.com/jackc/pgx/v5 v5.5.2
+	github.com/jackc/pgx/v5 v5.5.3
 	github.com/jlouis/glicko2 v1.0.0
 	github.com/matcornic/hermes/v2 v2.1.0
 )
@@ -37,8 +37,8 @@ require (
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/vanng822/css v1.0.1 // indirect
 	github.com/vanng822/go-premailer v1.20.2 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
