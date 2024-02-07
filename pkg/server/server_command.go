@@ -199,6 +199,9 @@ COMMANDS:
 					})
 				}
 
+				// Send message of the day.
+				cmd.client.sendNotice("Connect with other players and stay up to date on the latest changes. Visit bgammon.org/community")
+
 				// Rejoin match in progress.
 				s.gamesLock.RLock()
 				for _, g := range s.games {
