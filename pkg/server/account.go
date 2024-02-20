@@ -6,13 +6,14 @@ type account struct {
 	username []byte
 	password []byte
 
-	autoplay  bool
-	highlight bool
-	pips      bool
-	moves     bool
-	flip      bool
-	advanced  bool
-	speed     int8
+	autoplay    bool
+	highlight   bool
+	pips        bool
+	moves       bool
+	flip        bool
+	traditional bool
+	advanced    bool
+	speed       int8
 
 	casual      *clientRating
 	competitive *clientRating
