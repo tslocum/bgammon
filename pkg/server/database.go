@@ -801,7 +801,7 @@ func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 	result := &serverStatsResult{}
 	earliest := midnight(time.Unix(earliestGame, 0).In(tz))
 	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 0, 1).Unix()
-	var count int
+	var games, accounts int
 	for {
 		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2", rangeStart, rangeEnd)
 		if err != nil {
@@ -811,15 +811,30 @@ func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 			if err != nil {
 				continue
 			}
-			err = rows.Scan(&count)
+			err = rows.Scan(&games)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		rows, err = tx.Query(context.Background(), "SELECT COUNT(*) FROM account WHERE created >= $1 AND created < $2", rangeStart, rangeEnd)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			if err != nil {
+				continue
+			}
+			err = rows.Scan(&accounts)
 		}
 		if err != nil {
 			return nil, err
 		}
 
 		result.History = append(result.History, &serverStatsEntry{
-			Date:  earliest.Format("2006-01-02"),
-			Games: count,
+			Date:     earliest.Format("2006-01-02"),
+			Games:    games,
+			Accounts: accounts,
 		})
 
 		earliest = earliest.AddDate(0, 0, 1)
@@ -859,8 +874,8 @@ func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
 	result := &serverStatsResult{}
 	earliest := midnight(time.Unix(earliestGame, 0).In(tz))
 	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 0, 1).Unix()
-	var count int
-	var total int
+	var games, accounts int
+	var totalGames, totalAccounts int
 	for {
 		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2", rangeStart, rangeEnd)
 		if err != nil {
@@ -870,17 +885,32 @@ func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
 			if err != nil {
 				continue
 			}
-			err = rows.Scan(&count)
+			err = rows.Scan(&games)
 		}
 		if err != nil {
 			return nil, err
 		}
+		totalGames += games
 
-		total += count
+		rows, err = tx.Query(context.Background(), "SELECT COUNT(*) FROM account WHERE created >= $1 AND created < $2", rangeStart, rangeEnd)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			if err != nil {
+				continue
+			}
+			err = rows.Scan(&accounts)
+		}
+		if err != nil {
+			return nil, err
+		}
+		totalAccounts += accounts
 
 		result.History = append(result.History, &serverStatsEntry{
-			Date:  earliest.Format("2006-01-02"),
-			Games: total,
+			Date:     earliest.Format("2006-01-02"),
+			Games:    totalGames,
+			Accounts: totalAccounts,
 		})
 
 		earliest = earliest.AddDate(0, 0, 1)

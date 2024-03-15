@@ -18,8 +18,9 @@ type leaderboardResult struct {
 }
 
 type serverStatsEntry struct {
-	Date  string
-	Games int
+	Date     string
+	Games    int
+	Accounts int
 }
 
 type serverStatsResult struct {
