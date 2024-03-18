@@ -71,6 +71,7 @@ type serverClient struct {
 	id           int
 	json         bool
 	name         []byte
+	language     string
 	account      *account
 	accountID    int
 	connected    int64

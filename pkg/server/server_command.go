@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
+	"github.com/leonelquinteros/gotext"
 )
 
 func (s *server) handleCommands() {
@@ -77,6 +78,10 @@ COMMANDS:
 							sendUsage()
 							continue
 						}
+						slashIndex := bytes.IndexRune(params[0], '/')
+						if slashIndex != -1 {
+							cmd.client.language = "bgammon-" + string(s.matchLanguage(params[0][slashIndex+1:]))
+						}
 						email = params[1]
 						username = params[2]
 						password = bytes.Join(params[3:], []byte("_"))
@@ -109,8 +114,14 @@ COMMANDS:
 
 					readUsername := func() bool {
 						if cmd.client.json {
-							if len(params) > 1 {
-								username = params[1]
+							if len(params) > 0 {
+								slashIndex := bytes.IndexRune(params[0], '/')
+								if slashIndex != -1 {
+									cmd.client.language = "bgammon-" + string(s.matchLanguage(params[0][slashIndex+1:]))
+								}
+								if len(params) > 1 {
+									username = params[1]
+								}
 							}
 						} else {
 							if len(params) > 0 {
@@ -121,14 +132,16 @@ COMMANDS:
 							username = s.randomUsername()
 							randomUsername = true
 						} else if !alphaNumericUnderscore.Match(username) {
-							cmd.client.Terminate("Invalid username: must contain only letters, numbers and underscores.")
+							cmd.client.Terminate(gotext.GetD(cmd.client.language, "Invalid username: must contain only letters, numbers and underscores."))
 							return false
 						}
 						if onlyNumbers.Match(username) {
-							cmd.client.Terminate("Invalid username: must contain at least one non-numeric character.")
+							log.Println(cmd.client.language)
+							log.Println("!")
+							cmd.client.Terminate(gotext.GetD(cmd.client.language, "Invalid username: must contain at least one non-numeric character."))
 							return false
 						} else if s.clientByUsername(username) != nil || s.clientByUsername(append([]byte("Guest_"), username...)) != nil || (!randomUsername && !s.nameAllowed(username)) {
-							cmd.client.Terminate("That username is already in use.")
+							cmd.client.Terminate(gotext.GetD(cmd.client.language, "That username is already in use."))
 							return false
 						}
 						return true
@@ -147,10 +160,10 @@ COMMANDS:
 				if len(password) > 0 {
 					a, err := loginAccount(s.passwordSalt, username, password)
 					if err != nil {
-						cmd.client.Terminate(fmt.Sprintf("Failed to log in: %s", err))
+						cmd.client.Terminate(fmt.Sprintf(gotext.GetD(cmd.client.language, "Failed to log in: %s"), err))
 						continue
 					} else if a == nil {
-						cmd.client.Terminate("No account was found with the provided username and password. To log in as a guest, do not enter a password.")
+						cmd.client.Terminate(gotext.GetD(cmd.client.language, "No account was found with the provided username and password. To log in as a guest, do not enter a password."))
 						continue
 					}
 
@@ -161,7 +174,7 @@ COMMANDS:
 						name = a.username
 					}
 					if s.clientByUsername(name) != nil {
-						cmd.client.Terminate("That username is already in use.")
+						cmd.client.Terminate(gotext.GetD(cmd.client.language, "That username is already in use."))
 						continue
 					}
 
@@ -201,7 +214,7 @@ COMMANDS:
 				}
 
 				// Send message of the day.
-				cmd.client.sendNotice("Connect with other players and stay up to date on the latest changes. Visit bgammon.org/community")
+				cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Connect with other players and stay up to date on the latest changes. Visit %s"), "bgammon.org/community"))
 
 				// Rejoin match in progress.
 				s.gamesLock.RLock()
@@ -218,14 +231,14 @@ COMMANDS:
 					}
 					if rejoin {
 						g.addClient(cmd.client)
-						cmd.client.sendNotice(fmt.Sprintf("Rejoined match: %s", g.name))
+						cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Rejoined match: %s"), g.name))
 					}
 				}
 				s.gamesLock.RUnlock()
 				continue
 			}
 
-			cmd.client.Terminate("You must login before using other commands.")
+			cmd.client.Terminate(gotext.GetD(cmd.client.language, "You must login before using other commands."))
 			continue
 		}
 
@@ -235,7 +248,7 @@ COMMANDS:
 			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandDisconnect, bgammon.CommandPong:
 				// These commands are allowed to be used by spectators.
 			default:
-				cmd.client.sendNotice("Command ignored: You are spectating this match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Command ignored: You are spectating this match."))
 				continue
 			}
 		}
@@ -271,12 +284,12 @@ COMMANDS:
 				continue
 			}
 			if clientGame == nil {
-				cmd.client.sendNotice("Message not sent: You are not currently in a match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Message not sent: You are not currently in a match."))
 				continue
 			}
 			opponent := clientGame.opponent(cmd.client)
 			if opponent == nil {
-				cmd.client.sendNotice("Message not sent: There is no one else in the match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Message not sent: There is no one else in the match."))
 				continue
 			}
 			ev := &bgammon.EventSay{
@@ -305,7 +318,7 @@ COMMANDS:
 			cmd.client.sendEvent(ev)
 		case bgammon.CommandCreate, "c":
 			if clientGame != nil {
-				cmd.client.sendNotice("Failed to create match: Please leave the match you are in before creating another.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to create match: Please leave the match you are in before creating another."))
 				continue
 			}
 
@@ -387,7 +400,7 @@ COMMANDS:
 			s.games = append(s.games, g)
 			s.gamesLock.Unlock()
 
-			cmd.client.sendNotice(fmt.Sprintf("Created match: %s", g.name))
+			cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Created match: %s"), g.name))
 
 			if len(g.password) == 0 {
 				cmd.client.sendNotice("Note: Please be patient as you wait for another player to join the match. A chime will sound when another player joins. While you wait, join the bgammon.org community via Discord, Matrix or IRC at bgammon.org/community")
@@ -395,7 +408,7 @@ COMMANDS:
 		case bgammon.CommandJoin, "j":
 			if clientGame != nil {
 				cmd.client.sendEvent(&bgammon.EventFailedJoin{
-					Reason: "Please leave the match you are in before joining another.",
+					Reason: gotext.GetD(cmd.client.language, "Please leave the match you are in before joining another."),
 				})
 				continue
 			}
@@ -436,7 +449,7 @@ COMMANDS:
 
 				if joinGameID == 0 {
 					cmd.client.sendEvent(&bgammon.EventFailedJoin{
-						Reason: "Match not found.",
+						Reason: gotext.GetD(cmd.client.language, "Match not found."),
 					})
 					continue
 				}
@@ -451,7 +464,7 @@ COMMANDS:
 					providedPassword := bytes.ReplaceAll(bytes.Join(params[1:], []byte(" ")), []byte("_"), []byte(" "))
 					if len(g.password) != 0 && (len(params) < 2 || !bytes.Equal(g.password, providedPassword)) {
 						cmd.client.sendEvent(&bgammon.EventFailedJoin{
-							Reason: "Invalid password.",
+							Reason: gotext.GetD(cmd.client.language, "Invalid password."),
 						})
 						s.gamesLock.Unlock()
 						continue COMMANDS
@@ -466,9 +479,9 @@ COMMANDS:
 
 					spectator := g.addClient(cmd.client)
 					s.gamesLock.Unlock()
-					cmd.client.sendNotice(fmt.Sprintf("Joined match: %s", g.name))
+					cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Joined match: %s"), g.name))
 					if spectator {
-						cmd.client.sendNotice("You are spectating this match. Chat messages are not relayed.")
+						cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are spectating this match. Chat messages are not relayed."))
 					}
 					continue COMMANDS
 				}
@@ -476,12 +489,12 @@ COMMANDS:
 			s.gamesLock.Unlock()
 
 			cmd.client.sendEvent(&bgammon.EventFailedJoin{
-				Reason: "Match not found.",
+				Reason: gotext.GetD(cmd.client.language, "Match not found."),
 			})
 		case bgammon.CommandLeave, "l":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedLeave{
-					Reason: "You are not currently in a match.",
+					Reason: gotext.GetD(cmd.client.language, "You are not currently in a match."),
 				})
 				continue
 			}
@@ -495,14 +508,14 @@ COMMANDS:
 			clientGame.removeClient(cmd.client)
 		case bgammon.CommandDouble, "d":
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not currently in a match."))
 				continue
 			} else if clientGame.Winner != 0 {
 				continue
 			}
 
 			if clientGame.Turn != cmd.client.playerNumber {
-				cmd.client.sendNotice("It is not your turn.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "It is not your turn."))
 				continue
 			}
 
@@ -512,26 +525,26 @@ COMMANDS:
 				Available:    clientGame.LegalMoves(false),
 			}
 			if !gameState.MayDouble() {
-				cmd.client.sendNotice("You may not double at this time.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You may not double at this time."))
 				continue
 			}
 
 			if clientGame.DoublePlayer != 0 && clientGame.DoublePlayer != cmd.client.playerNumber {
-				cmd.client.sendNotice("You do not currently hold the doubling cube.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You do not currently hold the doubling cube."))
 				continue
 			}
 
 			opponent := clientGame.opponent(cmd.client)
 			if opponent == nil {
-				cmd.client.sendNotice("You may not double until your opponent rejoins the match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You may not double until your opponent rejoins the match."))
 				continue
 			}
 
 			clientGame.DoubleOffered = true
 			clientGame.NextPartialTurn(opponent.playerNumber)
 
-			cmd.client.sendNotice(fmt.Sprintf("Double offered to opponent (%d points).", clientGame.DoubleValue*2))
-			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf("%s offers a double (%d points).", cmd.client.name, clientGame.DoubleValue*2))
+			cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Double offered to opponent (%d points)."), clientGame.DoubleValue*2))
+			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "%s offers a double (%d points)."), cmd.client.name, clientGame.DoubleValue*2))
 
 			clientGame.eachClient(func(client *serverClient) {
 				if client.json {
@@ -540,7 +553,7 @@ COMMANDS:
 			})
 		case bgammon.CommandResign:
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not currently in a match."))
 				continue
 			} else if clientGame.Winner != 0 {
 				continue
@@ -552,20 +565,20 @@ COMMANDS:
 				Available:    clientGame.LegalMoves(false),
 			}
 			if !gameState.MayResign() {
-				cmd.client.sendNotice("You may not resign at this time.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You may not resign at this time."))
 				continue
 			}
 
 			opponent := clientGame.opponent(cmd.client)
 			if opponent == nil {
-				cmd.client.sendNotice("You may not resign until your opponent rejoins the match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You may not resign until your opponent rejoins the match."))
 				continue
 			}
 
 			clientGame.NextPartialTurn(opponent.playerNumber)
 
-			cmd.client.sendNotice("Declined double offer")
-			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf("%s declined double offer.", cmd.client.name))
+			cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Declined double offer"))
+			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "%s declined double offer."), cmd.client.name))
 
 			clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, clientGame.DoubleValue, clientGame.Variant))}, clientGame.replay...)
 
@@ -628,7 +641,7 @@ COMMANDS:
 		case bgammon.CommandRoll, "r":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedRoll{
-					Reason: "You are not currently in a match.",
+					Reason: gotext.GetD(cmd.client.language, "You are not currently in a match."),
 				})
 				continue
 			} else if clientGame.Winner != 0 {
@@ -638,14 +651,14 @@ COMMANDS:
 			opponent := clientGame.opponent(cmd.client)
 			if opponent == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedRoll{
-					Reason: "You may not roll until your opponent rejoins the match.",
+					Reason: gotext.GetD(cmd.client.language, "You may not roll until your opponent rejoins the match."),
 				})
 				continue
 			}
 
 			if !clientGame.roll(cmd.client.playerNumber) {
 				cmd.client.sendEvent(&bgammon.EventFailedRoll{
-					Reason: "It is not your turn to roll.",
+					Reason: gotext.GetD(cmd.client.language, "It is not your turn to roll."),
 				})
 				continue
 			}
@@ -766,7 +779,7 @@ COMMANDS:
 		case bgammon.CommandMove, "m", "mv":
 			if clientGame == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
-					Reason: "You are not currently in a match.",
+					Reason: gotext.GetD(cmd.client.language, "You are not currently in a match."),
 				})
 				continue
 			} else if clientGame.Winner != 0 {
@@ -776,7 +789,7 @@ COMMANDS:
 
 			if clientGame.Turn != cmd.client.playerNumber {
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
-					Reason: "It is not your turn to move.",
+					Reason: gotext.GetD(cmd.client.language, "It is not your turn to move."),
 				})
 				continue
 			}
@@ -784,7 +797,7 @@ COMMANDS:
 			opponent := clientGame.opponent(cmd.client)
 			if opponent == nil {
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
-					Reason: "You may not move until your opponent rejoins the match.",
+					Reason: gotext.GetD(cmd.client.language, "You may not move until your opponent rejoins the match."),
 				})
 				continue
 			}
@@ -821,7 +834,7 @@ COMMANDS:
 					cmd.client.sendEvent(&bgammon.EventFailedMove{
 						From:   from,
 						To:     to,
-						Reason: "Illegal move.",
+						Reason: gotext.GetD(cmd.client.language, "Illegal move."),
 					})
 					continue COMMANDS
 				}
@@ -835,7 +848,7 @@ COMMANDS:
 				cmd.client.sendEvent(&bgammon.EventFailedMove{
 					From:   0,
 					To:     0,
-					Reason: "Illegal move.",
+					Reason: gotext.GetD(cmd.client.language, "Illegal move."),
 				})
 				continue
 			}
@@ -853,14 +866,14 @@ COMMANDS:
 			clientGame.handleWin()
 		case bgammon.CommandReset:
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not currently in a match."))
 				continue
 			} else if clientGame.Winner != 0 {
 				continue
 			}
 
 			if clientGame.Turn != cmd.client.playerNumber {
-				cmd.client.sendNotice("It is not your turn.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "It is not your turn."))
 				continue
 			}
 
@@ -889,7 +902,7 @@ COMMANDS:
 			}
 		case bgammon.CommandOk, "k":
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not currently in a match."))
 				continue
 			} else if clientGame.Winner != 0 {
 				continue
@@ -897,7 +910,7 @@ COMMANDS:
 
 			opponent := clientGame.opponent(cmd.client)
 			if opponent == nil {
-				cmd.client.sendNotice("You must wait until your opponent rejoins the match before continuing the game.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You must wait until your opponent rejoins the match before continuing the game."))
 				continue
 			}
 
@@ -905,7 +918,7 @@ COMMANDS:
 				if clientGame.Turn != cmd.client.playerNumber {
 					opponent := clientGame.opponent(cmd.client)
 					if opponent == nil {
-						cmd.client.sendNotice("You may not accept the double until your opponent rejoins the match.")
+						cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You may not accept the double until your opponent rejoins the match."))
 						continue
 					}
 
@@ -914,24 +927,24 @@ COMMANDS:
 					clientGame.DoublePlayer = cmd.client.playerNumber
 					clientGame.NextPartialTurn(opponent.playerNumber)
 
-					cmd.client.sendNotice("Accepted double.")
-					opponent.sendNotice(fmt.Sprintf("%s accepted double.", cmd.client.name))
+					cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Accepted double."))
+					opponent.sendNotice(fmt.Sprintf(gotext.GetD(opponent.language, "%s accepted double."), cmd.client.name))
 
 					clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d d %d 1", clientGame.Turn, clientGame.DoubleValue)))
 					clientGame.eachClient(func(client *serverClient) {
 						clientGame.sendBoard(client, false)
 					})
 				} else {
-					cmd.client.sendNotice("Waiting for response from opponent.")
+					cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Waiting for response from opponent."))
 				}
 				continue
 			} else if clientGame.Turn != cmd.client.playerNumber {
-				cmd.client.sendNotice("It is not your turn.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "It is not your turn."))
 				continue
 			}
 
 			if clientGame.Roll1 == 0 || clientGame.Roll2 == 0 {
-				cmd.client.sendNotice("You must roll first.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You must roll first."))
 				continue
 			}
 
@@ -940,7 +953,7 @@ COMMANDS:
 				available := bgammon.FlipMoves(legalMoves, cmd.client.playerNumber, clientGame.Variant)
 				bgammon.SortMoves(available)
 				cmd.client.sendEvent(&bgammon.EventFailedOk{
-					Reason: fmt.Sprintf("The following legal moves are available: %s", bgammon.FormatMoves(available)),
+					Reason: fmt.Sprintf(gotext.GetD(cmd.client.language, "The following legal moves are available: %s"), bgammon.FormatMoves(available)),
 				})
 				continue
 			}
@@ -952,7 +965,7 @@ COMMANDS:
 				}
 				if doubles < 1 || doubles > 6 {
 					cmd.client.sendEvent(&bgammon.EventFailedOk{
-						Reason: "Choose which doubles you want for your acey-deucey.",
+						Reason: gotext.GetD(cmd.client.language, "Choose which doubles you want for your acey-deucey."),
 					})
 					continue
 				}
@@ -977,8 +990,8 @@ COMMANDS:
 				clientGame.nextTurn(true)
 				clientGame.Roll1, clientGame.Roll2 = 0, 0
 				if !clientGame.roll(cmd.client.playerNumber) {
-					cmd.client.Terminate("Server error")
-					opponent.Terminate("Server error")
+					cmd.client.Terminate(gotext.GetD(cmd.client.language, "Server error"))
+					opponent.Terminate(gotext.GetD(opponent.language, "Server error"))
 					continue
 				}
 				clientGame.Reroll = false
@@ -998,16 +1011,16 @@ COMMANDS:
 			}
 		case bgammon.CommandRematch, "rm":
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not currently in a match."))
 				continue
 			} else if clientGame.Winner == 0 {
-				cmd.client.sendNotice("The match you are in is still in progress.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "The match you are in is still in progress."))
 				continue
 			} else if clientGame.rematch == cmd.client.playerNumber {
-				cmd.client.sendNotice("You have already requested a rematch.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You have already requested a rematch."))
 				continue
 			} else if clientGame.client1 == nil || clientGame.client2 == nil {
-				cmd.client.sendNotice("Your opponent left the match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Your opponent left the match."))
 				continue
 			} else if clientGame.rematch != 0 && clientGame.rematch != cmd.client.playerNumber {
 				s.gamesLock.Lock()
@@ -1072,20 +1085,20 @@ COMMANDS:
 			} else {
 				clientGame.rematch = cmd.client.playerNumber
 
-				clientGame.opponent(cmd.client).sendNotice("Your opponent would like to play again. Type /rematch to accept.")
-				cmd.client.sendNotice("Rematch offer sent.")
+				clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "Your opponent would like to play again. Type %s to accept."), "/rematch"))
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Rematch offer sent."))
 				continue
 			}
 		case bgammon.CommandBoard, "b":
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not currently in a match."))
 				continue
 			}
 
 			clientGame.sendBoard(cmd.client, false)
 		case bgammon.CommandPassword:
 			if cmd.client.account == nil {
-				cmd.client.sendNotice("Failed to change password: you are logged in as a guest.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to change password: you are logged in as a guest."))
 				continue
 			} else if len(params) < 2 {
 				cmd.client.sendNotice("Please specify your old and new passwords as follows: password <old> <new>")
@@ -1094,16 +1107,16 @@ COMMANDS:
 
 			a, err := loginAccount(s.passwordSalt, cmd.client.name, params[0])
 			if err != nil || a == nil || a.id == 0 {
-				cmd.client.sendNotice("Failed to change password: incorrect existing password.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to change password: incorrect existing password."))
 				continue
 			}
 
 			err = setAccountPassword(s.passwordSalt, a.id, string(bytes.Join(params[1:], []byte("_"))))
 			if err != nil {
-				cmd.client.sendNotice("Failed to change password.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to change password."))
 				continue
 			}
-			cmd.client.sendNotice("Password changed successfully.")
+			cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Password changed successfully."))
 		case bgammon.CommandSet:
 			if len(params) < 2 {
 				cmd.client.sendNotice("Please specify the setting name and value as follows: set <name> <value>")
@@ -1154,17 +1167,17 @@ COMMANDS:
 			} else {
 				id, err = strconv.Atoi(string(params[0]))
 				if err != nil || id < 0 {
-					cmd.client.sendNotice("Invalid replay ID provided.")
+					cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Invalid replay ID provided."))
 					continue
 				}
 				replay, err = replayByID(id)
 				if err != nil {
-					cmd.client.sendNotice("Invalid replay ID provided.")
+					cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Invalid replay ID provided."))
 					continue
 				}
 			}
 			if len(replay) == 0 {
-				cmd.client.sendNotice("No replay was recorded for that game.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "No replay was recorded for that game."))
 				continue
 			}
 			cmd.client.sendEvent(&bgammon.EventReplay{
@@ -1188,7 +1201,7 @@ COMMANDS:
 
 			matches, err := matchHistory(string(params[0]))
 			if err != nil {
-				cmd.client.sendNotice("Invalid replay ID provided.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Invalid replay ID provided."))
 				continue
 			}
 
@@ -1229,12 +1242,12 @@ COMMANDS:
 			// Do nothing.
 		case "endgame":
 			if !allowDebugCommands {
-				cmd.client.sendNotice("You are not allowed to use that command.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not allowed to use that command."))
 				continue
 			}
 
 			if clientGame == nil {
-				cmd.client.sendNotice("You are not currently in a match.")
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not currently in a match."))
 				continue
 			}
 
@@ -1254,7 +1267,7 @@ COMMANDS:
 			})
 		default:
 			log.Printf("Received unknown command from client %s: %s", cmd.client.label(), cmd.command)
-			cmd.client.sendNotice(fmt.Sprintf("Unknown command: %s", cmd.command))
+			cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Unknown command: %s"), cmd.command))
 		}
 	}
 }

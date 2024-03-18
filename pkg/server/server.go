@@ -1,9 +1,12 @@
 package server
 
+//go:generate xgotext -no-locations -default bgammon -in . -out locales
+
 import (
 	"bufio"
 	"bytes"
 	"crypto/rand"
+	"embed"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -19,6 +22,8 @@ import (
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
+	"github.com/leonelquinteros/gotext"
+	"golang.org/x/text/language"
 )
 
 const clientTimeout = 40 * time.Second
@@ -32,6 +37,15 @@ var (
 	guestName              = regexp.MustCompile(`^guest[0-9]+$`)
 	alphaNumericUnderscore = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
 )
+
+//go:embed locales
+var assetFS embed.FS
+
+var englishIdentifier = []byte("en")
+
+func init() {
+	gotext.SetDomain("bgammon-en")
+}
 
 type serverCommand struct {
 	client  *serverClient
@@ -66,7 +80,9 @@ type server struct {
 	passwordSalt string
 	resetSalt    string
 
-	tz *time.Location
+	tz            *time.Location
+	languageTags  []language.Tag
+	languageNames [][]byte
 
 	relayChat bool // Chats are not relayed normally. This option is only used by local servers.
 	verbose   bool
@@ -85,6 +101,7 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 		relayChat:    relayChat,
 		verbose:      verbose,
 	}
+	s.loadLocales()
 
 	if tz != "" {
 		var err error
@@ -114,30 +131,62 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 
 	allowDebugCommands = allowDebug
 
-	/*gm := bgammon.NewGame(bgammon.VariantBackgammon)
-	gm.Turn = 1
-	gm.Roll1 = 2
-	gm.Roll2 = 3
-	log.Println(gm.MayBearOff(1, false))
-	gm.Player1.Entered = true
-	gm.Player2.Entered = true
-	log.Println(gm.Board)
-	//ok, expanded := gm.AddMoves([][]int8{{3, 1}}, false)
-	//log.Println(ok, expanded, "!")
-	log.Println(gm.MayBearOff(1, false))
-	gs := &bgammon.GameState{
-		Game:         gm,
-		PlayerNumber: 1,
-		Available:    gm.LegalMoves(false),
-	}
-	log.Printf("%+v", gs)
-	os.Exit(0)*/
-
 	go s.handleNewGameIDs()
 	go s.handleNewClientIDs()
 	go s.handleCommands()
 	go s.handleGames()
 	return s
+}
+
+func (s *server) loadLocales() {
+	entries, err := assetFS.ReadDir("locales")
+	if err != nil {
+		log.Fatalf("failed to list files in locales directory: %s", err)
+	}
+
+	var availableTags = []language.Tag{
+		language.MustParse("en_US"),
+	}
+	var availableNames = [][]byte{
+		[]byte("en"),
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		availableTags = append(availableTags, language.MustParse(entry.Name()))
+		availableNames = append(availableNames, []byte(entry.Name()))
+
+		b, err := assetFS.ReadFile(fmt.Sprintf("locales/%s/%s.po", entry.Name(), entry.Name()))
+		if err != nil {
+			log.Fatalf("failed to read locale %s: %s", entry.Name(), err)
+		}
+
+		po := gotext.NewPo()
+		po.Parse(b)
+		gotext.GetStorage().AddTranslator(fmt.Sprintf("bgammon-%s", entry.Name()), po)
+	}
+	s.languageTags = availableTags
+	s.languageNames = availableNames
+}
+
+func (s *server) matchLanguage(identifier []byte) []byte {
+	if len(identifier) == 0 {
+		return englishIdentifier
+	}
+
+	tag, err := language.Parse(string(identifier))
+	if err != nil {
+		return englishIdentifier
+	}
+	var preferred = []language.Tag{tag}
+
+	useLanguage, index, _ := language.NewMatcher(s.languageTags).Match(preferred...)
+	useLanguageCode := useLanguage.String()
+	if index < 0 || useLanguageCode == "" || strings.HasPrefix(useLanguageCode, "en") {
+		return englishIdentifier
+	}
+	return s.languageNames[index]
 }
 
 func (s *server) ListenLocal() chan net.Conn {
@@ -194,6 +243,7 @@ func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	c := &serverClient{
 		id:        <-s.newClientIDs,
+		language:  "bgammon-en",
 		accountID: -1,
 		connected: now,
 		active:    now,
@@ -341,6 +391,7 @@ func (s *server) handleConnection(conn net.Conn) {
 
 	c := &serverClient{
 		id:        <-s.newClientIDs,
+		language:  "bgammon-en",
 		accountID: -1,
 		connected: now,
 		active:    now,
