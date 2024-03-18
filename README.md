@@ -27,6 +27,10 @@ Source code is available [here](https://code.rocket9labs.com/tslocum/boxcars-and
 
 Source code is available [here](https://code.rocket9labs.com/tslocum/bgammon-cli).
 
+## Translate
+
+Translation is handled [online](https://hosted.weblate.org/projects/bgammon/).
+
 ## Support
 
 Please share issues and suggestions [here](https://code.rocket9labs.com/tslocum/bgammon/issues).
