@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2024-03-18 19:57+0000\n"
+"PO-Revision-Date: 2024-03-20 16:15+0000\n"
 "Last-Translator: \"Andrew \\\"EGYT\\\"\" <hitechni134@gmail.com>\n"
 "Language-Team: Ukrainian <https://hosted.weblate.org/projects/bgammon/"
 "bgammon-server/uk/>\n"
@@ -25,7 +25,7 @@ msgid "Accepted double."
 msgstr "Прийнято подвоєння."
 
 msgid "Choose which doubles you want for your acey-deucey."
-msgstr ""
+msgstr "Виберіть, які дублі Ви хочете для Вашого Ейсі-дусі."
 
 msgid "Command ignored: You are spectating this match."
 msgstr "Команду проігноровано: Ви - глядач."
@@ -36,7 +36,7 @@ msgstr ""
 "Відвідайте %s"
 
 msgid "Created match: %s"
-msgstr "Створено кімнату: %s"
+msgstr "Створено матч: %s"
 
 msgid "Declined double offer"
 msgstr "Відхилено подвоєння"
@@ -48,15 +48,15 @@ msgid "Failed to change password."
 msgstr "Помилка зміни паролю."
 
 msgid "Failed to change password: incorrect existing password."
-msgstr ""
+msgstr "Помилка зміни паролю: неправильний пароль."
 
 msgid "Failed to change password: you are logged in as a guest."
 msgstr "Помилка зміни паролю: Ви увійшли як гість."
 
 msgid "Failed to create match: Please leave the match you are in before creating another."
 msgstr ""
-"Помилка створення кімнати: Будь ласка, покиньте кімнату, у якій Ви зараз, "
-"перед створенням іншої."
+"Помилка створення матчу: Будь ласка, покиньте матч, у якому Ви зараз, перед "
+"тим, як створити інший."
 
 msgid "Failed to log in: %s"
 msgstr "Помилка входу: %s"
@@ -87,100 +87,106 @@ msgid "It is not your turn."
 msgstr "Ще не Ваш хід."
 
 msgid "Joined match: %s"
-msgstr "Увійдено до кімнати: %s"
+msgstr "Приєднано до матчу: %s"
 
 msgid "Match not found."
-msgstr ""
+msgstr "Матч не знайдено."
 
 msgid "Message not sent: There is no one else in the match."
-msgstr ""
+msgstr "Повідомлення не відправлено: Більше нікого немає, окрім Вас."
 
 msgid "Message not sent: You are not currently in a match."
-msgstr ""
+msgstr "Повідомлення не відправлено: Ви не у грі."
 
 msgid "No account was found with the provided username and password. To log in as a guest, do not enter a password."
 msgstr ""
+"Не було знайдено акаунта з такими логіном і паролем. Щоб увійти як гість, не "
+"вводьте пароль."
 
 msgid "No replay was recorded for that game."
-msgstr ""
+msgstr "Повтор не було записано для цієї гри."
 
 msgid "Password changed successfully."
-msgstr ""
+msgstr "Пароль успішно змінено."
 
 msgid "Please leave the match you are in before joining another."
 msgstr ""
+"Будь ласка, покиньте матч, у якому Ви зараз, перед тим, як приєднатися до "
+"іншого."
 
 msgid "Rejoined match: %s"
-msgstr ""
+msgstr "Повторно приєднано до матчу: %s"
 
 msgid "Rematch offer sent."
-msgstr ""
+msgstr "Відправлено запит на реванш."
 
 msgid "Server error"
-msgstr ""
+msgstr "Помилка сервера"
 
 msgid "That username is already in use."
-msgstr ""
+msgstr "Цей логін вже зайнято."
 
 msgid "The following legal moves are available: %s"
-msgstr ""
+msgstr "Доступні наступні ходи: %s"
 
 msgid "The match you are in is still in progress."
-msgstr ""
+msgstr "Гра, у якій Ви зараз, ще йде."
 
 msgid "Unknown command: %s"
-msgstr ""
+msgstr "Невідома команда: %s"
 
 msgid "Waiting for response from opponent."
-msgstr ""
+msgstr "Очікування на відповідь опонента."
 
 msgid "You are not allowed to use that command."
-msgstr ""
+msgstr "Ви не можете використовувати цю команду."
 
 msgid "You are not currently in a match."
-msgstr ""
+msgstr "Ви не у грі."
 
 msgid "You are spectating this match. Chat messages are not relayed."
-msgstr ""
+msgstr "Ви - глядач. Чат не показується."
 
 msgid "You do not currently hold the doubling cube."
-msgstr ""
+msgstr "Куб подвоєння наразі не у Вас."
 
 msgid "You have already requested a rematch."
-msgstr ""
+msgstr "Ви вже надіслали запит на реванш."
 
 msgid "You may not accept the double until your opponent rejoins the match."
-msgstr ""
+msgstr "Ви не можете прийняти подвоєння, допоки Ваш опонент не повернеться."
 
 msgid "You may not double at this time."
-msgstr ""
+msgstr "Ви не можете подвоїти зараз."
 
 msgid "You may not double until your opponent rejoins the match."
-msgstr ""
+msgstr "Ви не можете подвоїти, допоки Ваш опонент не повернеться."
 
 msgid "You may not move until your opponent rejoins the match."
-msgstr ""
+msgstr "Ви не можете ходити, допоки Ваш опонент не повернеться."
 
 msgid "You may not resign at this time."
-msgstr ""
+msgstr "Ви не можете капітулювати зараз."
 
 msgid "You may not resign until your opponent rejoins the match."
-msgstr ""
+msgstr "Ви не можете капітулювати, допоки Ваш опонент не повернеться."
 
 msgid "You may not roll until your opponent rejoins the match."
-msgstr ""
+msgstr "Ви не можете кинути, допоки Ваш опонент не повернеться."
 
 msgid "You must login before using other commands."
-msgstr ""
+msgstr "Ви мусите увійти перед тим, як використовувати інші команди."
 
 msgid "You must roll first."
-msgstr ""
+msgstr "Ви мусите кинути першими."
 
 msgid "You must wait until your opponent rejoins the match before continuing the game."
 msgstr ""
+"Ви повинні зачекати, допоки Ваш опонент не повернеться, перед тим, як "
+"продовжувати гру."
 
 msgid "Your opponent left the match."
-msgstr ""
+msgstr "Ваш опонент покинув матч."
 
 msgid "Your opponent would like to play again. Type %s to accept."
-msgstr ""
+msgstr "Ваш опонент хоче зіграти ще раз. Введіть %s щоб прийняти запит."
