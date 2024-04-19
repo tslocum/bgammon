@@ -98,56 +98,18 @@ func (s *server) cachedLeaderboard(matchType int, variant int8, multiPoint bool)
 		i += 8
 	}
 
-	if time.Since(s.leaderboardCacheTime) < 5*time.Minute {
+	if !s.leaderboardCacheTime[i].IsZero() && time.Since(s.leaderboardCacheTime[i]) < 5*time.Minute {
 		return s.leaderboardCache[i]
 	}
-	s.leaderboardCacheTime = time.Now()
+	s.leaderboardCacheTime[i] = time.Now()
 
-	for j := 0; j < 3; j++ {
-		i := 0
-		var v int8
-		if j == 1 {
-			i = 4
-			v = bgammon.VariantAceyDeucey
-		} else if j == 2 {
-			i = 8
-			v = bgammon.VariantTabula
-		}
-		result, err := getLeaderboard(matchTypeCasual, v, false)
-		if err != nil {
-			log.Fatalf("failed to get leaderboard: %s", err)
-		}
-		s.leaderboardCache[i], err = json.Marshal(result)
-		if err != nil {
-			log.Fatalf("failed to marshal %+v: %s", result, err)
-		}
-
-		result, err = getLeaderboard(matchTypeCasual, v, true)
-		if err != nil {
-			log.Fatalf("failed to get leaderboard: %s", err)
-		}
-		s.leaderboardCache[i+1], err = json.Marshal(result)
-		if err != nil {
-			log.Fatalf("failed to marshal %+v: %s", result, err)
-		}
-
-		result, err = getLeaderboard(matchTypeRated, v, false)
-		if err != nil {
-			log.Fatalf("failed to get leaderboard: %s", err)
-		}
-		s.leaderboardCache[i+2], err = json.Marshal(result)
-		if err != nil {
-			log.Fatalf("failed to marshal %+v: %s", result, err)
-		}
-
-		result, err = getLeaderboard(matchTypeRated, v, true)
-		if err != nil {
-			log.Fatalf("failed to get leaderboard: %s", err)
-		}
-		s.leaderboardCache[i+3], err = json.Marshal(result)
-		if err != nil {
-			log.Fatalf("failed to marshal %+v: %s", result, err)
-		}
+	result, err := getLeaderboard(matchType, variant, multiPoint)
+	if err != nil {
+		log.Fatalf("failed to get leaderboard: %s", err)
+	}
+	s.leaderboardCache[i], err = json.Marshal(result)
+	if err != nil {
+		log.Fatalf("failed to marshal %+v: %s", result, err)
 	}
 
 	return s.leaderboardCache[i]
@@ -157,46 +119,45 @@ func (s *server) cachedStats(statsType int) []byte {
 	s.statsCacheLock.Lock()
 	defer s.statsCacheLock.Unlock()
 
-	if time.Since(s.statsCacheTime) < 5*time.Minute {
+	if !s.statsCacheTime[statsType].IsZero() && time.Since(s.statsCacheTime[statsType]) < 5*time.Minute {
 		return s.statsCache[statsType]
 	}
-	s.statsCacheTime = time.Now()
+	s.statsCacheTime[statsType] = time.Now()
 
-	{
+	switch statsType {
+	case 0:
 		stats, err := dailyStats(s.tz)
 		if err != nil {
 			log.Fatalf("failed to fetch server statistics: %s", err)
 		}
-		s.statsCache[0], err = json.Marshal(stats)
+		s.statsCache[statsType], err = json.Marshal(stats)
 		if err != nil {
 			log.Fatalf("failed to marshal %+v: %s", stats, err)
 		}
-
-		stats, err = cumulativeStats(s.tz)
+	case 1:
+		stats, err := cumulativeStats(s.tz)
 		if err != nil {
 			log.Fatalf("failed to fetch server statistics: %s", err)
 		}
-		s.statsCache[1], err = json.Marshal(stats)
+		s.statsCache[statsType], err = json.Marshal(stats)
 		if err != nil {
 			log.Fatalf("failed to fetch serialize server statistics: %s", err)
 		}
-	}
-
-	{
+	case 2:
 		stats, err := botStats("BOT_tabula", s.tz)
 		if err != nil {
 			log.Fatalf("failed to fetch tabula statistics: %s", err)
 		}
-		s.statsCache[2], err = json.Marshal(stats)
+		s.statsCache[statsType], err = json.Marshal(stats)
 		if err != nil {
 			log.Fatalf("failed to fetch serialize tabula statistics: %s", err)
 		}
-
-		stats, err = botStats("BOT_wildbg", s.tz)
+	default:
+		stats, err := botStats("BOT_wildbg", s.tz)
 		if err != nil {
 			log.Fatalf("failed to fetch wildbg statistics: %s", err)
 		}
-		s.statsCache[3], err = json.Marshal(stats)
+		s.statsCache[statsType], err = json.Marshal(stats)
 		if err != nil {
 			log.Fatalf("failed to fetch serialize wildbg statistics: %s", err)
 		}
