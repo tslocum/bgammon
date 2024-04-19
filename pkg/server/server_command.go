@@ -69,7 +69,7 @@ COMMANDS:
 				var randomUsername bool
 				if registerCommand {
 					sendUsage := func() {
-						cmd.client.Terminate("Please enter an email, username and password.")
+						cmd.client.Terminate(gotext.GetD(cmd.client.language, "Please enter an email, username and password."))
 					}
 
 					var email []byte
@@ -95,7 +95,7 @@ COMMANDS:
 						password = bytes.Join(params[2:], []byte("_"))
 					}
 					if onlyNumbers.Match(username) {
-						cmd.client.Terminate("Failed to register: Invalid username: must contain at least one non-numeric character.")
+						cmd.client.Terminate(gotext.GetD(cmd.client.language, "Failed to register: Invalid username: must contain at least one non-numeric character."))
 						continue
 					}
 					password = bytes.ReplaceAll(password, []byte(" "), []byte("_"))
@@ -472,7 +472,7 @@ COMMANDS:
 
 					if bytes.HasPrefix(bytes.ToLower(cmd.client.name), []byte("bot_")) && ((g.client1 != nil && !bytes.HasPrefix(bytes.ToLower(g.client1.name), []byte("bot_"))) || (g.client2 != nil && !bytes.HasPrefix(bytes.ToLower(g.client2.name), []byte("bot_")))) {
 						cmd.client.sendEvent(&bgammon.EventFailedJoin{
-							Reason: "Bots are not allowed to join player matches. Please create a match instead.",
+							Reason: gotext.GetD(cmd.client.language, "Bots are not allowed to join player matches. Please create a match instead."),
 						})
 						continue COMMANDS
 					}

@@ -23,13 +23,19 @@ msgstr "%s godtok dobling (%d poeng)."
 msgid "Accepted double."
 msgstr "Dobling godkjent."
 
+msgid ""
+"Bots are not allowed to join player matches. Please create a match instead."
+msgstr ""
+
 msgid "Choose which doubles you want for your acey-deucey."
 msgstr "Velg hvilken dobling du ønsker for acey-deucey."
 
 msgid "Command ignored: You are spectating this match."
 msgstr "Kommando ignorert. Du bivåner dette spillet."
 
-msgid "Connect with other players and stay up to date on the latest changes. Visit %s"
+msgid ""
+"Connect with other players and stay up to date on the latest changes. Visit "
+"%s"
 msgstr "Møt andre spillere og få med deg de nyeste endringene. Besøk %s"
 
 msgid "Created match: %s"
@@ -51,13 +57,20 @@ msgstr "Klarte ikke å endre passord. Samsvarer ikke med eksisterende passord."
 msgid "Failed to change password: you are logged in as a guest."
 msgstr "Klarte ikke å endre passord. Du er innlogget som gjest."
 
-msgid "Failed to create match: Please leave the match you are in before creating another."
+msgid ""
+"Failed to create match: Please leave the match you are in before creating "
+"another."
 msgstr ""
 "Klarte ikke å opprette spill. Forlat det du er en del av før du oppretter "
 "nytt."
 
 msgid "Failed to log in: %s"
 msgstr "Klarte ikke å logge inn: %s"
+
+msgid ""
+"Failed to register: Invalid username: must contain at least one non-numeric "
+"character."
+msgstr ""
 
 msgid "Illegal move."
 msgstr "Ulovlig trekk."
@@ -95,7 +108,9 @@ msgstr "Meldingen ble ikke sendt. Det er ingen andre i spillet."
 msgid "Message not sent: You are not currently in a match."
 msgstr "Meldingen ble ikke sendt. Du er ikke i et spill per nå."
 
-msgid "No account was found with the provided username and password. To log in as a guest, do not enter a password."
+msgid ""
+"No account was found with the provided username and password. To log in as a "
+"guest, do not enter a password."
 msgstr ""
 "Fant ingen kontoer med angitt brukernavn og passord. Unngå å skive inn "
 "passord for å logge inn som gjest."
@@ -106,6 +121,9 @@ msgstr "Ingen gjentagelse ble registrert for det spillet."
 #, fuzzy
 msgid "Password changed successfully."
 msgstr "Passord endret."
+
+msgid "Please enter an email, username and password."
+msgstr ""
 
 msgid "Please leave the match you are in before joining another."
 msgstr "Forlat spillet du er en del av før du tar del i et nytt."
@@ -180,7 +198,9 @@ msgid "You must roll first."
 msgstr "Du må kaste terning først."
 
 #, fuzzy
-msgid "You must wait until your opponent rejoins the match before continuing the game."
+msgid ""
+"You must wait until your opponent rejoins the match before continuing the "
+"game."
 msgstr ""
 "Du må vente til motstanderen tar del i spillet igjen før spillet fortsetter."
 

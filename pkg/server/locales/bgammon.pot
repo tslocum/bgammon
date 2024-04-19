@@ -19,6 +19,9 @@ msgstr ""
 msgid "Accepted double."
 msgstr ""
 
+msgid "Bots are not allowed to join player matches. Please create a match instead."
+msgstr ""
+
 msgid "Choose which doubles you want for your acey-deucey."
 msgstr ""
 
@@ -50,6 +53,9 @@ msgid "Failed to create match: Please leave the match you are in before creating
 msgstr ""
 
 msgid "Failed to log in: %s"
+msgstr ""
+
+msgid "Failed to register: Invalid username: must contain at least one non-numeric character."
 msgstr ""
 
 msgid "Illegal move."
@@ -95,6 +101,9 @@ msgid "No replay was recorded for that game."
 msgstr ""
 
 msgid "Password changed successfully."
+msgstr ""
+
+msgid "Please enter an email, username and password."
 msgstr ""
 
 msgid "Please leave the match you are in before joining another."

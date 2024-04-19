@@ -24,13 +24,19 @@ msgstr "%s пропонує подвоєння до %d."
 msgid "Accepted double."
 msgstr "Прийнято подвоєння."
 
+msgid ""
+"Bots are not allowed to join player matches. Please create a match instead."
+msgstr ""
+
 msgid "Choose which doubles you want for your acey-deucey."
 msgstr "Виберіть, які дублі Ви хочете для Вашого Ейсі-дусі."
 
 msgid "Command ignored: You are spectating this match."
 msgstr "Команду проігноровано: Ви - глядач."
 
-msgid "Connect with other players and stay up to date on the latest changes. Visit %s"
+msgid ""
+"Connect with other players and stay up to date on the latest changes. Visit "
+"%s"
 msgstr ""
 "Приєднайтеся до інших гравців і залишайтеся в курсі останніх змін. "
 "Відвідайте %s"
@@ -53,13 +59,20 @@ msgstr "Помилка зміни паролю: неправильний пар�
 msgid "Failed to change password: you are logged in as a guest."
 msgstr "Помилка зміни паролю: Ви увійшли як гість."
 
-msgid "Failed to create match: Please leave the match you are in before creating another."
+msgid ""
+"Failed to create match: Please leave the match you are in before creating "
+"another."
 msgstr ""
 "Помилка створення матчу: Будь ласка, покиньте матч, у якому Ви зараз, перед "
 "тим, як створити інший."
 
 msgid "Failed to log in: %s"
 msgstr "Помилка входу: %s"
+
+msgid ""
+"Failed to register: Invalid username: must contain at least one non-numeric "
+"character."
+msgstr ""
 
 msgid "Illegal move."
 msgstr "Заборонений хід."
@@ -98,7 +111,9 @@ msgstr "Повідомлення не відправлено: Більше ні�
 msgid "Message not sent: You are not currently in a match."
 msgstr "Повідомлення не відправлено: Ви не у грі."
 
-msgid "No account was found with the provided username and password. To log in as a guest, do not enter a password."
+msgid ""
+"No account was found with the provided username and password. To log in as a "
+"guest, do not enter a password."
 msgstr ""
 "Не було знайдено акаунта з такими логіном і паролем. Щоб увійти як гість, не "
 "вводьте пароль."
@@ -108,6 +123,9 @@ msgstr "Повтор не було записано для цієї гри."
 
 msgid "Password changed successfully."
 msgstr "Пароль успішно змінено."
+
+msgid "Please enter an email, username and password."
+msgstr ""
 
 msgid "Please leave the match you are in before joining another."
 msgstr ""
@@ -180,7 +198,9 @@ msgstr "Ви мусите увійти перед тим, як використ�
 msgid "You must roll first."
 msgstr "Ви мусите кинути першими."
 
-msgid "You must wait until your opponent rejoins the match before continuing the game."
+msgid ""
+"You must wait until your opponent rejoins the match before continuing the "
+"game."
 msgstr ""
 "Ви повинні зачекати, допоки Ваш опонент не повернеться, перед тим, як "
 "продовжувати гру."

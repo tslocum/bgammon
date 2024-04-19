@@ -20,13 +20,19 @@ msgstr ""
 msgid "Accepted double."
 msgstr ""
 
+msgid ""
+"Bots are not allowed to join player matches. Please create a match instead."
+msgstr ""
+
 msgid "Choose which doubles you want for your acey-deucey."
 msgstr ""
 
 msgid "Command ignored: You are spectating this match."
 msgstr ""
 
-msgid "Connect with other players and stay up to date on the latest changes. Visit %s"
+msgid ""
+"Connect with other players and stay up to date on the latest changes. Visit "
+"%s"
 msgstr ""
 
 msgid "Created match: %s"
@@ -47,10 +53,17 @@ msgstr ""
 msgid "Failed to change password: you are logged in as a guest."
 msgstr ""
 
-msgid "Failed to create match: Please leave the match you are in before creating another."
+msgid ""
+"Failed to create match: Please leave the match you are in before creating "
+"another."
 msgstr ""
 
 msgid "Failed to log in: %s"
+msgstr ""
+
+msgid ""
+"Failed to register: Invalid username: must contain at least one non-numeric "
+"character."
 msgstr ""
 
 msgid "Illegal move."
@@ -89,13 +102,18 @@ msgstr ""
 msgid "Message not sent: You are not currently in a match."
 msgstr ""
 
-msgid "No account was found with the provided username and password. To log in as a guest, do not enter a password."
+msgid ""
+"No account was found with the provided username and password. To log in as a "
+"guest, do not enter a password."
 msgstr ""
 
 msgid "No replay was recorded for that game."
 msgstr ""
 
 msgid "Password changed successfully."
+msgstr ""
+
+msgid "Please enter an email, username and password."
 msgstr ""
 
 msgid "Please leave the match you are in before joining another."
@@ -167,7 +185,9 @@ msgstr ""
 msgid "You must roll first."
 msgstr ""
 
-msgid "You must wait until your opponent rejoins the match before continuing the game."
+msgid ""
+"You must wait until your opponent rejoins the match before continuing the "
+"game."
 msgstr ""
 
 msgid "Your opponent left the match."
