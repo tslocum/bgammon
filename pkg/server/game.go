@@ -696,9 +696,6 @@ func (g *serverGame) handleWin() bool {
 		g.Reset()
 		g.replay = g.replay[:0]
 	}
-	g.eachClient(func(client *serverClient) {
-		client.sendEvent(winEvent)
-	})
 
 	if g.client1 != nil && g.client1.account != nil {
 		g.Player1.Rating = g.client1.account.casual.getRating(g.Variant, g.Points > 1) / 100
@@ -708,6 +705,7 @@ func (g *serverGame) handleWin() bool {
 	}
 	g.eachClient(func(client *serverClient) {
 		g.sendBoard(client, false)
+		client.sendEvent(winEvent)
 	})
 	return true
 }

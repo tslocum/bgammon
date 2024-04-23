@@ -1254,11 +1254,11 @@ COMMANDS:
 			clientGame.Turn = 1
 			clientGame.Roll1 = 6
 			clientGame.Roll2 = 1
-			clientGame.Roll3 = 1
-			clientGame.Variant = 2
+			clientGame.Roll3 = 0
+			clientGame.Variant = 0
 			clientGame.Player1.Entered = true
 			clientGame.Player2.Entered = true
-			clientGame.Board = []int8{0, 0, 0, 0, 0, -3, 0, 0, -3, -2, -2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 9, 3, 1, -5, 1, 1, 0}
+			clientGame.Board = []int8{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0}
 
 			log.Println(clientGame.Board[0:28])
 
