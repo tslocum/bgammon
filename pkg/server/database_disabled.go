@@ -79,6 +79,10 @@ func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 	return &serverStatsResult{}, nil
 }
 
+func monthlyStats(tz *time.Location) (*serverStatsResult, error) {
+	return &serverStatsResult{}, nil
+}
+
 func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
 	return &serverStatsResult{}, nil
 }

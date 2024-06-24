@@ -31,10 +31,11 @@ func (s *server) listenWebSocket(address string) {
 	m.HandleFunc("/leaderboard-rated-acey-multi", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantAceyDeucey, true))
 	m.HandleFunc("/leaderboard-rated-tabula-single", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantTabula, false))
 	m.HandleFunc("/leaderboard-rated-tabula-multi", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantTabula, true))
-	m.HandleFunc("/stats", s.handlePrintDailyStats)
-	m.HandleFunc("/stats-total", s.handlePrintCumulativeStats)
-	m.HandleFunc("/stats-tabula", s.handlePrintTabulaStats)
-	m.HandleFunc("/stats-wildbg", s.handlePrintWildBGStats)
+	m.HandleFunc("/stats", s.handleStatsFunc(0))
+	m.HandleFunc("/stats-month", s.handleStatsFunc(1))
+	m.HandleFunc("/stats-total", s.handleStatsFunc(2))
+	m.HandleFunc("/stats-tabula", s.handleStatsFunc(3))
+	m.HandleFunc("/stats-wildbg", s.handleStatsFunc(4))
 	m.HandleFunc("/", s.handleWebSocket)
 
 	err := http.ListenAndServe(address, m)
@@ -135,6 +136,15 @@ func (s *server) cachedStats(statsType int) []byte {
 			log.Fatalf("failed to marshal %+v: %s", stats, err)
 		}
 	case 1:
+		stats, err := monthlyStats(s.tz)
+		if err != nil {
+			log.Fatalf("failed to fetch server statistics: %s", err)
+		}
+		s.statsCache[statsType], err = json.Marshal(stats)
+		if err != nil {
+			log.Fatalf("failed to marshal %+v: %s", stats, err)
+		}
+	case 2:
 		stats, err := cumulativeStats(s.tz)
 		if err != nil {
 			log.Fatalf("failed to fetch server statistics: %s", err)
@@ -143,7 +153,7 @@ func (s *server) cachedStats(statsType int) []byte {
 		if err != nil {
 			log.Fatalf("failed to fetch serialize server statistics: %s", err)
 		}
-	case 2:
+	case 3:
 		stats, err := botStats("BOT_tabula", s.tz)
 		if err != nil {
 			log.Fatalf("failed to fetch tabula statistics: %s", err)
@@ -217,22 +227,33 @@ func (s *server) handleLeaderboardFunc(matchType int, variant int8, multiPoint b
 	}
 }
 
+func (s *server) handleStatsFunc(statsType int) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(s.cachedStats(statsType))
+	}
+}
+
 func (s *server) handlePrintDailyStats(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+}
+
+func (s *server) handlePrintStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(s.cachedStats(0))
 }
 
 func (s *server) handlePrintCumulativeStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(s.cachedStats(1))
+	w.Write(s.cachedStats(2))
 }
 
 func (s *server) handlePrintTabulaStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(s.cachedStats(2))
+	w.Write(s.cachedStats(3))
 }
 
 func (s *server) handlePrintWildBGStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(s.cachedStats(3))
+	w.Write(s.cachedStats(4))
 }

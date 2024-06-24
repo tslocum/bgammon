@@ -846,6 +846,80 @@ func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 	return result, nil
 }
 
+func monthlyStats(tz *time.Location) (*serverStatsResult, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	tx, err := begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	var earliestGame int64
+	rows, err := tx.Query(context.Background(), "SELECT started FROM game ORDER BY started ASC LIMIT 1")
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		if err != nil {
+			continue
+		}
+		err = rows.Scan(&earliestGame)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	result := &serverStatsResult{}
+	m := midnight(time.Unix(earliestGame, 0).In(tz))
+	earliest := time.Date(m.Year(), m.Month(), 1, 0, 0, 0, 0, m.Location())
+	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 1, -earliest.Day()).Unix()
+	var games, accounts int
+	for {
+		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2", rangeStart, rangeEnd)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			if err != nil {
+				continue
+			}
+			err = rows.Scan(&games)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		rows, err = tx.Query(context.Background(), "SELECT COUNT(*) FROM account WHERE created >= $1 AND created < $2", rangeStart, rangeEnd)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			if err != nil {
+				continue
+			}
+			err = rows.Scan(&accounts)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		result.History = append(result.History, &serverStatsEntry{
+			Date:     earliest.Format("2006-01"),
+			Games:    games,
+			Accounts: accounts,
+		})
+
+		earliest = time.Date(earliest.Year(), earliest.Month()+1, 1, 0, 0, 0, 0, m.Location())
+		rangeStart, rangeEnd = rangeEnd, earliest.Unix()
+		if rangeStart >= time.Now().Unix() {
+			break
+		}
+	}
+	return result, nil
+}
+
 func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()
