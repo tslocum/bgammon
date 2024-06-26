@@ -594,7 +594,7 @@ COMMANDS:
 					reset = true
 				}
 			} else {
-				clientGame.Player1.Points = clientGame.Player2.Points + clientGame.DoubleValue
+				clientGame.Player1.Points = clientGame.Player1.Points + clientGame.DoubleValue
 				if clientGame.Player1.Points >= clientGame.Points {
 					clientGame.Winner = 1
 					clientGame.Ended = time.Now()
