@@ -81,7 +81,7 @@ formatted responses are more easily parsed by computers.
   - Aliases: `d`
 
 - `resign`
-  - Decline double offer and resign game.
+  - Resign game. Resigning when a double is offered will decline the offer.
 
 - `roll`
   - Roll dice.

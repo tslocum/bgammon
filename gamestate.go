@@ -132,8 +132,9 @@ func (g *GameState) MayOK() bool {
 	return g.Turn != 0 && g.Turn == g.PlayerNumber && g.Roll1 != 0 && len(g.Available) == 0
 }
 
-// MayResign returns whether the player may send the 'resign' command.
-func (g *GameState) MayResign() bool {
+// MayDecline returns whether the player may send the 'resign' command to
+// decline a double offer.
+func (g *GameState) MayDecline() bool {
 	if g.Spectating || g.Winner != 0 {
 		return false
 	}

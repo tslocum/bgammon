@@ -559,41 +559,45 @@ COMMANDS:
 				continue
 			}
 
-			gameState := &bgammon.GameState{
-				Game:         clientGame.Game,
-				PlayerNumber: cmd.client.playerNumber,
-				Available:    clientGame.LegalMoves(false),
-			}
-			if !gameState.MayResign() {
-				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You may not resign at this time."))
-				continue
-			}
-
 			opponent := clientGame.opponent(cmd.client)
 			if opponent == nil {
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You may not resign until your opponent rejoins the match."))
 				continue
 			}
 
-			clientGame.NextPartialTurn(opponent.playerNumber)
+			gameState := &bgammon.GameState{
+				Game:         clientGame.Game,
+				PlayerNumber: cmd.client.playerNumber,
+				Available:    clientGame.LegalMoves(false),
+			}
+			var winner int8
+			addReplayHeader := func() {
+				clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, winner, clientGame.DoubleValue, clientGame.Variant))}, clientGame.replay...)
+			}
+			if gameState.MayDecline() {
+				winner = opponent.playerNumber
+				clientGame.NextPartialTurn(opponent.playerNumber)
 
-			cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Declined double offer"))
-			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "%s declined double offer."), cmd.client.name))
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Declined double offer."))
+				clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "%s declined double offer."), cmd.client.name))
 
-			clientGame.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", clientGame.Started.Unix(), clientGame.Player1.Name, clientGame.Player2.Name, clientGame.Points, clientGame.Player1.Points, clientGame.Player2.Points, clientGame.Winner, clientGame.DoubleValue, clientGame.Variant))}, clientGame.replay...)
+				addReplayHeader()
+				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d d %d 0", clientGame.Turn, clientGame.DoubleValue*2)))
+			} else if gameState.Turn == 0 || gameState.Turn != cmd.client.playerNumber {
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You may not resign until it is your turn."))
+				continue
+			} else {
+				winner = cmd.client.playerNumber
+				clientGame.NextPartialTurn(cmd.client.playerNumber)
 
-			clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d d %d 0", clientGame.Turn, clientGame.DoubleValue*2)))
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Resigned."))
+				clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "%s resigned."), cmd.client.name))
+
+				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d t", cmd.client.playerNumber)))
+			}
 
 			var reset bool
-			if cmd.client.playerNumber == 1 {
-				clientGame.Player2.Points = clientGame.Player2.Points + clientGame.DoubleValue
-				if clientGame.Player2.Points >= clientGame.Points {
-					clientGame.Winner = 2
-					clientGame.Ended = time.Now()
-				} else {
-					reset = true
-				}
-			} else {
+			if winner == 1 {
 				clientGame.Player1.Points = clientGame.Player1.Points + clientGame.DoubleValue
 				if clientGame.Player1.Points >= clientGame.Points {
 					clientGame.Winner = 1
@@ -601,7 +605,16 @@ COMMANDS:
 				} else {
 					reset = true
 				}
+			} else {
+				clientGame.Player2.Points = clientGame.Player2.Points + clientGame.DoubleValue
+				if clientGame.Player2.Points >= clientGame.Points {
+					clientGame.Winner = 2
+					clientGame.Ended = time.Now()
+				} else {
+					reset = true
+				}
 			}
+			addReplayHeader()
 
 			var winEvent *bgammon.EventWin
 			if clientGame.Winner != 0 {

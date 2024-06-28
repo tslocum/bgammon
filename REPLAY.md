@@ -25,7 +25,13 @@ The index is always eight digits in length with leading zeroes.
 
 The first line of the game is the metadata. The timestamp specifies when the game started.
 
-`i <timestamp> <player1> <player2> <total> <score1> <score2> <winner> <points> <acey>`
+`i <timestamp> <player1> <player2> <total> <score1> <score2> <winner> <points> <variant>`
+
+The variant is specified as follows:
+
+- **0** Backgammon
+- **1** Acey-deucey
+- **2** Tabula
 
 #### Events
 
@@ -54,6 +60,12 @@ Moves for both players are specified from player 1's perspective. The highest ro
 When no moves are possible, only the roll is specified.
 
 `1 r 4-4`
+
+##### Terminate
+
+When a player resigns voluntarily or abandons an unfinished game, the player terminating the game early is indicated.
+
+`1 t`
 
 ## Example .match file
 
