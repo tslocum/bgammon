@@ -63,7 +63,7 @@ When no moves are possible, only the roll is specified.
 
 ##### Terminate
 
-When a player resigns voluntarily or abandons an unfinished game, the player terminating the game early is indicated.
+When a player resigns voluntarily or abandons an incomplete game, the player terminating the game early is indicated.
 
 `1 t`
 

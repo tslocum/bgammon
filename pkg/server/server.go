@@ -351,7 +351,19 @@ func (s *server) handleGames() {
 						g.Winner = 2
 					}
 				}
-				err := recordMatchResult(g, matchTypeCasual)
+
+				g.addReplayHeader()
+				opponent := 1
+				if g.Winner == 1 {
+					opponent = 2
+				}
+				g.replay = append(g.replay, []byte(fmt.Sprintf("%d t", opponent)))
+
+				err := recordGameResult(g, 4, g.replay)
+				if err != nil {
+					log.Fatalf("failed to record game result: %s", err)
+				}
+				err = recordMatchResult(g, matchTypeCasual)
 				if err != nil {
 					log.Fatalf("failed to record match result: %s", err)
 				}

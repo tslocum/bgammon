@@ -587,6 +587,10 @@ func (g *serverGame) nextTurn(reroll bool) {
 	})
 }
 
+func (g *serverGame) addReplayHeader() {
+	g.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", g.Started.Unix(), g.allowed1, g.allowed2, g.Points, g.Player1.Points, g.Player2.Points, g.Winner, g.DoubleValue, g.Variant))}, g.replay...)
+}
+
 func (g *serverGame) handleWin() bool {
 	if g.Winner == 0 {
 		return false
@@ -633,7 +637,7 @@ func (g *serverGame) handleWin() bool {
 		}
 	}
 
-	g.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", g.Started.Unix(), g.Player1.Name, g.Player2.Name, g.Points, g.Player1.Points, g.Player2.Points, g.Winner, winPoints, g.Variant))}, g.replay...)
+	g.addReplayHeader()
 
 	r1, r2, r3 := g.Roll1, g.Roll2, g.Roll3
 	if r2 > r1 {
