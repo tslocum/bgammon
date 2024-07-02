@@ -1250,14 +1250,14 @@ COMMANDS:
 				continue
 			}
 
-			clientGame.Turn = 1
-			clientGame.Roll1 = 6
-			clientGame.Roll2 = 1
+			clientGame.Turn = 2
+			clientGame.Roll1 = 5
+			clientGame.Roll2 = 5
 			clientGame.Roll3 = 0
 			clientGame.Variant = 0
 			clientGame.Player1.Entered = true
 			clientGame.Player2.Entered = true
-			clientGame.Board = []int8{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0}
+			clientGame.Board = []int8{1, 1, 2, 2, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, -4, -3, -2, -2, -2, -1, 0, 0, 0}
 
 			log.Println(clientGame.Board[0:28])
 
