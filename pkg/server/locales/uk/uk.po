@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2024-03-20 16:15+0000\n"
+"PO-Revision-Date: 2024-04-21 13:07+0000\n"
 "Last-Translator: \"Andrew \\\"EGYT\\\"\" <hitechni134@gmail.com>\n"
 "Language-Team: Ukrainian <https://hosted.weblate.org/projects/bgammon/"
 "bgammon-server/uk/>\n"
@@ -15,6 +15,9 @@ msgstr ""
 msgid "%s accepted double."
 msgstr "%s приймає подвоєння."
 
+msgid "%s resigned."
+msgstr ""
+
 msgid "%s declined double offer."
 msgstr "%s відхиляє подвоєння."
 
@@ -27,6 +30,8 @@ msgstr "Прийнято подвоєння."
 msgid ""
 "Bots are not allowed to join player matches. Please create a match instead."
 msgstr ""
+"Боти не можуть приєднуватися до матчів гравців. Будь ласка, створіть матч "
+"натомість."
 
 msgid "Choose which doubles you want for your acey-deucey."
 msgstr "Виберіть, які дублі Ви хочете для Вашого Ейсі-дусі."
@@ -44,8 +49,8 @@ msgstr ""
 msgid "Created match: %s"
 msgstr "Створено матч: %s"
 
-msgid "Declined double offer"
-msgstr "Відхилено подвоєння"
+msgid "Declined double offer."
+msgstr ""
 
 msgid "Double offered to opponent (%d points)."
 msgstr "Опоненту запропоновано подвоєння до %d."
@@ -73,22 +78,24 @@ msgid ""
 "Failed to register: Invalid username: must contain at least one non-numeric "
 "character."
 msgstr ""
+"Помилка реєстрації: Недопустимий логін: повинен містити хоч один нецифровий "
+"символ."
 
 msgid "Illegal move."
 msgstr "Заборонений хід."
 
 msgid "Invalid password."
-msgstr "Неправильний пароль."
+msgstr "Недопустимий пароль."
 
 msgid "Invalid replay ID provided."
-msgstr "Неправильний ідентифікатор повтору."
+msgstr "Недопустимий ідентифікатор повтору."
 
 msgid "Invalid username: must contain at least one non-numeric character."
-msgstr "Неправильний логін: повинен містити хоч один нецифровий символ."
+msgstr "Недопустимий логін: повинен містити хоч один нецифровий символ."
 
 msgid "Invalid username: must contain only letters, numbers and underscores."
 msgstr ""
-"Неправильний логін: повинен містити лише літери, цифри та підкреслювання."
+"Недопустимий логін: повинен містити лише літери, цифри та підкреслювання."
 
 msgid "It is not your turn to move."
 msgstr "Ще не Ваш час ходити."
@@ -125,7 +132,7 @@ msgid "Password changed successfully."
 msgstr "Пароль успішно змінено."
 
 msgid "Please enter an email, username and password."
-msgstr ""
+msgstr "Будь ласка, введіть електронну поштову скриньку, логін та пароль."
 
 msgid "Please leave the match you are in before joining another."
 msgstr ""
@@ -137,6 +144,9 @@ msgstr "Повторно приєднано до матчу: %s"
 
 msgid "Rematch offer sent."
 msgstr "Відправлено запит на реванш."
+
+msgid "Resigned."
+msgstr ""
 
 msgid "Server error"
 msgstr "Помилка сервера"
@@ -183,8 +193,8 @@ msgstr "Ви не можете подвоїти, допоки Ваш опоне�
 msgid "You may not move until your opponent rejoins the match."
 msgstr "Ви не можете ходити, допоки Ваш опонент не повернеться."
 
-msgid "You may not resign at this time."
-msgstr "Ви не можете капітулювати зараз."
+msgid "You may not resign until it is your turn."
+msgstr ""
 
 msgid "You may not resign until your opponent rejoins the match."
 msgstr "Ви не можете капітулювати, допоки Ваш опонент не повернеться."

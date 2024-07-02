@@ -11,6 +11,9 @@ msgstr ""
 msgid "%s accepted double."
 msgstr ""
 
+msgid "%s resigned."
+msgstr ""
+
 msgid "%s declined double offer."
 msgstr ""
 
@@ -38,7 +41,7 @@ msgstr ""
 msgid "Created match: %s"
 msgstr ""
 
-msgid "Declined double offer"
+msgid "Declined double offer."
 msgstr ""
 
 msgid "Double offered to opponent (%d points)."
@@ -125,6 +128,9 @@ msgstr ""
 msgid "Rematch offer sent."
 msgstr ""
 
+msgid "Resigned."
+msgstr ""
+
 msgid "Server error"
 msgstr ""
 
@@ -170,7 +176,7 @@ msgstr ""
 msgid "You may not move until your opponent rejoins the match."
 msgstr ""
 
-msgid "You may not resign at this time."
+msgid "You may not resign until it is your turn."
 msgstr ""
 
 msgid "You may not resign until your opponent rejoins the match."
