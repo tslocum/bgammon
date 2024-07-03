@@ -570,13 +570,14 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 	}
 	onBar := g.Board[barSpace] != 0
 	available, _ := b.Available(g.Turn)
+	mayBearOff := b.MayBearOff(g.Turn)
 	var moves [][]int8
 	for i := range available {
 		for j := range available[i] {
 			if available[i][j][0] == 0 && available[i][j][1] == 0 {
 				break
 			}
-			if (!onBar || (onBar && available[i][j][0] == barSpace)) && PlayerCheckers(g.Board[available[i][j][0]], g.Turn) != 0 {
+			if (!onBar || (onBar && available[i][j][0] == barSpace)) && ((available[i][j][1] != tabula.SpaceHomePlayer && available[i][j][1] != tabula.SpaceHomeOpponent) || mayBearOff) && PlayerCheckers(g.Board[available[i][j][0]], g.Turn) != 0 {
 				var found bool
 				for _, m := range moves {
 					if m[0] == available[i][j][0] && m[1] == available[i][j][1] {
