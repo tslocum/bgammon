@@ -9,6 +9,8 @@ import (
 	"os"
 
 	"code.rocket9labs.com/tslocum/bgammon/pkg/server"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 func main() {
@@ -75,11 +77,15 @@ func main() {
 func printRollStatistics() {
 	var oneSame, doubles int
 	var lastroll1, lastroll2 int
+	var rolls [6]int
 
-	total := 1000000
+	const total = 10000000
 	for i := 0; i < total; i++ {
 		roll1 := server.RandInt(6) + 1
 		roll2 := server.RandInt(6) + 1
+
+		rolls[roll1-1]++
+		rolls[roll2-1]++
 
 		if roll1 == lastroll1 || roll1 == lastroll2 || roll2 == lastroll1 || roll2 == lastroll2 {
 			oneSame++
@@ -92,5 +98,6 @@ func printRollStatistics() {
 		lastroll1, lastroll2 = roll1, roll2
 	}
 
-	log.Printf("total: %d, one same: %d (%.0f%%), doubles: %d (%.0f%%)", total, oneSame, float64(oneSame)/float64(total)*100, doubles, float64(doubles)/float64(total)*100)
+	p := message.NewPrinter(language.English)
+	p.Printf("Rolled %d pairs of dice.\nDoubles: %d (%.0f%%). One same as last: %d (%.0f%%).\n1s: %d (%.0f%%), 2s: %d (%.0f%%), 3s: %d (%.0f%%), 4s: %d (%.0f%%), 5s: %d (%.0f%%), 6s: %d (%.0f%%).\n", total, doubles, float64(doubles)/float64(total)*100, oneSame, float64(oneSame)/float64(total)*100, rolls[0], float64(rolls[0])/float64(total*2)*100, rolls[1], float64(rolls[1])/float64(total*2)*100, rolls[2], float64(rolls[2])/float64(total*2)*100, rolls[3], float64(rolls[3])/float64(total*2)*100, rolls[4], float64(rolls[4])/float64(total*2)*100, rolls[5], float64(rolls[5])/float64(total*2)*100)
 }

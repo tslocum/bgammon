@@ -874,7 +874,7 @@ func monthlyStats(tz *time.Location) (*serverStatsResult, error) {
 	result := &serverStatsResult{}
 	m := midnight(time.Unix(earliestGame, 0).In(tz))
 	earliest := time.Date(m.Year(), m.Month(), 1, 0, 0, 0, 0, m.Location())
-	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 1, -earliest.Day()).Unix()
+	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 1, -(earliest.Day()-1)).Unix()
 	var games, accounts int
 	for {
 		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2", rangeStart, rangeEnd)
