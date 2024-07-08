@@ -86,6 +86,9 @@ type server struct {
 
 	relayChat bool // Chats are not relayed normally. This option is only used by local servers.
 	verbose   bool
+
+	shutdownTime   time.Time
+	shutdownReason string
 }
 
 func NewServer(tz string, dataSource string, mailServer string, passwordSalt string, resetSalt string, relayChat bool, verbose bool, allowDebug bool) *server {
@@ -537,6 +540,44 @@ func (s *server) Analyze(g *bgammon.Game) {
 
 	time.Sleep(2 * time.Second)
 	os.Exit(0)
+}
+
+func (s *server) handleShutdown() {
+	var mins time.Duration
+	var minutes int
+	t := time.NewTicker(time.Minute)
+	for {
+		mins = time.Until(s.shutdownTime)
+		if mins > 0 {
+			minutes = int(mins.Minutes()) + 1
+		}
+
+		s.clientsLock.Lock()
+		for _, sc := range s.clients {
+			switch minutes {
+			case 0:
+				sc.sendBroadcast(gotext.GetD(sc.language, "The server is shutting down. Reason:"))
+			case 1:
+				sc.sendBroadcast(gotext.GetD(sc.language, "The server is shutting down in 1 minute. Reason:"))
+			default:
+				sc.sendBroadcast(gotext.GetD(sc.language, "The server is shutting down in %d minutes. Reason:", minutes))
+			}
+			sc.sendBroadcast(s.shutdownReason)
+			sc.sendBroadcast(gotext.GetD(sc.language, "Please finish your match as soon as possible."))
+		}
+		s.clientsLock.Unlock()
+
+		<-t.C
+	}
+}
+
+func (s *server) shutdown(delay time.Duration, reason string) {
+	if !s.shutdownTime.IsZero() {
+		return
+	}
+	s.shutdownTime = time.Now().Add(delay)
+	s.shutdownReason = reason
+	go s.handleShutdown()
 }
 
 func RandInt(max int) int {

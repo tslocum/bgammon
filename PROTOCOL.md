@@ -123,6 +123,14 @@ must write some data to the server at least once every 40 seconds.
 - `disconnect`
   - Disconnect from the server.
 
+- `broadcast`
+  - Send a message to all players.
+  - This command is only available to server administrators.
+
+- `shutdown <minutes> <reason>`
+  - Prevent the creation of new matches and periodically warn players about the server shutting down.
+  - This command is only available to server administrators.
+
 ## Server events
 
 All events are sent in either JSON or human-readable format. The structure of

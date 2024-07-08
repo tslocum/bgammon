@@ -245,7 +245,7 @@ COMMANDS:
 		clientGame := s.gameByClient(cmd.client)
 		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
 			switch keyword {
-			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandDisconnect, bgammon.CommandPong:
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandBroadcast, bgammon.CommandShutdown:
 				// These commands are allowed to be used by spectators.
 			default:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Command ignored: You are spectating this match."))
@@ -319,6 +319,9 @@ COMMANDS:
 		case bgammon.CommandCreate, "c":
 			if clientGame != nil {
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to create match: Please leave the match you are in before creating another."))
+				continue
+			} else if !s.shutdownTime.IsZero() {
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to create match: The server is shutting down. Reason: %s", s.shutdownReason))
 				continue
 			}
 
@@ -1232,20 +1235,52 @@ COMMANDS:
 				ev.CasualTabulaMulti = a.casual.tabulaMulti / 100
 			}
 			cmd.client.sendEvent(ev)
+		case bgammon.CommandPong:
+			// Do nothing.
 		case bgammon.CommandDisconnect:
 			if clientGame != nil {
 				clientGame.removeClient(cmd.client)
 			}
 			cmd.client.Terminate("Client disconnected")
-		case bgammon.CommandPong:
-			// Do nothing.
+		case bgammon.CommandBroadcast:
+			if !cmd.client.Admin() {
+				cmd.client.sendNotice("Access denied.")
+				continue
+			} else if len(params) == 0 {
+				cmd.client.sendNotice("Please specify a message to broadcast.")
+				continue
+			}
+
+			message := string(bytes.Join(params, []byte(" ")))
+			s.clientsLock.Lock()
+			for _, sc := range s.clients {
+				sc.sendBroadcast(message)
+			}
+			s.clientsLock.Unlock()
+		case bgammon.CommandShutdown:
+			if !cmd.client.Admin() {
+				cmd.client.sendNotice("Access denied.")
+				continue
+			} else if len(params) < 2 {
+				cmd.client.sendNotice("Please specify the number of minutes until shutdown and the reason.")
+				continue
+			} else if !s.shutdownTime.IsZero() {
+				cmd.client.sendNotice("Server shutdown already in progress.")
+				continue
+			}
+
+			minutes, err := strconv.Atoi(string(params[0]))
+			if err != nil || minutes <= 0 {
+				cmd.client.sendNotice("Error: Invalid shutdown delay.")
+				continue
+			}
+
+			s.shutdown(time.Duration(minutes)*time.Minute, string(bytes.Join(params[1:], []byte(" "))))
 		case "endgame":
 			if !allowDebugCommands {
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not allowed to use that command."))
 				continue
-			}
-
-			if clientGame == nil {
+			} else if clientGame == nil {
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not currently in a match."))
 				continue
 			}

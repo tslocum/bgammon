@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
+	"github.com/leonelquinteros/gotext"
 )
 
 type clientRating struct {
@@ -82,6 +83,10 @@ type serverClient struct {
 	playerNumber int8
 	terminating  bool
 	bgammon.Client
+}
+
+func (c *serverClient) Admin() bool {
+	return c.accountID == 1
 }
 
 func (c *serverClient) sendEvent(e interface{}) {
@@ -202,6 +207,12 @@ func (c *serverClient) sendEvent(e interface{}) {
 func (c *serverClient) sendNotice(message string) {
 	c.sendEvent(&bgammon.EventNotice{
 		Message: message,
+	})
+}
+
+func (c *serverClient) sendBroadcast(message string) {
+	c.sendEvent(&bgammon.EventNotice{
+		Message: gotext.GetD(c.language, "SERVER BROADCAST:") + " " + message,
 	})
 }
 

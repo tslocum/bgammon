@@ -29,6 +29,8 @@ const (
 	CommandBoard         = "board"         // Print current board state in human-readable form.
 	CommandPong          = "pong"          // Response to server ping.
 	CommandDisconnect    = "disconnect"    // Disconnect from server.
+	CommandBroadcast     = "broadcast"     // Send a message to all players.
+	CommandShutdown      = "shutdown"      // Prevent the creation of new matches.
 )
 
 type EventType string
