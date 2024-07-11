@@ -218,5 +218,5 @@ msgstr ""
 msgid "Your opponent left the match."
 msgstr "Ваш опонент покинув матч."
 
-msgid "Your opponent would like to play again. Type %s to accept."
-msgstr "Ваш опонент хоче зіграти ще раз. Введіть %s щоб прийняти запит."
+msgid "Your opponent would like to play again."
+msgstr "Ваш опонент хоче зіграти ще раз."

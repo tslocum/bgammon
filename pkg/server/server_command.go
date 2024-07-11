@@ -1087,7 +1087,7 @@ COMMANDS:
 			} else {
 				clientGame.rematch = cmd.client.playerNumber
 
-				clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "Your opponent would like to play again. Type %s to accept."), "/rematch"))
+				clientGame.opponent(cmd.client).sendNotice(gotext.GetD(clientGame.opponent(cmd.client).language, "Your opponent would like to play again."))
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Rematch offer sent."))
 				continue
 			}

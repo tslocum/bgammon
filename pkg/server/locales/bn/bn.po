@@ -198,5 +198,5 @@ msgstr ""
 msgid "Your opponent left the match."
 msgstr ""
 
-msgid "Your opponent would like to play again. Type %s to accept."
+msgid "Your opponent would like to play again."
 msgstr ""

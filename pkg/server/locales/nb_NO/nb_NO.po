@@ -213,5 +213,5 @@ msgstr ""
 msgid "Your opponent left the match."
 msgstr "Motstanderen din har forlatt spillet."
 
-msgid "Your opponent would like to play again. Type %s to accept."
-msgstr "Motstanderen din vil ha omkamp. Skriv «%s» for å godta."
+msgid "Your opponent would like to play again."
+msgstr "Motstanderen din vil ha omkamp."
