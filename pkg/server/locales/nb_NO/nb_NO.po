@@ -67,6 +67,9 @@ msgstr ""
 "Klarte ikke å opprette spill. Forlat det du er en del av før du oppretter "
 "nytt."
 
+msgid "Failed to create match: The server is shutting down. Reason: %s"
+msgstr ""
+
 msgid "Failed to log in: %s"
 msgstr "Klarte ikke å logge inn: %s"
 
@@ -128,6 +131,9 @@ msgstr "Passord endret."
 msgid "Please enter an email, username and password."
 msgstr ""
 
+msgid "Please finish your match as soon as possible."
+msgstr ""
+
 msgid "Please leave the match you are in before joining another."
 msgstr "Forlat spillet du er en del av før du tar del i et nytt."
 
@@ -138,6 +144,9 @@ msgid "Rematch offer sent."
 msgstr "Omkampstilbud sendt."
 
 msgid "Resigned."
+msgstr ""
+
+msgid "SERVER BROADCAST:"
 msgstr ""
 
 msgid "Server error"
@@ -151,6 +160,15 @@ msgstr "Følgende lovlige trekk er tilgjengelige: %s"
 
 msgid "The match you are in is still in progress."
 msgstr "Spillet du er en del av er ikke avsluttet."
+
+msgid "The server is shutting down. Reason:"
+msgstr ""
+
+msgid "The server is shutting down in 1 minute. Reason:"
+msgstr ""
+
+msgid "The server is shutting down in %d minutes. Reason:"
+msgstr ""
 
 msgid "Unknown command: %s"
 msgstr "Ukjent kommando: %s"

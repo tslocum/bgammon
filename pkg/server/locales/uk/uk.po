@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2024-07-08 18:47+0000\n"
+"PO-Revision-Date: 2024-07-09 19:09+0000\n"
 "Last-Translator: \"Andrew \\\"EGYT\\\"\" <hitechni134@gmail.com>\n"
 "Language-Team: Ukrainian <https://hosted.weblate.org/projects/bgammon/"
 "bgammon-server/uk/>\n"
@@ -71,6 +71,9 @@ msgstr ""
 "Помилка створення матчу: Будь ласка, покиньте матч, у якому Ви зараз, перед "
 "тим, як створити інший."
 
+msgid "Failed to create match: The server is shutting down. Reason: %s"
+msgstr "Помилка створення матчу: Сервер вимикається. Причина: %s"
+
 msgid "Failed to log in: %s"
 msgstr "Помилка входу: %s"
 
@@ -134,6 +137,9 @@ msgstr "Пароль успішно змінено."
 msgid "Please enter an email, username and password."
 msgstr "Будь ласка, введіть електронну поштову скриньку, логін та пароль."
 
+msgid "Please finish your match as soon as possible."
+msgstr "Будь ласка, завершіть свій матч якомога швидше."
+
 msgid "Please leave the match you are in before joining another."
 msgstr ""
 "Будь ласка, покиньте матч, у якому Ви зараз, перед тим, як приєднатися до "
@@ -148,6 +154,9 @@ msgstr "Відправлено запит на реванш."
 msgid "Resigned."
 msgstr "Капітульовано."
 
+msgid "SERVER BROADCAST:"
+msgstr "ПОВІДОМЛЕННЯ ВІД СЕРВЕРА:"
+
 msgid "Server error"
 msgstr "Помилка сервера"
 
@@ -159,6 +168,17 @@ msgstr "Доступні наступні ходи: %s"
 
 msgid "The match you are in is still in progress."
 msgstr "Гра, у якій Ви зараз, ще йде."
+
+msgid "The server is shutting down. Reason:"
+msgstr "Сервер вимикається. Причина:"
+
+#, fuzzy
+msgid "The server is shutting down in 1 minute. Reason:"
+msgstr "Сервер вимкнеться через 1 одну хвилину. Причина:"
+
+#, fuzzy
+msgid "The server is shutting down in %d minutes. Reason:"
+msgstr "Сервер вимкнеться через %d хвилин. Причина:"
 
 msgid "Unknown command: %s"
 msgstr "Невідома команда: %s"

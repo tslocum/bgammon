@@ -64,6 +64,9 @@ msgid ""
 "another."
 msgstr ""
 
+msgid "Failed to create match: The server is shutting down. Reason: %s"
+msgstr ""
+
 msgid "Failed to log in: %s"
 msgstr "Malsukcesis saluti: %s"
 
@@ -122,6 +125,9 @@ msgstr "Sukcese ŝanĝis pasvorton."
 msgid "Please enter an email, username and password."
 msgstr "Bonvolu tajpi retpoŝtan adreson, salutnomon kaj pasvorton."
 
+msgid "Please finish your match as soon as possible."
+msgstr ""
+
 msgid "Please leave the match you are in before joining another."
 msgstr ""
 
@@ -134,6 +140,9 @@ msgstr ""
 msgid "Resigned."
 msgstr ""
 
+msgid "SERVER BROADCAST:"
+msgstr ""
+
 msgid "Server error"
 msgstr "Servila eraro"
 
@@ -144,6 +153,15 @@ msgid "The following legal moves are available: %s"
 msgstr "Jen la eblaj movoj: %s"
 
 msgid "The match you are in is still in progress."
+msgstr ""
+
+msgid "The server is shutting down. Reason:"
+msgstr ""
+
+msgid "The server is shutting down in 1 minute. Reason:"
+msgstr ""
+
+msgid "The server is shutting down in %d minutes. Reason:"
 msgstr ""
 
 msgid "Unknown command: %s"

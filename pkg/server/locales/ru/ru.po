@@ -61,6 +61,9 @@ msgid ""
 "another."
 msgstr ""
 
+msgid "Failed to create match: The server is shutting down. Reason: %s"
+msgstr ""
+
 msgid "Failed to log in: %s"
 msgstr ""
 
@@ -119,6 +122,9 @@ msgstr ""
 msgid "Please enter an email, username and password."
 msgstr ""
 
+msgid "Please finish your match as soon as possible."
+msgstr ""
+
 msgid "Please leave the match you are in before joining another."
 msgstr ""
 
@@ -131,6 +137,9 @@ msgstr ""
 msgid "Resigned."
 msgstr ""
 
+msgid "SERVER BROADCAST:"
+msgstr ""
+
 msgid "Server error"
 msgstr ""
 
@@ -141,6 +150,15 @@ msgid "The following legal moves are available: %s"
 msgstr ""
 
 msgid "The match you are in is still in progress."
+msgstr ""
+
+msgid "The server is shutting down. Reason:"
+msgstr ""
+
+msgid "The server is shutting down in 1 minute. Reason:"
+msgstr ""
+
+msgid "The server is shutting down in %d minutes. Reason:"
 msgstr ""
 
 msgid "Unknown command: %s"
