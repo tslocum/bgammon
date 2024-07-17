@@ -1,220 +1,259 @@
 msgid ""
 msgstr ""
+"PO-Revision-Date: 2024-07-17 14:09+0000\n"
+"Last-Translator: Rhenaud Dubois <rhen33390@gmail.com>\n"
+"Language-Team: French <https://hosted.weblate.org/projects/bgammon/"
+"bgammon-server/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: xgotext\n"
+"X-Generator: Weblate 5.7-dev\n"
 
 msgid "%s accepted double."
-msgstr ""
+msgstr "%s a accepté le double."
 
 msgid "%s resigned."
-msgstr ""
+msgstr "%s a abandonné."
 
 msgid "%s declined double offer."
-msgstr ""
+msgstr "%s a décliné l'offre de double."
 
 msgid "%s offers a double (%d points)."
-msgstr ""
+msgstr "%s offre un double (%d points)."
 
 msgid "Accepted double."
-msgstr ""
+msgstr "Double accepté."
 
 msgid ""
 "Bots are not allowed to join player matches. Please create a match instead."
 msgstr ""
+"Les robots ne sont pas autorisés à rejoindre de partie entre joueurs. "
+"Veuillez créer une partie à la place."
 
 msgid "Choose which doubles you want for your acey-deucey."
-msgstr ""
+msgstr "Choisissez quels doubles vous voulez pour votre acey-deucey."
 
 msgid "Command ignored: You are spectating this match."
-msgstr ""
+msgstr "Commande ignorée : Vous êtes un spectateur de la partie."
 
 msgid ""
 "Connect with other players and stay up to date on the latest changes. Visit "
 "%s"
 msgstr ""
+"Connectez-vous avec d'autres joueurs et restez à jour sur les derniers "
+"changements. Visitez %s"
 
 msgid "Created match: %s"
-msgstr ""
+msgstr "Partie créée : %s"
 
 msgid "Declined double offer."
-msgstr ""
+msgstr "Offre de double déclinée."
 
 msgid "Double offered to opponent (%d points)."
-msgstr ""
+msgstr "Double proposé à l'adversaire (%d points)."
 
 msgid "Failed to change password."
-msgstr ""
+msgstr "Impossible de changer le mot de passe."
 
 msgid "Failed to change password: incorrect existing password."
 msgstr ""
+"Impossible de changer le mot de passe : le mot de passe actuel est erroné."
 
 msgid "Failed to change password: you are logged in as a guest."
 msgstr ""
+"Impossible de changer le mot de passe : Vous êtes connectés en tant "
+"qu'invité."
 
 msgid ""
 "Failed to create match: Please leave the match you are in before creating "
 "another."
 msgstr ""
+"Impossible de créer la partie : Veuillez quitter votre partie actuelle avant "
+"d'en créer une autre."
 
 msgid "Failed to create match: The server is shutting down. Reason: %s"
 msgstr ""
+"Impossible de créer la partie : Le serveur est en train de s'éteindre. "
+"Raison : %s"
 
 msgid "Failed to log in: %s"
-msgstr ""
+msgstr "Impossible de se connecter : %s"
 
 msgid ""
 "Failed to register: Invalid username: must contain at least one non-numeric "
 "character."
 msgstr ""
+"Impossible de s'enregistrer : Nom d'utilisateur invalide : il doit contenir "
+"au moins un caractère non numérique."
 
 msgid "Illegal move."
-msgstr ""
+msgstr "Déplacement illégal."
 
 msgid "Invalid password."
-msgstr ""
+msgstr "Mot de passe invalide."
 
 msgid "Invalid replay ID provided."
-msgstr ""
+msgstr "ID de replay donné invalide."
 
 msgid "Invalid username: must contain at least one non-numeric character."
 msgstr ""
+"Nom d'utilisateur invalide : il doit contenir au moins un caractère non "
+"numérique."
 
 msgid "Invalid username: must contain only letters, numbers and underscores."
 msgstr ""
+"Nom d'utilisateur invalide : il doit contenir seulement des lettres, des "
+"nombres et des tirets du 8."
 
 msgid "It is not your turn to move."
-msgstr ""
+msgstr "Ce n'est pas à votre tour de jouer."
 
 msgid "It is not your turn to roll."
-msgstr ""
+msgstr "Ce n'est pas à votre tour de lancer les dés."
 
 msgid "It is not your turn."
-msgstr ""
+msgstr "Ce n'est pas votre tour."
 
 msgid "Joined match: %s"
-msgstr ""
+msgstr "Partie rejointe : %s"
 
 msgid "Match not found."
-msgstr ""
+msgstr "Partie non trouvée."
 
 msgid "Message not sent: There is no one else in the match."
-msgstr ""
+msgstr "Message non envoyé : Il n'y a personne d'autre dans la partie."
 
 msgid "Message not sent: You are not currently in a match."
-msgstr ""
+msgstr "Message non envoyé : Vous n'êtes pas dans une partie."
 
 msgid ""
 "No account was found with the provided username and password. To log in as a "
 "guest, do not enter a password."
 msgstr ""
+"Aucun compte n'a été trouvé avec le nom d'utilisateur et le mot de passe "
+"donnés. Pour se connecter en tant qu'invité, veuillez à ne pas entrer de mot "
+"de passe."
 
 msgid "No replay was recorded for that game."
-msgstr ""
+msgstr "Aucun replay n'a été enregistré pour cette partie."
 
 msgid "Password changed successfully."
-msgstr ""
+msgstr "Mot de passe mis à jour avec succès."
 
 msgid "Please enter an email, username and password."
-msgstr ""
+msgstr "Veuillez entrer un email, un nom d'utilisateur et un mot de passe."
 
 msgid "Please finish your match as soon as possible."
-msgstr ""
+msgstr "Veuillez terminer votre partie aussi vite que possible."
 
 msgid "Please leave the match you are in before joining another."
 msgstr ""
+"Veuillez quitter la partie dans laquelle vous êtes avant d'en rejoindre une "
+"autre."
 
 msgid "Rejoined match: %s"
-msgstr ""
+msgstr "Partie rejointe : %s"
 
 msgid "Rematch offer sent."
-msgstr ""
+msgstr "Offre de nouvelle partie envoyée."
 
 msgid "Resigned."
-msgstr ""
+msgstr "Abandonné."
 
 msgid "SERVER BROADCAST:"
-msgstr ""
+msgstr "MESSAGE DU SERVEUR :"
 
 msgid "Server error"
-msgstr ""
+msgstr "Erreur du serveur"
 
 msgid "That username is already in use."
-msgstr ""
+msgstr "Ce nom d'utilisateur est déjà utilisé."
 
 msgid "The following legal moves are available: %s"
-msgstr ""
+msgstr "Les déplacements légaux suivants sont possibles : %s"
 
 msgid "The match you are in is still in progress."
-msgstr ""
+msgstr "La partie dans laquelle vous êtes est toujours en cours."
 
 msgid "The server is shutting down. Reason:"
-msgstr ""
+msgstr "Le serveur est en train de s'éteindre. Raison :"
 
 msgid "The server is shutting down in 1 minute. Reason:"
-msgstr ""
+msgstr "Le serveur s'éteindra dans 1 minute. Raison :"
 
 msgid "The server is shutting down in %d minutes. Reason:"
-msgstr ""
+msgstr "Le serveur s'éteindra dans %d minutes. Raison :"
 
 msgid "Unknown command: %s"
-msgstr ""
+msgstr "Commande inconnue : %s"
 
 msgid "Waiting for response from opponent."
-msgstr ""
+msgstr "En attente de réponse de l'adversaire."
 
 msgid "You are not allowed to use that command."
-msgstr ""
+msgstr "Vous n'êtes pas autorisés à utiliser cette commande."
 
 msgid "You are not currently in a match."
-msgstr ""
+msgstr "Vous n'êtes pas dans une partie."
 
 msgid "You are spectating this match. Chat messages are not relayed."
 msgstr ""
+"Vous êtes un spectateur de cette partie. Les messages du chat ne seront pas "
+"relayés."
 
+#, fuzzy
 msgid "You do not currently hold the doubling cube."
-msgstr ""
+msgstr "Vous n'êtes pas en possession du cube de doublement."
 
 msgid "You have already requested a rematch."
-msgstr ""
+msgstr "Vous avez déjà effectué une demande de nouvelle partie."
 
 msgid "You may not accept the double until your opponent rejoins the match."
 msgstr ""
+"Vous ne pouvez accepter le double qu'après que votre adversaire aie rejoint "
+"la partie."
 
 msgid "You may not double at this time."
-msgstr ""
+msgstr "Vous ne pouvez pas doubler pour le moment."
 
 msgid "You may not double until your opponent rejoins the match."
 msgstr ""
+"Vous ne pouvez pas doubler avant que votre adversaire rejoigne la partie."
 
 msgid "You may not move until your opponent rejoins the match."
 msgstr ""
+"Vous ne pouvez pas effectuer de déplacement avant que votre adversaire "
+"rejoigne la partie."
 
 msgid "You may not resign until it is your turn."
-msgstr ""
+msgstr "Vous ne pouvez pas abandonner tant que ce n'est pas votre tour."
 
 msgid "You may not resign until your opponent rejoins the match."
 msgstr ""
+"Vous ne pourrez abandonner que quand votre adversaire aura rejoint la partie."
 
 msgid "You may not roll until your opponent rejoins the match."
 msgstr ""
+"Vous ne pouvez pas lancer de dé avant que votre adversaire rejoigne la "
+"partie."
 
 msgid "You must login before using other commands."
-msgstr ""
+msgstr "Vous devez vous connecter avant d'utiliser d'autres commandes."
 
 msgid "You must roll first."
-msgstr ""
+msgstr "Vous devez tout d'abord lancer les dés."
 
 msgid ""
 "You must wait until your opponent rejoins the match before continuing the "
 "game."
 msgstr ""
+"Vous devez attendre que votre adversaire rejoigne la partie avant de "
+"continuer le jeu."
 
 msgid "Your opponent left the match."
-msgstr ""
+msgstr "Votre adversaire a quitté la partie."
 
 msgid "Your opponent would like to play again."
-msgstr ""
+msgstr "Votre adversaire voudrait jouer avec vous à nouveau."
