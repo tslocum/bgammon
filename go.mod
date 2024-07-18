@@ -5,13 +5,13 @@ go 1.17
 require (
 	code.rocket9labs.com/tslocum/tabula v0.0.0-20240703054156-ce0b448f0999
 	github.com/alexedwards/argon2id v1.0.0
-	github.com/gobwas/ws v1.4.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jlouis/glicko2 v1.0.0
 	github.com/leonelquinteros/gotext v1.6.1
 	github.com/matcornic/hermes/v2 v2.1.0
 	golang.org/x/text v0.16.0
+	nhooyr.io/websocket v1.8.11
 )
 
 require (
@@ -21,8 +21,6 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/PuerkitoBio/goquery v1.9.2 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
-	github.com/gobwas/httphead v0.1.0 // indirect
-	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect

@@ -2,21 +2,23 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"log"
-	"net"
 	"net/http"
 	"sync"
-	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
-	"github.com/gobwas/ws"
-	"github.com/gobwas/ws/wsutil"
+	"nhooyr.io/websocket"
 )
+
+var acceptOptions = &websocket.AcceptOptions{
+	InsecureSkipVerify: true,
+}
 
 var _ bgammon.Client = &webSocketClient{}
 
 type webSocketClient struct {
-	conn       net.Conn
+	conn       *websocket.Conn
 	events     chan []byte
 	commands   chan<- []byte
 	terminated bool
@@ -25,7 +27,7 @@ type webSocketClient struct {
 }
 
 func newWebSocketClient(r *http.Request, w http.ResponseWriter, commands chan<- []byte, events chan []byte, verbose bool) *webSocketClient {
-	conn, _, _, err := ws.UpgradeHTTP(r, w)
+	conn, err := websocket.Accept(w, r, acceptOptions)
 	if err != nil {
 		return nil
 	}
@@ -61,48 +63,33 @@ func (c *webSocketClient) Write(message []byte) {
 }
 
 func (c *webSocketClient) readCommands() {
-	setTimeout := func() {
-		err := c.conn.SetReadDeadline(time.Now().Add(clientTimeout))
-		if err != nil {
-			c.Terminate(err.Error())
-			return
-		}
-	}
-
+	var ctx context.Context
 	for {
 		if c.terminated {
 			return
 		}
 
-		setTimeout()
-		msg, op, err := wsutil.ReadClientData(c.conn)
+		ctx, _ = context.WithTimeout(context.Background(), clientTimeout)
+		msgType, msgContent, err := c.conn.Read(ctx)
 		if err != nil {
 			c.Terminate(err.Error())
 			return
-		} else if op != ws.OpText {
+		} else if msgType != websocket.MessageText {
 			continue
 		}
 
-		buf := make([]byte, len(msg))
-		copy(buf, msg)
+		buf := make([]byte, len(msgContent))
+		copy(buf, msgContent)
 		c.commands <- buf
 
 		if c.verbose {
-			logClientRead(msg)
+			logClientRead(msgContent)
 		}
 	}
 }
 
 func (c *webSocketClient) writeEvents(closeWrite chan struct{}) {
-	setTimeout := func() {
-		err := c.conn.SetWriteDeadline(time.Now().Add(clientTimeout))
-		if err != nil {
-			c.Terminate(err.Error())
-			return
-		}
-	}
-
-	setTimeout()
+	var ctx context.Context
 	var event []byte
 	for {
 		select {
@@ -123,8 +110,8 @@ func (c *webSocketClient) writeEvents(closeWrite chan struct{}) {
 			continue
 		}
 
-		setTimeout()
-		err := wsutil.WriteServerMessage(c.conn, ws.OpText, event)
+		ctx, _ = context.WithTimeout(context.Background(), clientTimeout)
+		err := c.conn.Write(ctx, websocket.MessageText, event)
 		if err != nil {
 			c.Terminate(err.Error())
 			c.wgEvents.Done()
@@ -143,7 +130,7 @@ func (c *webSocketClient) Terminate(reason string) {
 		return
 	}
 	c.terminated = true
-	c.conn.Close()
+	c.conn.CloseNow()
 }
 
 func (c *webSocketClient) Terminated() bool {
