@@ -697,6 +697,7 @@ COMMANDS:
 						ev.Player = string(clientGame.Player2.Name)
 					}
 					clientGame.eachClient(func(client *serverClient) {
+						clientGame.sendBoard(client, false)
 						client.sendEvent(ev)
 					})
 				}
