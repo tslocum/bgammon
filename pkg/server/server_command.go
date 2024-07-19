@@ -12,6 +12,8 @@ import (
 	"github.com/leonelquinteros/gotext"
 )
 
+var clearBytes = []byte("clear")
+
 func (s *server) handleCommands() {
 	var cmd serverCommand
 COMMANDS:
@@ -214,7 +216,7 @@ COMMANDS:
 				}
 
 				// Send message of the day.
-				cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Connect with other players and stay up to date on the latest changes. Visit %s"), "bgammon.org/community"))
+				s.sendMOTD(cmd.client)
 
 				// Rejoin match in progress.
 				s.gamesLock.RLock()
@@ -245,7 +247,7 @@ COMMANDS:
 		clientGame := s.gameByClient(cmd.client)
 		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
 			switch keyword {
-			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandBroadcast, bgammon.CommandShutdown:
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandShutdown:
 				// These commands are allowed to be used by spectators.
 			default:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Command ignored: You are spectating this match."))
@@ -1243,6 +1245,22 @@ COMMANDS:
 				clientGame.removeClient(cmd.client)
 			}
 			cmd.client.Terminate("Client disconnected")
+		case bgammon.CommandMOTD:
+			if len(params) == 0 {
+				cmd.client.sendNotice("Message of the day:")
+				s.sendMOTD(cmd.client)
+				continue
+			} else if !cmd.client.Admin() {
+				cmd.client.sendNotice("Access denied.")
+				continue
+			}
+
+			motd := bytes.Join(params, []byte(" "))
+			if bytes.Equal(bytes.ToLower(motd), clearBytes) {
+				motd = nil
+			}
+			s.motd = string(motd)
+			cmd.client.sendNotice("MOTD updated.")
 		case bgammon.CommandBroadcast:
 			if !cmd.client.Admin() {
 				cmd.client.sendNotice("Access denied.")

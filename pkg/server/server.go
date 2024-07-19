@@ -76,6 +76,8 @@ type server struct {
 	leaderboardCacheTime [12]time.Time
 	leaderboardCacheLock sync.Mutex
 
+	motd string
+
 	mailServer   string
 	passwordSalt string
 	resetSalt    string
@@ -413,7 +415,7 @@ func (s *server) handleConnection(conn net.Conn) {
 		commands:  commands,
 		Client:    newSocketClient(conn, commands, events, s.verbose),
 	}
-	s.sendHello(c)
+	s.sendWelcome(c)
 	s.handleClient(c)
 }
 
@@ -478,11 +480,19 @@ func (s *server) randomUsername() []byte {
 	}
 }
 
-func (s *server) sendHello(c *serverClient) {
+func (s *server) sendWelcome(c *serverClient) {
 	if c.json {
 		return
 	}
 	c.Write(s.welcome)
+}
+
+func (s *server) sendMOTD(c *serverClient) {
+	motd := s.motd
+	if motd == "" {
+		motd = fmt.Sprintf(gotext.GetD(c.language, "Connect with other players and stay up to date on the latest changes. Visit %s"), "bgammon.org/community")
+	}
+	c.sendNotice(motd)
 }
 
 func (s *server) gameByClient(c *serverClient) *serverGame {
