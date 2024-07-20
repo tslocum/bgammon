@@ -257,11 +257,21 @@ COMMANDS:
 
 		switch keyword {
 		case bgammon.CommandHelp, "h":
-			// TODO get extended help by specifying a command after help
-			cmd.client.sendEvent(&bgammon.EventHelp{
-				Topic:   "",
-				Message: "Test help text",
-			})
+			if len(params) > 0 {
+				command := string(bytes.ToLower(bytes.Join(params, []byte(" "))))
+				commandHelp := bgammon.HelpText[command]
+				if commandHelp != "" {
+					cmd.client.sendNotice("/" + command + " " + commandHelp)
+				} else {
+					cmd.client.sendNotice(fmt.Sprintf("Unknown command: %s", command))
+				}
+				continue
+			}
+
+			cmd.client.sendNotice("Available commands:")
+			for _, command := range s.sortedCommands {
+				cmd.client.sendNotice("/" + command + " " + bgammon.HelpText[command])
+			}
 		case bgammon.CommandJSON:
 			sendUsage := func() {
 				cmd.client.sendNotice("To enable JSON formatted messages, send 'json on'. To disable JSON formatted messages, send 'json off'.")

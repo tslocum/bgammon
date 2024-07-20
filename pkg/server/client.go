@@ -95,8 +95,6 @@ func (c *serverClient) sendEvent(e interface{}) {
 		switch ev := e.(type) {
 		case *bgammon.EventWelcome:
 			ev.Type = bgammon.EventTypeWelcome
-		case *bgammon.EventHelp:
-			ev.Type = bgammon.EventTypeHelp
 		case *bgammon.EventPing:
 			ev.Type = bgammon.EventTypePing
 		case *bgammon.EventNotice:
@@ -149,10 +147,6 @@ func (c *serverClient) sendEvent(e interface{}) {
 	switch ev := e.(type) {
 	case *bgammon.EventWelcome:
 		c.Write([]byte(fmt.Sprintf("welcome %s there are %d clients playing %d matches.", ev.PlayerName, ev.Clients, ev.Games)))
-	case *bgammon.EventHelp:
-		c.Write([]byte("helpstart Help text:"))
-		c.Write([]byte(fmt.Sprintf("help %s", ev.Message)))
-		c.Write([]byte("helpend End of help text."))
 	case *bgammon.EventPing:
 		c.Write([]byte(fmt.Sprintf("ping %s", ev.Message)))
 	case *bgammon.EventNotice:

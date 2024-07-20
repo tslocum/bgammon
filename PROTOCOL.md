@@ -68,13 +68,16 @@ formatted responses are more easily parsed by computers.
   - List all matches.
   - Aliases: `ls`
 
-- `create <public>/<private [password]> <points> <acey> [name]`
-  - Create a match. An `acey` value of 0 represents a standard game, while a value of 1 represents an acey-deucey game.
+- `create <public>/<private [password]> <points> <variant> [name]`
+  - Create a match. A `variant` value of 0 represents a standard game, a value of 1 represents an acey-deucey game and a value of 2 represents a tabula game.
   - Aliases: `c`
 
 - `join <id>/<username> [password]`
   - Join match by match ID or by player.
   - Aliases: `j`
+
+- `leave`
+  - Leave match.
 
 - `double`
   - Offer double to opponent.
@@ -123,7 +126,11 @@ must write some data to the server at least once every 40 seconds.
 - `disconnect`
   - Disconnect from the server.
 
-- `broadcast`
+- `motd [message]`
+  - View (or set) message of the day.
+  - Specifying a new message of the day is only available to server administrators.
+
+- `broadcast <message>`
   - Send a message to all players.
   - This command is only available to server administrators.
 

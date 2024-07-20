@@ -58,3 +58,32 @@ const (
 	EventTypeReplay      = "replay"
 	EventTypeHistory     = "history"
 )
+
+var HelpText = map[string]string{
+	CommandLogin:         "[username] [password] - Log in. A random username is assigned when none is provided.",
+	CommandRegister:      "<email> <username> <password> - Register an account. A valid email address must be provided.",
+	CommandResetPassword: "<email> - Request a password reset link via email.",
+	CommandPassword:      "<old> <new> - Change account password.",
+	CommandSet:           "<name> <value> - Change account setting. Available settings: highlight, pips and moves.",
+	CommandReplay:        "<id> - Retrieve replay of the specified game.",
+	CommandHistory:       "<username> [page] - Retrieve match history of the specified player.",
+	CommandHelp:          "[command] - Request help for all commands, or optionally a specific command.",
+	CommandSay:           "<message> - Send a chat message. This command can only be used after creating or joining a match.",
+	CommandList:          "- List all matches.",
+	CommandCreate:        "<public>/<private [password]> <points> <variant> [name] - Create a match. A variant value of 0 represents a standard game, a value of 1 represents an acey-deucey game and a value of 2 represents a tabula game.",
+	CommandJoin:          "<id>/<username> [password] - Join match by match ID or by player.",
+	CommandLeave:         "- Leave match.",
+	CommandDouble:        "- Offer double to opponent.",
+	CommandResign:        "- Resign game. Resigning when a double is offered will decline the offer.",
+	CommandRoll:          "- Roll dice.",
+	CommandMove:          "<from-to> [from-to]... - Move checkers.",
+	CommandReset:         "- Reset pending checker movement.",
+	CommandOk:            "[1-6] - Accept double offer or confirm checker movement. The parameter for this command only applies in acey-deucey games.",
+	CommandRematch:       "- Request (or accept) a rematch after a match has been finished.",
+	CommandBoard:         "- Request current match state.",
+	CommandPong:          "<message> - Sent in response to server ping event to prevent the connection from timing out.",
+	CommandDisconnect:    "- Disconnect from the server.",
+	CommandMOTD:          "[message] - View (or set) message of the day. Specifying a new message of the day is only available to server administrators.",
+	CommandBroadcast:     "<message> - Send a message to all players. This command is only available to server administrators.",
+	CommandShutdown:      "<minutes> <reason> - Prevent the creation of new matches and periodically warn players about the server shutting down. This command is only available to server administrators.",
+}

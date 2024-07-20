@@ -15,7 +15,9 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -78,6 +80,8 @@ type server struct {
 
 	motd string
 
+	sortedCommands []string
+
 	mailServer   string
 	passwordSalt string
 	resetSalt    string
@@ -107,6 +111,13 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 		verbose:      verbose,
 	}
 	s.loadLocales()
+
+	keys := reflect.ValueOf(bgammon.HelpText).MapKeys()
+	sortKeys := func(i, j int) bool { return keys[i].Interface().(string) < keys[j].Interface().(string) }
+	sort.Slice(keys, sortKeys)
+	for _, key := range keys {
+		s.sortedCommands = append(s.sortedCommands, key.Interface().(string))
+	}
 
 	if tz != "" {
 		var err error

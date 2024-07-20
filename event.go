@@ -24,12 +24,6 @@ type EventWelcome struct {
 	Games      int
 }
 
-type EventHelp struct {
-	Event
-	Topic   string
-	Message string
-}
-
 type EventPing struct {
 	Event
 	Message string
@@ -169,8 +163,6 @@ func DecodeEvent(message []byte) (interface{}, error) {
 	switch e.Type {
 	case EventTypeWelcome:
 		ev = &EventWelcome{}
-	case EventTypeHelp:
-		ev = &EventHelp{}
 	case EventTypePing:
 		ev = &EventPing{}
 	case EventTypeNotice:
