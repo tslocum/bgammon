@@ -1037,6 +1037,9 @@ COMMANDS:
 			} else if clientGame.client1 == nil || clientGame.client2 == nil {
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Your opponent left the match."))
 				continue
+			} else if !s.shutdownTime.IsZero() {
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to create match: The server is shutting down. Reason: %s", s.shutdownReason))
+				continue
 			} else if clientGame.rematch != 0 && clientGame.rematch != cmd.client.playerNumber {
 				s.gamesLock.Lock()
 
@@ -1050,8 +1053,8 @@ COMMANDS:
 				copy(newGame.spectators, clientGame.spectators)
 				newGame.Player1.Name = clientGame.Player1.Name
 				newGame.Player2.Name = clientGame.Player2.Name
-				newGame.Player1.Points = clientGame.Player1.Points
-				newGame.Player2.Points = clientGame.Player2.Points
+				newGame.Player1.Rating = clientGame.Player1.Rating
+				newGame.Player2.Rating = clientGame.Player2.Rating
 				newGame.allowed1 = clientGame.allowed1
 				newGame.allowed2 = clientGame.allowed2
 				s.games = append(s.games, newGame)
