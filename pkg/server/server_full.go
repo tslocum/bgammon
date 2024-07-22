@@ -6,13 +6,40 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
 	"github.com/gorilla/mux"
 )
+
+func (s *server) Listen(network string, address string) {
+	if strings.ToLower(network) == "ws" {
+		go s.listenWebSocket(address)
+		return
+	}
+
+	log.Printf("Listening for %s connections on %s...", strings.ToUpper(network), address)
+	listener, err := net.Listen(network, address)
+	if err != nil {
+		log.Fatalf("failed to listen on %s: %s", address, err)
+	}
+	go s.handleListener(listener)
+	s.listeners = append(s.listeners, listener)
+}
+
+func (s *server) handleListener(listener net.Listener) {
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Fatalf("failed to accept connection: %s", err)
+		}
+		go s.handleConnection(conn)
+	}
+}
 
 func (s *server) listenWebSocket(address string) {
 	log.Printf("Listening for WebSocket connections on %s...", address)

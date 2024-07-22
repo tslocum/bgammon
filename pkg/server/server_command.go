@@ -204,14 +204,19 @@ COMMANDS:
 				if cmd.client.account != nil {
 					a := cmd.client.account
 					cmd.client.sendEvent(&bgammon.EventSettings{
-						AutoPlay:    a.autoplay,
-						Highlight:   a.highlight,
-						Pips:        a.pips,
-						Moves:       a.moves,
-						Flip:        a.flip,
-						Traditional: a.traditional,
-						Advanced:    a.advanced,
-						Speed:       a.speed,
+						AutoPlay:      a.autoplay,
+						Highlight:     a.highlight,
+						Pips:          a.pips,
+						Moves:         a.moves,
+						Flip:          a.flip,
+						Traditional:   a.traditional,
+						Advanced:      a.advanced,
+						MuteJoinLeave: a.muteJoinLeave,
+						MuteChat:      a.muteChat,
+						MuteRoll:      a.muteRoll,
+						MuteMove:      a.muteMove,
+						MuteBearOff:   a.muteBearOff,
+						Speed:         a.speed,
 					})
 				}
 
@@ -1142,7 +1147,7 @@ COMMANDS:
 			}
 
 			name := string(bytes.ToLower(params[0]))
-			settings := []string{"autoplay", "highlight", "pips", "moves", "flip", "traditional", "advanced", "speed"}
+			settings := []string{"autoplay", "highlight", "pips", "moves", "flip", "traditional", "advanced", "mutejoinleave", "mutechat", "muteroll", "mutemove", "mutebearoff", "speed"}
 			var found bool
 			for i := range settings {
 				if name == settings[i] {

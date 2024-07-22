@@ -54,6 +54,11 @@ CREATE TABLE account (
 	flip                     smallint NOT NULL DEFAULT 0,
 	traditional              smallint NOT NULL DEFAULT 0,
 	advanced                 smallint NOT NULL DEFAULT 0,
+	mutejoinleave            smallint NOT NULL DEFAULT 0,
+	mutechat                 smallint NOT NULL DEFAULT 0,
+	muteroll                 smallint NOT NULL DEFAULT 0,
+	mutemove                 smallint NOT NULL DEFAULT 0,
+	mutebearoff              smallint NOT NULL DEFAULT 0,
 	speed                    smallint NOT NULL DEFAULT 1
 );
 CREATE TABLE game (
@@ -344,8 +349,8 @@ func accountByID(id int) (*account, error) {
 		casual:      &clientRating{},
 		competitive: &clientRating{},
 	}
-	var autoplay, highlight, pips, moves, flip, traditional, advanced int
-	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, autoplay, highlight, pips, moves, flip, traditional, advanced, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE id = $1", id).Scan(&a.id, &a.email, &a.username, &a.password, &autoplay, &highlight, &pips, &moves, &flip, &traditional, &advanced, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
+	var autoplay, highlight, pips, moves, flip, traditional, advanced, muteJoinLeave, muteChat, muteRoll, muteMove, muteBearOff int
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, autoplay, highlight, pips, moves, flip, traditional, advanced, mutejoinleave, mutechat, muteroll, mutemove, mutebearoff, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE id = $1", id).Scan(&a.id, &a.email, &a.username, &a.password, &autoplay, &highlight, &pips, &moves, &flip, &traditional, &advanced, &a.muteJoinLeave, &a.muteChat, &a.muteRoll, &a.muteMove, &a.muteBearOff, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
 	if err != nil {
 		return nil, nil
 	}
@@ -356,6 +361,11 @@ func accountByID(id int) (*account, error) {
 	a.flip = flip == 1
 	a.traditional = traditional == 1
 	a.advanced = advanced == 1
+	a.muteJoinLeave = muteJoinLeave == 1
+	a.muteChat = muteChat == 1
+	a.muteRoll = muteRoll == 1
+	a.muteMove = muteMove == 1
+	a.muteBearOff = muteBearOff == 1
 	return a, nil
 }
 

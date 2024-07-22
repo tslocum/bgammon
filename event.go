@@ -115,14 +115,19 @@ type EventWin struct {
 
 type EventSettings struct {
 	Event
-	AutoPlay    bool
-	Highlight   bool
-	Pips        bool
-	Moves       bool
-	Flip        bool
-	Traditional bool
-	Advanced    bool
-	Speed       int8
+	AutoPlay      bool
+	Highlight     bool
+	Pips          bool
+	Moves         bool
+	Flip          bool
+	Traditional   bool
+	Advanced      bool
+	MuteJoinLeave bool
+	MuteChat      bool
+	MuteRoll      bool
+	MuteMove      bool
+	MuteBearOff   bool
+	Speed         int8
 }
 
 type EventReplay struct {
