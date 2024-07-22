@@ -44,6 +44,30 @@ func (s *server) listenWebSocket(address string) {
 	log.Fatalf("failed to listen on %s: %s", address, err)
 }
 
+func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	const bufferSize = 8
+	commands := make(chan []byte, bufferSize)
+	events := make(chan []byte, bufferSize)
+
+	wsClient := newWebSocketClient(r, w, commands, events, s.verbose)
+	if wsClient == nil {
+		return
+	}
+
+	now := time.Now().Unix()
+
+	c := &serverClient{
+		id:        <-s.newClientIDs,
+		language:  "bgammon-en",
+		accountID: -1,
+		connected: now,
+		active:    now,
+		commands:  commands,
+		Client:    wsClient,
+	}
+	s.handleClient(c)
+}
+
 func (s *server) cachedMatches() []byte {
 	s.gamesCacheLock.Lock()
 	defer s.gamesCacheLock.Unlock()
