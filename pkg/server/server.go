@@ -15,7 +15,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -24,7 +23,7 @@ import (
 	"time"
 
 	"code.rocket9labs.com/tslocum/bgammon"
-	"github.com/leonelquinteros/gotext"
+	"code.rocket9labs.com/tslocum/gotext"
 	"golang.org/x/text/language"
 )
 
@@ -112,12 +111,10 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 	}
 	s.loadLocales()
 
-	keys := reflect.ValueOf(bgammon.HelpText).MapKeys()
-	sortKeys := func(i, j int) bool { return keys[i].Interface().(string) < keys[j].Interface().(string) }
-	sort.Slice(keys, sortKeys)
-	for _, key := range keys {
-		s.sortedCommands = append(s.sortedCommands, key.Interface().(string))
+	for command := range bgammon.HelpText {
+		s.sortedCommands = append(s.sortedCommands, command)
 	}
+	sort.Slice(s.sortedCommands, func(i, j int) bool { return s.sortedCommands[i] < s.sortedCommands[j] })
 
 	if tz != "" {
 		var err error

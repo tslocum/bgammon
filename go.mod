@@ -3,12 +3,12 @@ module code.rocket9labs.com/tslocum/bgammon
 go 1.17
 
 require (
+	code.rocket9labs.com/tslocum/gotext v0.0.0-20240722063358-6067ad4d7a58
 	code.rocket9labs.com/tslocum/tabula v0.0.0-20240703054156-ce0b448f0999
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jlouis/glicko2 v1.0.0
-	github.com/leonelquinteros/gotext v1.6.1
 	github.com/matcornic/hermes/v2 v2.1.0
 	golang.org/x/text v0.16.0
 	nhooyr.io/websocket v1.8.11

@@ -1,5 +1,7 @@
 code.rocket9labs.com/tslocum/bei v0.0.0-20240108012722-6db380cc190b h1:Y0a14Kf/hSYepSmp4ZfDeE4CZZGBGBS97CNjCbKJm0c=
 code.rocket9labs.com/tslocum/bei v0.0.0-20240108012722-6db380cc190b/go.mod h1:tS60/VNAJphKvDBkSLQhKALa15msIAuWWfEKNc4oFZc=
+code.rocket9labs.com/tslocum/gotext v0.0.0-20240722063358-6067ad4d7a58 h1:8A+LPX/j9qYaE/tSJcaYONIh28JX5CN9i+4ZfRefvPo=
+code.rocket9labs.com/tslocum/gotext v0.0.0-20240722063358-6067ad4d7a58/go.mod h1:ZkYZ/IF/ebzhUL2bNp4ALROsuH9iCztUWvUJBWsHXRU=
 code.rocket9labs.com/tslocum/tabula v0.0.0-20240703054156-ce0b448f0999 h1:PwfoDBtxVT3TwL2KpoijPKi6NQsGu6cXhPVoQeqKJWM=
 code.rocket9labs.com/tslocum/tabula v0.0.0-20240703054156-ce0b448f0999/go.mod h1:WEJXESKXqrMFLAArikQ79lpRibNeeE1C0VruxXYMF5M=
 github.com/Masterminds/goutils v1.1.1 h1:5nUrii3FMTL5diU80unEVvNevw1nH4+ZV4DSLVJLSYI=
@@ -54,8 +56,6 @@ github.com/jlouis/glicko2 v1.0.0/go.mod h1:5dzlxjhVPPLk+wiUwwF2oVyDwsNXMgnw7WrLR
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
-github.com/leonelquinteros/gotext v1.6.1 h1:PuTN8YUqHvfPZxW+fPXp7o0Fc2zN9L2wXBZrqT5MO5A=
-github.com/leonelquinteros/gotext v1.6.1/go.mod h1:qQRISjoonXYFdRGrTG1LARQ38Gpibad0IPeB4hpvyyM=
 github.com/matcornic/hermes/v2 v2.1.0 h1:9TDYFBPFv6mcXanaDmRDEp/RTWj0dTTi+LpFnnnfNWc=
 github.com/matcornic/hermes/v2 v2.1.0/go.mod h1:2+ziJeoyRfaLiATIL8VZ7f9hpzH4oDHqTmn0bhrsgVI=
 github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
