@@ -425,12 +425,14 @@ ADDMOVES:
 			}
 			gameMove := gameCopy.Moves[i]
 			if move[0] == gameMove[1] && move[1] == gameMove[0] {
-				copy(gameCopy.Board, gameCopy.boardStates[i])
-				gameCopy.Player1.Entered = gameCopy.enteredStates[i][0]
-				gameCopy.Player2.Entered = gameCopy.enteredStates[i][1]
-				gameCopy.boardStates = gameCopy.boardStates[:i]
-				gameCopy.enteredStates = gameCopy.enteredStates[:i]
 				gameCopy.Moves = gameCopy.Moves[:i]
+				if !local {
+					copy(gameCopy.Board, gameCopy.boardStates[i])
+					gameCopy.Player1.Entered = gameCopy.enteredStates[i][0]
+					gameCopy.Player2.Entered = gameCopy.enteredStates[i][1]
+					gameCopy.boardStates = gameCopy.boardStates[:i]
+					gameCopy.enteredStates = gameCopy.enteredStates[:i]
+				}
 				continue
 			}
 		}
