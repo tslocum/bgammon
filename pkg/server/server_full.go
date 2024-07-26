@@ -237,17 +237,17 @@ func (s *server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	key := vars["key"]
 
-	newPassword, err := confirmResetAccount(s.resetSalt, s.passwordSalt, id, key)
+	username, newPassword, err := confirmResetAccount(s.resetSalt, s.passwordSalt, id, key)
 	if err != nil {
 		log.Printf("failed to reset password: %s", err)
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	if err != nil || newPassword == "" {
+	if err != nil || username == "" || newPassword == "" {
 		w.Write([]byte(`<!DOCTYPE html><html><body><h1>Invalid or expired password reset link.</h1></body></html>`))
 		return
 	}
-	w.Write([]byte(`<!DOCTYPE html><html><body><h1>Your bgammon.org password has been reset.</h1>Your new password is <b>` + newPassword + `</b></body></html>`))
+	w.Write([]byte(`<!DOCTYPE html><html><body><h1>Your bgammon.org password has been reset.</h1>Your username is <b>` + username + `</b><br><br>Your new password is <b>` + newPassword + `</b></body></html>`))
 }
 
 func (s *server) handleMatch(w http.ResponseWriter, r *http.Request) {

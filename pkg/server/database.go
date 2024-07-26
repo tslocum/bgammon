@@ -281,54 +281,55 @@ func resetAccount(mailServer string, resetSalt string, email []byte) error {
 	return nil
 }
 
-func confirmResetAccount(resetSalt string, passwordSalt string, id int, key string) (string, error) {
+func confirmResetAccount(resetSalt string, passwordSalt string, id int, key string) (string, string, error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
 	if db == nil {
-		return "", nil
+		return "", "", nil
 	} else if id == 0 {
-		return "", fmt.Errorf("no id provided")
+		return "", "", fmt.Errorf("no id provided")
 	} else if len(strings.TrimSpace(key)) == 0 {
-		return "", fmt.Errorf("no reset key provided")
+		return "", "", fmt.Errorf("no reset key provided")
 	}
 
 	tx, err := begin()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer tx.Commit(context.Background())
 
 	var result int
 	err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM account WHERE id = $1 AND reset != 0", id).Scan(&result)
 	if err != nil {
-		return "", err
+		return "", "", err
 	} else if result == 0 {
-		return "", nil
+		return "", "", nil
 	}
 
+	var username string
 	var reset int
-	err = tx.QueryRow(context.Background(), "SELECT reset FROM account WHERE id = $1", id).Scan(&reset)
+	err = tx.QueryRow(context.Background(), "SELECT username, reset FROM account WHERE id = $1", id).Scan(&username, &reset)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	h := sha256.New()
 	h.Write([]byte(fmt.Sprintf("%d/%d", id, reset) + resetSalt))
 	hash := fmt.Sprintf("%x", h.Sum(nil))[0:16]
 	if key != hash {
-		return "", nil
+		return "", "", nil
 	}
 
 	newPassword := randomAlphanumeric(7)
 
 	passwordHash, err := argon2id.CreateHash(newPassword+passwordSalt, passwordArgon2id)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	_, err = tx.Exec(context.Background(), "UPDATE account SET password = $1, reset = reset - 1 WHERE id = $2", passwordHash, id)
-	return newPassword, err
+	return username, newPassword, err
 }
 
 func accountByID(id int) (*account, error) {
