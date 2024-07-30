@@ -87,7 +87,7 @@ func (g *GameState) Pips(player int8) int {
 
 // MayDouble returns whether the player may send the 'double' command.
 func (g *GameState) MayDouble() bool {
-	if g.Spectating || g.Winner != 0 || g.Variant != VariantBackgammon {
+	if g.Spectating || g.Winner != 0 || g.Variant != VariantBackgammon || g.DoubleValue == 64 {
 		return false
 	}
 	return g.Points != 1 && g.Turn != 0 && g.Turn == g.PlayerNumber && g.Roll1 == 0 && !g.DoubleOffered && (g.DoublePlayer == 0 || g.DoublePlayer == g.PlayerNumber)
