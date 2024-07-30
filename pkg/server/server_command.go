@@ -395,9 +395,11 @@ COMMANDS:
 			}
 
 			points, err := strconv.Atoi(string(gamePoints))
-			if err != nil || points < 1 || points > 99 {
+			if err != nil || points < 1 {
 				sendUsage()
 				continue
+			} else if points > 127 {
+				points = 127
 			}
 
 			// Set default game name.
@@ -614,10 +616,10 @@ COMMANDS:
 
 			var reset bool
 			if clientGame.Winner == 1 {
-				clientGame.Player1.Points = clientGame.Player1.Points + clientGame.DoubleValue
+				clientGame.Player1.Points = add8(clientGame.Player1.Points, clientGame.DoubleValue)
 				reset = clientGame.Player1.Points < clientGame.Points
 			} else {
-				clientGame.Player2.Points = clientGame.Player2.Points + clientGame.DoubleValue
+				clientGame.Player2.Points = add8(clientGame.Player2.Points, clientGame.DoubleValue)
 				reset = clientGame.Player2.Points < clientGame.Points
 			}
 			clientGame.addReplayHeader()

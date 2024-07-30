@@ -556,6 +556,31 @@ func RandInt(max int) int {
 	return int(i.Int64())
 }
 
+// add8 adds two int8 values without overflowing.
+func add8(a int8, b int8) int8 {
+	v := a
+	for i := int8(0); i < b; i++ {
+		a++
+		if a < 0 {
+			return 127
+		}
+		v++
+	}
+	return v
+}
+
+// mul8 multiplies two int8 values without overflowing.
+func mul8(a int8, b int8) int8 {
+	var v int8
+	for i := int8(0); i < b; i++ {
+		v = add8(v, a)
+		if v == 127 {
+			return v
+		}
+	}
+	return v
+}
+
 func gnubgPosition(g *bgammon.Game) string {
 	var opponent int8 = 2
 	start := 0

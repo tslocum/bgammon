@@ -666,7 +666,7 @@ func (g *serverGame) handleWin() bool {
 	var reset bool
 	if g.Winner == 1 {
 		winEvent.Player = g.Player1.Name
-		g.Player1.Points = g.Player1.Points + winPoints*g.DoubleValue
+		g.Player1.Points = add8(g.Player1.Points, mul8(winPoints, g.DoubleValue))
 		if g.Player1.Points < g.Points {
 			reset = true
 		} else {
@@ -674,7 +674,7 @@ func (g *serverGame) handleWin() bool {
 		}
 	} else {
 		winEvent.Player = g.Player2.Name
-		g.Player2.Points = g.Player2.Points + winPoints*g.DoubleValue
+		g.Player2.Points = add8(g.Player2.Points, mul8(winPoints, g.DoubleValue))
 		if g.Player2.Points < g.Points {
 			reset = true
 		} else {
