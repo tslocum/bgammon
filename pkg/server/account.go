@@ -6,6 +6,9 @@ type account struct {
 	username []byte
 	password []byte
 
+	icon  int
+	icons []byte
+
 	autoplay      bool
 	highlight     bool
 	pips          bool

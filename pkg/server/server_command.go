@@ -1062,6 +1062,8 @@ COMMANDS:
 				newGame.Player2.Name = clientGame.Player2.Name
 				newGame.Player1.Rating = clientGame.Player1.Rating
 				newGame.Player2.Rating = clientGame.Player2.Rating
+				newGame.Player1.Icon = clientGame.Player1.Icon
+				newGame.Player2.Icon = clientGame.Player2.Icon
 				newGame.allowed1 = clientGame.allowed1
 				newGame.allowed2 = clientGame.allowed2
 				s.games = append(s.games, newGame)

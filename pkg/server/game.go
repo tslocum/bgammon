@@ -353,20 +353,24 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 		}
 	}()
 	var rating int
+	var icon int
 	if client.account != nil {
 		rating = client.account.casual.getRating(g.Variant, g.Points > 1) / 100
+		icon = client.account.icon
 	}
 	switch {
 	case g.client1 != nil:
 		g.client2 = client
 		g.Player2.Name = string(client.name)
 		g.Player2.Rating = rating
+		g.Player2.Icon = icon
 		client.playerNumber = 2
 		playerNumber = 2
 	case g.client2 != nil:
 		g.client1 = client
 		g.Player1.Name = string(client.name)
 		g.Player1.Rating = rating
+		g.Player1.Icon = icon
 		client.playerNumber = 1
 		playerNumber = 1
 	default:
@@ -374,12 +378,14 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 			g.client1 = client
 			g.Player1.Name = string(client.name)
 			g.Player1.Rating = rating
+			g.Player1.Icon = icon
 			client.playerNumber = 1
 			playerNumber = 1
 		} else {
 			g.client2 = client
 			g.Player2.Name = string(client.name)
 			g.Player2.Rating = rating
+			g.Player2.Icon = icon
 			client.playerNumber = 2
 			playerNumber = 2
 		}
@@ -435,11 +441,13 @@ func (g *serverGame) removeClient(client *serverClient) {
 		g.client1 = nil
 		g.Player1.Name = ""
 		g.Player1.Rating = 0
+		g.Player1.Icon = 0
 		playerNumber = 1
 	case g.client2 == client:
 		g.client2 = nil
 		g.Player2.Name = ""
 		g.Player2.Rating = 0
+		g.Player2.Icon = 0
 		playerNumber = 2
 	default:
 		for i, spectator := range g.spectators {
@@ -606,6 +614,7 @@ func (g *serverGame) handleWin() bool {
 		playerBar = bgammon.SpaceBarOpponent
 	}
 
+	// Check for backgammon win.
 	backgammon := bgammon.PlayerCheckers(g.Board[playerBar], opponent) != 0
 	if !backgammon {
 		homeStart, homeEnd := bgammon.HomeRange(g.Winner, g.Variant)
@@ -616,6 +625,7 @@ func (g *serverGame) handleWin() bool {
 		})
 	}
 
+	// Calculate win type and point value.
 	var winPoints int8
 	switch g.Variant {
 	case bgammon.VariantAceyDeucey:
@@ -637,8 +647,8 @@ func (g *serverGame) handleWin() bool {
 		}
 	}
 
+	// Finalize replay.
 	g.addReplayHeader()
-
 	r1, r2, r3 := g.Roll1, g.Roll2, g.Roll3
 	if r2 > r1 {
 		r1, r2 = r2, r1
@@ -660,6 +670,7 @@ func (g *serverGame) handleWin() bool {
 	line = append(line, movesFormatted...)
 	g.replay = append(g.replay, line)
 
+	// Create win event.
 	winEvent := &bgammon.EventWin{
 		Points: winPoints * g.DoubleValue,
 	}
@@ -682,6 +693,7 @@ func (g *serverGame) handleWin() bool {
 		}
 	}
 
+	// Record game.
 	winType := winPoints
 	if g.Variant != bgammon.VariantBackgammon {
 		winType = 1
@@ -692,21 +704,26 @@ func (g *serverGame) handleWin() bool {
 	}
 
 	if !reset {
+		// Record match.
 		err := recordMatchResult(g, matchTypeCasual)
 		if err != nil {
 			log.Fatalf("failed to record match result: %s", err)
 		}
 	} else {
+		// Reset game and continue match.
 		g.Reset()
 		g.replay = g.replay[:0]
 	}
 
+	// Refresh cached ratings.
 	if g.client1 != nil && g.client1.account != nil {
 		g.Player1.Rating = g.client1.account.casual.getRating(g.Variant, g.Points > 1) / 100
 	}
 	if g.client2 != nil && g.client2.account != nil {
 		g.Player2.Rating = g.client2.account.casual.getRating(g.Variant, g.Points > 1) / 100
 	}
+
+	// Send board and win events.
 	g.eachClient(func(client *serverClient) {
 		g.sendBoard(client, false)
 		client.sendEvent(winEvent)
