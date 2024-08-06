@@ -96,8 +96,13 @@ COMMANDS:
 						username = params[1]
 						password = bytes.Join(params[2:], []byte("_"))
 					}
+					email = bytes.ToLower(email)
+					username = bytes.ToLower(username)
 					if onlyNumbers.Match(username) {
 						cmd.client.Terminate(gotext.GetD(cmd.client.language, "Failed to register: Invalid username: must contain at least one non-numeric character."))
+						continue
+					} else if len(string(username)) > maxUsernameLength {
+						cmd.client.Terminate(fmt.Sprintf(gotext.GetD(cmd.client.language, "Failed to register: %s", gotext.GetD(cmd.client.language, "Invalid username: must be %d characters or less.")), maxUsernameLength))
 						continue
 					}
 					password = bytes.ReplaceAll(password, []byte(" "), []byte("_"))
@@ -137,13 +142,15 @@ COMMANDS:
 							cmd.client.Terminate(gotext.GetD(cmd.client.language, "Invalid username: must contain only letters, numbers and underscores."))
 							return false
 						}
+						username = bytes.ToLower(username)
 						if onlyNumbers.Match(username) {
-							log.Println(cmd.client.language)
-							log.Println("!")
 							cmd.client.Terminate(gotext.GetD(cmd.client.language, "Invalid username: must contain at least one non-numeric character."))
 							return false
 						} else if s.clientByUsername(username) != nil || s.clientByUsername(append([]byte("Guest_"), username...)) != nil || (!randomUsername && !s.nameAllowed(username)) {
 							cmd.client.Terminate(gotext.GetD(cmd.client.language, "That username is already in use."))
+							return false
+						} else if (!bytes.HasPrefix(username, []byte("guest_")) && len(string(username)) > maxUsernameLength) || len(string(username)) > maxUsernameLength+6 {
+							cmd.client.Terminate(fmt.Sprintf(gotext.GetD(cmd.client.language, "Invalid username: must be %d characters or less."), maxUsernameLength))
 							return false
 						}
 						return true
@@ -186,7 +193,11 @@ COMMANDS:
 					cmd.client.autoplay = a.autoplay
 				} else {
 					cmd.client.accountID = 0
-					if !randomUsername && !bytes.HasPrefix(username, []byte("BOT_")) && !bytes.HasPrefix(username, []byte("Guest_")) {
+					if bytes.HasPrefix(username, []byte("bot_")) {
+						username = append([]byte("BOT_"), username[4:]...)
+					} else if bytes.HasPrefix(username, []byte("guest_")) {
+						username = append([]byte("Guest_"), username[6:]...)
+					} else if !randomUsername {
 						username = append([]byte("Guest_"), username...)
 					}
 					cmd.client.name = username

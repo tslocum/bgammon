@@ -28,15 +28,17 @@ import (
 
 const clientTimeout = 40 * time.Second
 
-const inactiveLimit = 600 // 10 minutes.
+const maxUsernameLength = 18
 
-var allowDebugCommands bool
+const inactiveLimit = 600 // 10 minutes.
 
 var (
 	onlyNumbers            = regexp.MustCompile(`^[0-9]+$`)
 	guestName              = regexp.MustCompile(`^guest[0-9]+$`)
 	alphaNumericUnderscore = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
 )
+
+var allowDebugCommands bool
 
 //go:embed locales
 var assetFS embed.FS

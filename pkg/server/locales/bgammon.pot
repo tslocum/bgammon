@@ -73,6 +73,9 @@ msgstr ""
 msgid "Invalid replay ID provided."
 msgstr ""
 
+msgid "Invalid username: must be %d characters or less."
+msgstr ""
+
 msgid "Invalid username: must contain at least one non-numeric character."
 msgstr ""
 
