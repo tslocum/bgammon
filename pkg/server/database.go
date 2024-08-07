@@ -1019,7 +1019,7 @@ func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
 	return result, nil
 }
 
-func botStats(name string, tz *time.Location) (*botStatsResult, error) {
+func accountStats(name string, matchType int, variant int8, tz *time.Location) (*accountStatsResult, error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
@@ -1030,7 +1030,7 @@ func botStats(name string, tz *time.Location) (*botStatsResult, error) {
 	defer tx.Commit(context.Background())
 
 	var earliestGame int64
-	rows, err := tx.Query(context.Background(), "SELECT started FROM game WHERE player1 = $1 OR player2 = $2 ORDER BY started ASC LIMIT 1", name, name)
+	rows, err := tx.Query(context.Background(), "SELECT started FROM game WHERE (player1 = $1 OR player2 = $2) AND variant = $3 ORDER BY started ASC LIMIT 1", name, name, variant)
 	if err != nil {
 		return nil, err
 	}
@@ -1044,12 +1044,13 @@ func botStats(name string, tz *time.Location) (*botStatsResult, error) {
 		return nil, err
 	}
 
-	result := &botStatsResult{}
-	earliest := midnight(time.Unix(earliestGame, 0).In(tz))
-	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 0, 1).Unix()
+	result := &accountStatsResult{}
+	m := midnight(time.Unix(earliestGame, 0).In(tz))
+	earliest := time.Date(m.Year(), m.Month(), 1, 0, 0, 0, 0, m.Location())
+	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 1, -(earliest.Day()-1)).Unix()
 	var winCount, lossCount int
 	for {
-		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2 AND (player1 = $3 OR player2 = $4)", rangeStart, rangeEnd, name, name)
+		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2 AND (player1 = $3 OR player2 = $4) AND variant = $5", rangeStart, rangeEnd, name, name, variant)
 		if err != nil {
 			return nil, err
 		}
@@ -1063,7 +1064,7 @@ func botStats(name string, tz *time.Location) (*botStatsResult, error) {
 			return nil, err
 		}
 
-		rows, err = tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2 AND ((player1 = $3 AND winner = 1) OR (player2 = $4 AND winner = 2))", rangeStart, rangeEnd, name, name)
+		rows, err = tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2 AND ((player1 = $3 AND winner = 1) OR (player2 = $4 AND winner = 2)) AND variant = $5", rangeStart, rangeEnd, name, name, variant)
 		if err != nil {
 			return nil, err
 		}
@@ -1079,16 +1080,16 @@ func botStats(name string, tz *time.Location) (*botStatsResult, error) {
 		lossCount -= winCount
 
 		if winCount != 0 || lossCount != 0 {
-			result.History = append(result.History, &botStatsEntry{
-				Date:    earliest.Format("2006-01-02"),
+			result.History = append(result.History, &accountStatsEntry{
+				Date:    earliest.Format("2006-01"),
 				Percent: float64(winCount) / float64(winCount+lossCount),
 				Wins:    winCount,
 				Losses:  lossCount,
 			})
 		}
 
-		earliest = earliest.AddDate(0, 0, 1)
-		rangeStart, rangeEnd = rangeEnd, earliest.AddDate(0, 0, 1).Unix()
+		earliest = time.Date(earliest.Year(), earliest.Month()+1, 1, 0, 0, 0, 0, m.Location())
+		rangeStart, rangeEnd = rangeEnd, earliest.Unix()
 		if rangeStart >= time.Now().Unix() {
 			break
 		}

@@ -47,24 +47,28 @@ func (s *server) listenWebSocket(address string) {
 	m := mux.NewRouter()
 	m.HandleFunc("/reset/{id:[0-9]+}/{key:[A-Za-z0-9]+}", s.handleResetPassword)
 	m.HandleFunc("/match/{id:[0-9]+}", s.handleMatch)
-	m.HandleFunc("/matches", s.handleListMatches)
-	m.HandleFunc("/leaderboard-casual-backgammon-single", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantBackgammon, false))
-	m.HandleFunc("/leaderboard-casual-backgammon-multi", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantBackgammon, true))
-	m.HandleFunc("/leaderboard-casual-acey-single", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantAceyDeucey, false))
-	m.HandleFunc("/leaderboard-casual-acey-multi", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantAceyDeucey, true))
-	m.HandleFunc("/leaderboard-casual-tabula-single", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantTabula, false))
-	m.HandleFunc("/leaderboard-casual-tabula-multi", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantTabula, true))
-	m.HandleFunc("/leaderboard-rated-backgammon-single", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantBackgammon, false))
-	m.HandleFunc("/leaderboard-rated-backgammon-multi", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantBackgammon, true))
-	m.HandleFunc("/leaderboard-rated-acey-single", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantAceyDeucey, false))
-	m.HandleFunc("/leaderboard-rated-acey-multi", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantAceyDeucey, true))
-	m.HandleFunc("/leaderboard-rated-tabula-single", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantTabula, false))
-	m.HandleFunc("/leaderboard-rated-tabula-multi", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantTabula, true))
-	m.HandleFunc("/stats", s.handleStatsFunc(0))
-	m.HandleFunc("/stats-month", s.handleStatsFunc(1))
-	m.HandleFunc("/stats-total", s.handleStatsFunc(2))
-	m.HandleFunc("/stats-tabula", s.handleStatsFunc(3))
-	m.HandleFunc("/stats-wildbg", s.handleStatsFunc(4))
+	m.HandleFunc("/matches.json", s.handleListMatches)
+	m.HandleFunc("/leaderboard-casual-backgammon-single.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantBackgammon, false))
+	m.HandleFunc("/leaderboard-casual-backgammon-multi.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantBackgammon, true))
+	m.HandleFunc("/leaderboard-casual-acey-single.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantAceyDeucey, false))
+	m.HandleFunc("/leaderboard-casual-acey-multi.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantAceyDeucey, true))
+	m.HandleFunc("/leaderboard-casual-tabula-single.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantTabula, false))
+	m.HandleFunc("/leaderboard-casual-tabula-multi.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantTabula, true))
+	m.HandleFunc("/leaderboard-rated-backgammon-single.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantBackgammon, false))
+	m.HandleFunc("/leaderboard-rated-backgammon-multi.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantBackgammon, true))
+	m.HandleFunc("/leaderboard-rated-acey-single.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantAceyDeucey, false))
+	m.HandleFunc("/leaderboard-rated-acey-multi.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantAceyDeucey, true))
+	m.HandleFunc("/leaderboard-rated-tabula-single.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantTabula, false))
+	m.HandleFunc("/leaderboard-rated-tabula-multi.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantTabula, true))
+	m.HandleFunc("/stats.json", s.handleStatsFunc(0))
+	m.HandleFunc("/stats-month.json", s.handleStatsFunc(1))
+	m.HandleFunc("/stats-total.json", s.handleStatsFunc(2))
+	m.HandleFunc("/stats-tabula.json", s.handleStatsFunc(3))
+	m.HandleFunc("/stats-wildbg.json", s.handleStatsFunc(4))
+	m.HandleFunc("/stats/{username:[A-Za-z0-9_\\-]+}.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantBackgammon))
+	m.HandleFunc("/stats/{username:[A-Za-z0-9_\\-]+}/backgammon.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantBackgammon))
+	m.HandleFunc("/stats/{username:[A-Za-z0-9_\\-]+}/acey.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantAceyDeucey))
+	m.HandleFunc("/stats/{username:[A-Za-z0-9_\\-]+}/tabula.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantTabula))
 	m.HandleFunc("/", s.handleWebSocket)
 
 	err := http.ListenAndServe(address, m)
@@ -204,25 +208,25 @@ func (s *server) cachedStats(statsType int) []byte {
 		}
 		s.statsCache[statsType], err = json.Marshal(stats)
 		if err != nil {
-			log.Fatalf("failed to fetch serialize server statistics: %s", err)
+			log.Fatalf("failed to serialize server statistics: %s", err)
 		}
 	case 3:
-		stats, err := botStats("BOT_tabula", s.tz)
+		stats, err := accountStats("BOT_tabula", matchTypeCasual, bgammon.VariantBackgammon, s.tz)
 		if err != nil {
 			log.Fatalf("failed to fetch tabula statistics: %s", err)
 		}
 		s.statsCache[statsType], err = json.Marshal(stats)
 		if err != nil {
-			log.Fatalf("failed to fetch serialize tabula statistics: %s", err)
+			log.Fatalf("failed to serialize tabula statistics: %s", err)
 		}
 	default:
-		stats, err := botStats("BOT_wildbg", s.tz)
+		stats, err := accountStats("BOT_wildbg", matchTypeCasual, bgammon.VariantBackgammon, s.tz)
 		if err != nil {
 			log.Fatalf("failed to fetch wildbg statistics: %s", err)
 		}
 		s.statsCache[statsType], err = json.Marshal(stats)
 		if err != nil {
-			log.Fatalf("failed to fetch serialize wildbg statistics: %s", err)
+			log.Fatalf("failed to serialize wildbg statistics: %s", err)
 		}
 	}
 
@@ -271,6 +275,33 @@ func (s *server) handleMatch(w http.ResponseWriter, r *http.Request) {
 func (s *server) handleListMatches(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(s.cachedMatches())
+}
+
+func (s *server) handleAccountStatsFunc(matchType int, variant int8) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		username := strings.ToLower(strings.TrimSpace(vars["username"]))
+		if username == "" {
+			w.Write([]byte(`<!DOCTYPE html><html><body><h1>No account specified.</h1></body></html>`))
+			return
+		}
+		if strings.HasPrefix(username, "guest_") {
+			username = "Guest_" + username[6:]
+		} else if strings.HasPrefix(username, "bot_") {
+			username = "BOT_" + username[4:]
+		}
+		w.Header().Set("Content-Type", "application/json")
+		stats, err := accountStats(username, matchType, variant, s.tz)
+		if err != nil {
+			log.Fatalf("failed to fetch account statistics: %s", err)
+		}
+		buf, err := json.Marshal(stats)
+		if err != nil {
+			log.Fatalf("failed to serialize account statistics: %s", err)
+		}
+		w.Write(buf)
+
+	}
 }
 
 func (s *server) handleLeaderboardFunc(matchType int, variant int8, multiPoint bool) func(w http.ResponseWriter, r *http.Request) {

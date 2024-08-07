@@ -87,6 +87,6 @@ func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
 	return &serverStatsResult{}, nil
 }
 
-func botStats(name string, tz *time.Location) (*botStatsResult, error) {
-	return &botStatsResult{}, nil
+func accountStats(name string, tz *time.Location) (*accountStatsResult, error) {
+	return &accountStatsResult{}, nil
 }

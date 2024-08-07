@@ -27,13 +27,13 @@ type serverStatsResult struct {
 	History []*serverStatsEntry
 }
 
-type botStatsEntry struct {
+type accountStatsEntry struct {
 	Date    string
 	Percent float64
 	Wins    int
 	Losses  int
 }
 
-type botStatsResult struct {
-	History []*botStatsEntry
+type accountStatsResult struct {
+	History []*accountStatsEntry
 }
