@@ -113,7 +113,7 @@ func (s *server) cachedMatches() []byte {
 	var games []*bgammon.GameListing
 	for _, g := range s.games {
 		listing := g.listing(nil)
-		if listing == nil || listing.Password || listing.Players == 2 {
+		if listing == nil || listing.Password {
 			continue
 		}
 		games = append(games, listing)
