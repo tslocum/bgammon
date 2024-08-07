@@ -1061,7 +1061,7 @@ COMMANDS:
 			} else if clientGame.rematch != 0 && clientGame.rematch != cmd.client.playerNumber {
 				s.gamesLock.Lock()
 
-				newGame := newServerGame(<-s.newGameIDs, clientGame.Variant)
+				newGame := newServerGame(clientGame.id, clientGame.Variant)
 				newGame.name = clientGame.name
 				newGame.Points = clientGame.Points
 				newGame.password = clientGame.password
