@@ -14,6 +14,15 @@ import (
 
 var clearBytes = []byte("clear")
 
+// translatedLanguages is a list of languages which have at least 90% translation status.
+var translatedLanguages = []string{
+	"en",
+	"de",
+	"es_mx",
+	"fr",
+	"uk",
+}
+
 func (s *server) handleCommands() {
 	var cmd serverCommand
 COMMANDS:
@@ -233,6 +242,18 @@ COMMANDS:
 
 				// Send message of the day.
 				s.sendMOTD(cmd.client)
+
+				// Request translation assistance from international users.
+				var found bool
+				for _, language := range translatedLanguages {
+					if language == cmd.client.language {
+						found = true
+						break
+					}
+				}
+				if !found {
+					cmd.client.sendNotice("Help translate this application into your preferred language at bgammon.org/translate")
+				}
 
 				// Rejoin match in progress.
 				s.gamesLock.RLock()

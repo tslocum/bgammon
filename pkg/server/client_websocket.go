@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"code.rocket9labs.com/tslocum/bgammon"
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 )
 
 var acceptOptions = &websocket.AcceptOptions{
