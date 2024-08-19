@@ -13,6 +13,7 @@ import (
 	"mime/multipart"
 	"net/smtp"
 	"net/textproto"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -180,6 +181,7 @@ func registerAccount(passwordSalt string, a *account) error {
 	}
 
 	passwordHash, err := argon2id.CreateHash(string(a.password)+passwordSalt, passwordArgon2id)
+	debug.FreeOSMemory() // Password hashing is memory intensive. Return memory to the OS.
 	if err != nil {
 		return err
 	}
@@ -326,6 +328,7 @@ func confirmResetAccount(resetSalt string, passwordSalt string, id int, key stri
 	newPassword := randomAlphanumeric(7)
 
 	passwordHash, err := argon2id.CreateHash(newPassword+passwordSalt, passwordArgon2id)
+	debug.FreeOSMemory() // Password hashing is memory intensive. Return memory to the OS.
 	if err != nil {
 		return "", "", err
 	}
@@ -451,6 +454,7 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 	a.muteBearOff = muteBearOff == 1
 
 	match, err := argon2id.ComparePasswordAndHash(string(password)+passwordSalt, string(a.password))
+	debug.FreeOSMemory() // Password hashing is memory intensive. Return memory to the OS.
 	if err != nil {
 		return nil, err
 	} else if !match {
@@ -491,6 +495,7 @@ func setAccountPassword(passwordSalt string, id int, password string) error {
 	}
 
 	passwordHash, err := argon2id.CreateHash(password+passwordSalt, passwordArgon2id)
+	debug.FreeOSMemory() // Password hashing is memory intensive. Return memory to the OS.
 	if err != nil {
 		return err
 	}
