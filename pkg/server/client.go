@@ -238,6 +238,7 @@ func (c *serverClient) Terminate(reason string) {
 func logClientRead(msg []byte) {
 	msgLower := bytes.ToLower(msg)
 	loginJSON := bytes.HasPrefix(msgLower, []byte("loginjson ")) || bytes.HasPrefix(msgLower, []byte("lj "))
+	registerJSON := bytes.HasPrefix(msgLower, []byte("registerjson ")) || bytes.HasPrefix(msgLower, []byte("rj "))
 	if bytes.HasPrefix(msgLower, []byte("login ")) || bytes.HasPrefix(msgLower, []byte("l ")) || loginJSON {
 		split := bytes.Split(msg, []byte(" "))
 		var clientName []byte
@@ -267,6 +268,43 @@ func logClientRead(msg []byte) {
 			clientName = []byte("unspecified")
 		}
 		log.Printf("<- %s %s %s %s", split[0], clientName, username, password)
+	} else if bytes.HasPrefix(msgLower, []byte("register ")) || registerJSON {
+		split := bytes.Split(msg, []byte(" "))
+		var clientName []byte
+		var email []byte
+		var username []byte
+		var password []byte
+		l := len(split)
+		if l > 1 {
+			if registerJSON {
+				clientName = split[1]
+			} else {
+				email = []byte("*******")
+			}
+			if l > 2 {
+				if registerJSON {
+					email = []byte("*******")
+				} else {
+					username = split[2]
+				}
+				if l > 3 {
+					if registerJSON {
+						username = split[3]
+					} else {
+						password = []byte("*******")
+					}
+					if l > 4 {
+						if registerJSON {
+							password = []byte("*******")
+						}
+					}
+				}
+			}
+		}
+		if len(clientName) == 0 {
+			clientName = []byte("unspecified")
+		}
+		log.Printf("<- %s %s %s %s %s", split[0], clientName, email, username, password)
 	} else if !bytes.HasPrefix(msgLower, []byte("list")) && !bytes.HasPrefix(msgLower, []byte("ls")) && !bytes.HasPrefix(msgLower, []byte("pong")) {
 		log.Printf("<- %s", msg)
 	}

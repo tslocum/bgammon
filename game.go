@@ -587,7 +587,7 @@ func (g *Game) LegalMoves(local bool) [][]int8 {
 						break
 					}
 				}
-				if !found {
+				if !found && b.HaveRoll(available[i][j][0], available[i][j][1], g.Turn) {
 					moves = append(moves, []int8{available[i][j][0], available[i][j][1]})
 				}
 			}
