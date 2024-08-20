@@ -860,7 +860,7 @@ func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 		}
 
 		result.History = append(result.History, &serverStatsEntry{
-			Date:     earliest.Format("2006-01-02"),
+			Date:     time.Unix(rangeStart, 0).Format("2006-01-02"),
 			Games:    games,
 			Accounts: accounts,
 		})
@@ -902,7 +902,7 @@ func monthlyStats(tz *time.Location) (*serverStatsResult, error) {
 	result := &serverStatsResult{}
 	m := midnight(time.Unix(earliestGame, 0).In(tz))
 	earliest := time.Date(m.Year(), m.Month(), 1, 0, 0, 0, 0, m.Location())
-	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 1, -(earliest.Day()-1)).Unix()
+	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 1, 0).Unix()
 	var games, accounts int
 	for {
 		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2", rangeStart, rangeEnd)
@@ -934,13 +934,13 @@ func monthlyStats(tz *time.Location) (*serverStatsResult, error) {
 		}
 
 		result.History = append(result.History, &serverStatsEntry{
-			Date:     earliest.Format("2006-01"),
+			Date:     time.Unix(rangeStart, 0).Format("2006-01"),
 			Games:    games,
 			Accounts: accounts,
 		})
 
 		earliest = time.Date(earliest.Year(), earliest.Month()+1, 1, 0, 0, 0, 0, m.Location())
-		rangeStart, rangeEnd = rangeEnd, earliest.Unix()
+		rangeStart, rangeEnd = earliest.Unix(), time.Date(earliest.Year(), earliest.Month()+1, 1, 0, 0, 0, 0, m.Location()).Unix()
 		if rangeStart >= time.Now().Unix() {
 			break
 		}
@@ -1010,7 +1010,7 @@ func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
 		totalAccounts += accounts
 
 		result.History = append(result.History, &serverStatsEntry{
-			Date:     earliest.Format("2006-01-02"),
+			Date:     time.Unix(rangeStart, 0).Format("2006-01-02"),
 			Games:    totalGames,
 			Accounts: totalAccounts,
 		})
@@ -1086,7 +1086,7 @@ func accountStats(name string, matchType int, variant int8, tz *time.Location) (
 
 		if winCount != 0 || lossCount != 0 {
 			result.History = append(result.History, &accountStatsEntry{
-				Date:    earliest.Format("2006-01"),
+				Date:    time.Unix(rangeStart, 0).Format("2006-01"),
 				Percent: float64(winCount) / float64(winCount+lossCount),
 				Wins:    winCount,
 				Losses:  lossCount,
@@ -1094,7 +1094,7 @@ func accountStats(name string, matchType int, variant int8, tz *time.Location) (
 		}
 
 		earliest = time.Date(earliest.Year(), earliest.Month()+1, 1, 0, 0, 0, 0, m.Location())
-		rangeStart, rangeEnd = rangeEnd, earliest.Unix()
+		rangeStart, rangeEnd = earliest.Unix(), time.Date(earliest.Year(), earliest.Month()+1, 1, 0, 0, 0, 0, m.Location()).Unix()
 		if rangeStart >= time.Now().Unix() {
 			break
 		}
