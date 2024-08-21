@@ -202,15 +202,20 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 	s.sendMOTD(cmd.client)
 
 	// Request translation assistance from international users.
-	var found bool
-	for _, language := range translatedLanguages {
-		if language == cmd.client.language {
-			found = true
-			break
+	if strings.HasPrefix(cmd.client.language, "bgammon-") {
+		clientLanguage := cmd.client.language[8:]
+		if clientLanguage != "" {
+			var found bool
+			for _, language := range translatedLanguages {
+				if language == clientLanguage {
+					found = true
+					break
+				}
+			}
+			if !found {
+				cmd.client.sendNotice("Help translate this application into your preferred language at bgammon.org/translate")
+			}
 		}
-	}
-	if !found {
-		cmd.client.sendNotice("Help translate this application into your preferred language at bgammon.org/translate")
 	}
 
 	c := cmd.client
