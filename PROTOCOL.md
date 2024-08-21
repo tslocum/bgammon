@@ -118,6 +118,12 @@ formatted responses are more easily parsed by computers.
   - This command is not normally used, as the match state is provided in JSON format.
   - Aliases: `b`
 
+- `follow <username>`
+  - Follow a player. A notification is shown whenever a followed player goes online or offline.
+
+- `unfollow <username>`
+  - Un-follow a player.
+
 - `pong <message>`
   - Sent in response to server `ping` event to prevent the connection from timing out.
   - Whether the client sends a `pong` command, or any other command, clients

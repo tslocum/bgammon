@@ -78,6 +78,17 @@ CREATE TABLE game (
 	wintype  integer NOT NULL,
 	replay   TEXT NOT NULL DEFAULT ''
 );
+CREATE TABLE follow (
+	account integer NOT NULL,
+	target integer NOT NULL,
+	UNIQUE (account, target),
+	CONSTRAINT follow_user
+		FOREIGN KEY(account) 
+		REFERENCES account(id),
+	CONSTRAINT follow_target
+		FOREIGN KEY(target) 
+		REFERENCES account(id)
+);
 `
 
 var (
@@ -461,6 +472,19 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 		return nil, nil
 	}
 
+	var follows []byte
+	err = tx.QueryRow(context.Background(), "select string_agg(target::text, ',') FROM follow WHERE account = $1", a.id).Scan(&follows)
+	if err != nil {
+		return nil, nil
+	}
+	for _, target := range bytes.Split(follows, []byte(",")) {
+		v, err := strconv.Atoi(string(target))
+		if err != nil || v <= 0 {
+			continue
+		}
+		a.follows = append(a.follows, v)
+	}
+
 	_, err = tx.Exec(context.Background(), "UPDATE account SET active = $1 WHERE id = $2", time.Now().Unix(), a.id)
 	if err != nil {
 		return nil, nil
@@ -529,6 +553,30 @@ func setAccountSetting(id int, name string, value int) error {
 	}
 
 	_, err = tx.Exec(context.Background(), "UPDATE account SET "+name+" = $1 WHERE id = $2", value, id)
+	return err
+}
+
+func setAccountFollows(id int, target int, follows bool) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil {
+		return nil
+	} else if id == 0 || target == 0 {
+		return fmt.Errorf("invalid id or target: %d/%d", id, target)
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit(context.Background())
+
+	if !follows {
+		_, err = tx.Exec(context.Background(), "DELETE FROM follow WHERE account = $1 AND target = $2", id, target)
+		return err
+	}
+	_, err = tx.Exec(context.Background(), "INSERT INTO follow VALUES ($1, $2)", id, target)
 	return err
 }
 

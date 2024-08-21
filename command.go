@@ -26,6 +26,8 @@ const (
 	CommandReset         = "reset"         // Reset checker movement.
 	CommandOk            = "ok"            // Confirm checker movement and pass turn to next player.
 	CommandRematch       = "rematch"       // Confirm checker movement and pass turn to next player.
+	CommandFollow        = "follow"        // Follow a player.
+	CommandUnfollow      = "unfollow"      // Un-follow a player.
 	CommandBoard         = "board"         // Print current board state in human-readable form.
 	CommandPong          = "pong"          // Response to server ping.
 	CommandDisconnect    = "disconnect"    // Disconnect from server.
@@ -80,6 +82,8 @@ var HelpText = map[string]string{
 	CommandReset:         "- Reset pending checker movement.",
 	CommandOk:            "[1-6] - Accept double offer or confirm checker movement. The parameter for this command only applies in acey-deucey games.",
 	CommandRematch:       "- Request (or accept) a rematch after a match has been finished.",
+	CommandFollow:        "- Follow a player. A notification is shown whenever a followed player goes online or offline.",
+	CommandUnfollow:      "- Un-follow a player.",
 	CommandBoard:         "- Request current match state.",
 	CommandPong:          "<message> - Sent in response to server ping event to prevent the connection from timing out.",
 	CommandDisconnect:    "- Disconnect from the server.",

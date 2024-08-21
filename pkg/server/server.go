@@ -257,6 +257,19 @@ func (s *server) removeClient(c *serverClient) {
 			return
 		}
 	}
+
+	if c.accountID != 0 {
+		for _, sc := range s.clients {
+			if sc.accountID <= 0 {
+				continue
+			}
+			for _, target := range sc.account.follows {
+				if c.accountID == target {
+					sc.sendNotice(fmt.Sprintf(gotext.GetD(c.language, "%s disconnected."), c.name))
+				}
+			}
+		}
+	}
 }
 
 func (s *server) handleGames() {

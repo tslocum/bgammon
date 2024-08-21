@@ -10,13 +10,19 @@ msgstr ""
 msgid "%s accepted double."
 msgstr ""
 
-msgid "%s resigned."
-msgstr ""
-
 msgid "%s declined double offer."
 msgstr ""
 
+msgid "%s disconnected."
+msgstr ""
+
+msgid "%s is online."
+msgstr ""
+
 msgid "%s offers a double (%d points)."
+msgstr ""
+
+msgid "%s resigned."
 msgstr ""
 
 msgid "Accepted double."
@@ -160,10 +166,16 @@ msgstr ""
 msgid "Waiting for response from opponent."
 msgstr ""
 
+msgid "You are no longer following %s."
+msgstr ""
+
 msgid "You are not allowed to use that command."
 msgstr ""
 
 msgid "You are not currently in a match."
+msgstr ""
+
+msgid "You are now following %s."
 msgstr ""
 
 msgid "You are spectating this match. Chat messages are not relayed."

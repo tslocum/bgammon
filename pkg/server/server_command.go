@@ -255,6 +255,27 @@ COMMANDS:
 					cmd.client.sendNotice("Help translate this application into your preferred language at bgammon.org/translate")
 				}
 
+				c := cmd.client
+				if c.accountID != 0 {
+					s.clientsLock.Lock()
+					for _, sc := range s.clients {
+						if sc.accountID <= 0 {
+							continue
+						}
+						for _, target := range c.account.follows {
+							if sc.accountID == target {
+								c.sendNotice(fmt.Sprintf(gotext.GetD(c.language, "%s is online."), sc.name))
+							}
+						}
+						for _, target := range sc.account.follows {
+							if c.accountID == target {
+								sc.sendNotice(fmt.Sprintf(gotext.GetD(c.language, "%s is online."), c.name))
+							}
+						}
+					}
+					s.clientsLock.Unlock()
+				}
+
 				// Rejoin match in progress.
 				s.gamesLock.RLock()
 				for _, g := range s.games {
@@ -284,7 +305,7 @@ COMMANDS:
 		clientGame := s.gameByClient(cmd.client)
 		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
 			switch keyword {
-			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandShutdown:
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandShutdown:
 				// These commands are allowed to be used by spectators.
 			default:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Command ignored: You are spectating this match."))
@@ -1148,6 +1169,56 @@ COMMANDS:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Rematch offer sent."))
 				continue
 			}
+		case bgammon.CommandFollow:
+			if len(params) < 1 {
+				cmd.client.sendNotice("Please specify a player: follow <username>")
+				continue
+			} else if cmd.client.accountID == 0 {
+				cmd.client.sendNotice("Failed to follow player: Please log in before following.")
+				continue
+			}
+
+			target, err := accountByUsername(string(params[0]))
+			if err != nil || target == nil || target.id == 0 {
+				cmd.client.sendNotice("Failed to follow player: Invalid username.")
+				continue
+			} else if target.id == cmd.client.accountID {
+				cmd.client.sendNotice("Following yourself will get you nowhere quickly.")
+				continue
+			}
+
+			err = setAccountFollows(cmd.client.accountID, target.id, true)
+			if err != nil {
+				cmd.client.sendNotice(fmt.Sprintf("You are already following %s.", target.username))
+				continue
+			}
+			cmd.client.account.follows = append(cmd.client.account.follows, target.id)
+			cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "You are now following %s."), target.username))
+		case bgammon.CommandUnfollow:
+			if len(params) < 1 {
+				cmd.client.sendNotice("Please specify a player: unfollow <username>")
+				continue
+			} else if cmd.client.accountID == 0 {
+				cmd.client.sendNotice("Failed to un-follow player: Please log in before un-following.")
+				continue
+			}
+
+			target, err := accountByUsername(string(params[0]))
+			if err != nil || target == nil || target.id == 0 {
+				cmd.client.sendNotice("Failed to un-follow player: Invalid username.")
+				continue
+			} else if target.id == cmd.client.accountID {
+				cmd.client.sendNotice("Un-following yourself will get you somewhere slowly.")
+				continue
+			}
+
+			err = setAccountFollows(cmd.client.accountID, target.id, false)
+			if err != nil {
+				cmd.client.sendNotice(fmt.Sprintf("You are not following %s.", target.username))
+				continue
+			}
+			cmd.client.account.follows = removeInt(cmd.client.account.follows, target.id)
+			cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "You are no longer following %s."), target.username))
 		case bgammon.CommandBoard, "b":
 			if clientGame == nil {
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not currently in a match."))
@@ -1377,4 +1448,14 @@ COMMANDS:
 			cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Unknown command: %s"), cmd.command))
 		}
 	}
+}
+
+func removeInt(s []int, v int) []int {
+	for i, sv := range s {
+		if sv == v {
+			s[i] = s[len(s)-1]
+			return s[:len(s)-1]
+		}
+	}
+	return s
 }
