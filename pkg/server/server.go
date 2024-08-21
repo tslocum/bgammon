@@ -258,7 +258,7 @@ func (s *server) removeClient(c *serverClient) {
 		}
 	}
 
-	if c.accountID != 0 {
+	if c.accountID > 0 {
 		for _, sc := range s.clients {
 			if sc.accountID <= 0 {
 				continue

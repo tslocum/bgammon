@@ -23,6 +23,238 @@ var translatedLanguages = []string{
 	"uk",
 }
 
+// handleFirstCommand handles the login and register commands. This method runs
+// in a separate goroutine to allow gameplay to continue while checking passwords.
+func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params [][]byte, reigster bool) {
+	if keyword == bgammon.CommandLoginJSON || keyword == bgammon.CommandRegisterJSON || keyword == "lj" || keyword == "rj" {
+		cmd.client.json = true
+	}
+
+	var username []byte
+	var password []byte
+	var randomUsername bool
+	if reigster {
+		sendUsage := func() {
+			cmd.client.Terminate(gotext.GetD(cmd.client.language, "Please enter an email, username and password."))
+		}
+
+		var email []byte
+		if keyword == bgammon.CommandRegisterJSON || keyword == "rj" {
+			if len(params) < 4 {
+				sendUsage()
+				return
+			}
+			slashIndex := bytes.IndexRune(params[0], '/')
+			if slashIndex != -1 {
+				cmd.client.language = "bgammon-" + string(s.matchLanguage(params[0][slashIndex+1:]))
+			}
+			email = params[1]
+			username = params[2]
+			password = bytes.Join(params[3:], []byte("_"))
+		} else {
+			if len(params) < 3 {
+				sendUsage()
+				return
+			}
+			email = params[0]
+			username = params[1]
+			password = bytes.Join(params[2:], []byte("_"))
+		}
+		email = bytes.ToLower(email)
+		username = bytes.ToLower(username)
+		if onlyNumbers.Match(username) {
+			cmd.client.Terminate(gotext.GetD(cmd.client.language, "Failed to register: Invalid username: must contain at least one non-numeric character."))
+			return
+		} else if len(string(username)) > maxUsernameLength {
+			cmd.client.Terminate(fmt.Sprintf(gotext.GetD(cmd.client.language, "Failed to register: %s", gotext.GetD(cmd.client.language, "Invalid username: must be %d characters or less.")), maxUsernameLength))
+			return
+		}
+		password = bytes.ReplaceAll(password, []byte(" "), []byte("_"))
+		a := &account{
+			email:    email,
+			username: username,
+			password: password,
+		}
+		err := registerAccount(s.passwordSalt, a)
+		if err != nil {
+			cmd.client.Terminate(fmt.Sprintf("Failed to register: %s", err))
+			return
+		}
+	} else {
+		s.clientsLock.Lock()
+
+		readUsername := func() bool {
+			if cmd.client.json {
+				if len(params) > 0 {
+					slashIndex := bytes.IndexRune(params[0], '/')
+					if slashIndex != -1 {
+						cmd.client.language = "bgammon-" + string(s.matchLanguage(params[0][slashIndex+1:]))
+					}
+					if len(params) > 1 {
+						username = params[1]
+					}
+				}
+			} else {
+				if len(params) > 0 {
+					username = params[0]
+				}
+			}
+			if len(bytes.TrimSpace(username)) == 0 {
+				username = s.randomUsername()
+				randomUsername = true
+			} else if !alphaNumericUnderscore.Match(username) {
+				cmd.client.Terminate(gotext.GetD(cmd.client.language, "Invalid username: must contain only letters, numbers and underscores."))
+				return false
+			}
+			username = bytes.ToLower(username)
+			if onlyNumbers.Match(username) {
+				cmd.client.Terminate(gotext.GetD(cmd.client.language, "Invalid username: must contain at least one non-numeric character."))
+				return false
+			} else if s.clientByUsername(username) != nil || s.clientByUsername(append([]byte("Guest_"), username...)) != nil || (!randomUsername && !s.nameAllowed(username)) {
+				cmd.client.Terminate(gotext.GetD(cmd.client.language, "That username is already in use."))
+				return false
+			} else if (!bytes.HasPrefix(username, []byte("guest_")) && len(string(username)) > maxUsernameLength) || len(string(username)) > maxUsernameLength+6 {
+				cmd.client.Terminate(fmt.Sprintf(gotext.GetD(cmd.client.language, "Invalid username: must be %d characters or less."), maxUsernameLength))
+				return false
+			}
+			return true
+		}
+		if !readUsername() {
+			s.clientsLock.Unlock()
+			return
+		}
+		if len(params) > 2 {
+			password = bytes.ReplaceAll(bytes.Join(params[2:], []byte(" ")), []byte(" "), []byte("_"))
+		}
+
+		s.clientsLock.Unlock()
+	}
+
+	if len(password) > 0 {
+		a, err := loginAccount(s.passwordSalt, username, password)
+		if err != nil {
+			cmd.client.Terminate(fmt.Sprintf(gotext.GetD(cmd.client.language, "Failed to log in: %s"), err))
+			return
+		} else if a == nil {
+			cmd.client.Terminate(gotext.GetD(cmd.client.language, "No account was found with the provided username and password. To log in as a guest, do not enter a password."))
+			return
+		}
+
+		var name []byte
+		if bytes.HasPrefix(a.username, []byte("bot_")) {
+			name = append([]byte("BOT_"), a.username[4:]...)
+		} else {
+			name = a.username
+		}
+		s.clientsLock.Lock()
+		existing := s.clientByUsername(name)
+		s.clientsLock.Unlock()
+		if existing != nil {
+			cmd.client.Terminate(gotext.GetD(cmd.client.language, "That username is already in use."))
+			return
+		}
+
+		cmd.client.account = a
+		cmd.client.accountID = a.id
+		cmd.client.name = name
+		cmd.client.autoplay = a.autoplay
+	} else {
+		cmd.client.accountID = 0
+		if bytes.HasPrefix(username, []byte("bot_")) {
+			username = append([]byte("BOT_"), username[4:]...)
+		} else if bytes.HasPrefix(username, []byte("guest_")) {
+			username = append([]byte("Guest_"), username[6:]...)
+		} else if !randomUsername {
+			username = append([]byte("Guest_"), username...)
+		}
+		cmd.client.name = username
+	}
+
+	cmd.client.sendEvent(&bgammon.EventWelcome{
+		PlayerName: string(cmd.client.name),
+		Clients:    len(s.clients),
+		Games:      len(s.games),
+	})
+
+	log.Printf("Client %d logged in as %s", cmd.client.id, cmd.client.name)
+
+	// Send user settings.
+	if cmd.client.account != nil {
+		a := cmd.client.account
+		cmd.client.sendEvent(&bgammon.EventSettings{
+			AutoPlay:      a.autoplay,
+			Highlight:     a.highlight,
+			Pips:          a.pips,
+			Moves:         a.moves,
+			Flip:          a.flip,
+			Traditional:   a.traditional,
+			Advanced:      a.advanced,
+			MuteJoinLeave: a.muteJoinLeave,
+			MuteChat:      a.muteChat,
+			MuteRoll:      a.muteRoll,
+			MuteMove:      a.muteMove,
+			MuteBearOff:   a.muteBearOff,
+			Speed:         a.speed,
+		})
+	}
+
+	// Send message of the day.
+	s.sendMOTD(cmd.client)
+
+	// Request translation assistance from international users.
+	var found bool
+	for _, language := range translatedLanguages {
+		if language == cmd.client.language {
+			found = true
+			break
+		}
+	}
+	if !found {
+		cmd.client.sendNotice("Help translate this application into your preferred language at bgammon.org/translate")
+	}
+
+	c := cmd.client
+	if c.accountID != 0 {
+		s.clientsLock.Lock()
+		for _, sc := range s.clients {
+			if sc.accountID <= 0 {
+				continue
+			}
+			for _, target := range c.account.follows {
+				if sc.accountID == target {
+					c.sendNotice(fmt.Sprintf(gotext.GetD(c.language, "%s is online."), sc.name))
+				}
+			}
+			for _, target := range sc.account.follows {
+				if c.accountID == target {
+					sc.sendNotice(fmt.Sprintf(gotext.GetD(c.language, "%s is online."), c.name))
+				}
+			}
+		}
+		s.clientsLock.Unlock()
+	}
+
+	// Rejoin match in progress.
+	s.gamesLock.RLock()
+	for _, g := range s.games {
+		if g.terminated() || g.Winner != 0 {
+			continue
+		}
+
+		var rejoin bool
+		if bytes.Equal(cmd.client.name, g.allowed1) {
+			rejoin = g.rejoin1
+		} else if bytes.Equal(cmd.client.name, g.allowed2) {
+			rejoin = g.rejoin2
+		}
+		if rejoin {
+			g.addClient(cmd.client)
+			cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Rejoined match: %s"), g.name))
+		}
+	}
+	s.gamesLock.RUnlock()
+}
+
 func (s *server) handleCommands() {
 	var cmd serverCommand
 COMMANDS:
@@ -51,7 +283,7 @@ COMMANDS:
 		keyword = strings.ToLower(keyword)
 		params := bytes.Fields(cmd.command[startParameters:])
 
-		// Require users to send login command first.
+		// Require users to login or register before using other commands.
 		if cmd.client.accountID == -1 {
 			resetCommand := keyword == bgammon.CommandResetPassword
 			if resetCommand {
@@ -71,234 +303,14 @@ COMMANDS:
 			loginCommand := keyword == bgammon.CommandLogin || keyword == bgammon.CommandLoginJSON || keyword == "lj"
 			registerCommand := keyword == bgammon.CommandRegister || keyword == bgammon.CommandRegisterJSON || keyword == "rj"
 			if loginCommand || registerCommand {
-				if keyword == bgammon.CommandLoginJSON || keyword == bgammon.CommandRegisterJSON || keyword == "lj" || keyword == "rj" {
-					cmd.client.json = true
-				}
-
-				var username []byte
-				var password []byte
-				var randomUsername bool
-				if registerCommand {
-					sendUsage := func() {
-						cmd.client.Terminate(gotext.GetD(cmd.client.language, "Please enter an email, username and password."))
-					}
-
-					var email []byte
-					if keyword == bgammon.CommandRegisterJSON || keyword == "rj" {
-						if len(params) < 4 {
-							sendUsage()
-							continue
-						}
-						slashIndex := bytes.IndexRune(params[0], '/')
-						if slashIndex != -1 {
-							cmd.client.language = "bgammon-" + string(s.matchLanguage(params[0][slashIndex+1:]))
-						}
-						email = params[1]
-						username = params[2]
-						password = bytes.Join(params[3:], []byte("_"))
-					} else {
-						if len(params) < 3 {
-							sendUsage()
-							continue
-						}
-						email = params[0]
-						username = params[1]
-						password = bytes.Join(params[2:], []byte("_"))
-					}
-					email = bytes.ToLower(email)
-					username = bytes.ToLower(username)
-					if onlyNumbers.Match(username) {
-						cmd.client.Terminate(gotext.GetD(cmd.client.language, "Failed to register: Invalid username: must contain at least one non-numeric character."))
-						continue
-					} else if len(string(username)) > maxUsernameLength {
-						cmd.client.Terminate(fmt.Sprintf(gotext.GetD(cmd.client.language, "Failed to register: %s", gotext.GetD(cmd.client.language, "Invalid username: must be %d characters or less.")), maxUsernameLength))
-						continue
-					}
-					password = bytes.ReplaceAll(password, []byte(" "), []byte("_"))
-					a := &account{
-						email:    email,
-						username: username,
-						password: password,
-					}
-					err := registerAccount(s.passwordSalt, a)
-					if err != nil {
-						cmd.client.Terminate(fmt.Sprintf("Failed to register: %s", err))
-						continue
-					}
-				} else {
-					s.clientsLock.Lock()
-
-					readUsername := func() bool {
-						if cmd.client.json {
-							if len(params) > 0 {
-								slashIndex := bytes.IndexRune(params[0], '/')
-								if slashIndex != -1 {
-									cmd.client.language = "bgammon-" + string(s.matchLanguage(params[0][slashIndex+1:]))
-								}
-								if len(params) > 1 {
-									username = params[1]
-								}
-							}
-						} else {
-							if len(params) > 0 {
-								username = params[0]
-							}
-						}
-						if len(bytes.TrimSpace(username)) == 0 {
-							username = s.randomUsername()
-							randomUsername = true
-						} else if !alphaNumericUnderscore.Match(username) {
-							cmd.client.Terminate(gotext.GetD(cmd.client.language, "Invalid username: must contain only letters, numbers and underscores."))
-							return false
-						}
-						username = bytes.ToLower(username)
-						if onlyNumbers.Match(username) {
-							cmd.client.Terminate(gotext.GetD(cmd.client.language, "Invalid username: must contain at least one non-numeric character."))
-							return false
-						} else if s.clientByUsername(username) != nil || s.clientByUsername(append([]byte("Guest_"), username...)) != nil || (!randomUsername && !s.nameAllowed(username)) {
-							cmd.client.Terminate(gotext.GetD(cmd.client.language, "That username is already in use."))
-							return false
-						} else if (!bytes.HasPrefix(username, []byte("guest_")) && len(string(username)) > maxUsernameLength) || len(string(username)) > maxUsernameLength+6 {
-							cmd.client.Terminate(fmt.Sprintf(gotext.GetD(cmd.client.language, "Invalid username: must be %d characters or less."), maxUsernameLength))
-							return false
-						}
-						return true
-					}
-					if !readUsername() {
-						s.clientsLock.Unlock()
-						continue
-					}
-					if len(params) > 2 {
-						password = bytes.ReplaceAll(bytes.Join(params[2:], []byte(" ")), []byte(" "), []byte("_"))
-					}
-
-					s.clientsLock.Unlock()
-				}
-
-				if len(password) > 0 {
-					a, err := loginAccount(s.passwordSalt, username, password)
-					if err != nil {
-						cmd.client.Terminate(fmt.Sprintf(gotext.GetD(cmd.client.language, "Failed to log in: %s"), err))
-						continue
-					} else if a == nil {
-						cmd.client.Terminate(gotext.GetD(cmd.client.language, "No account was found with the provided username and password. To log in as a guest, do not enter a password."))
-						continue
-					}
-
-					var name []byte
-					if bytes.HasPrefix(a.username, []byte("bot_")) {
-						name = append([]byte("BOT_"), a.username[4:]...)
-					} else {
-						name = a.username
-					}
-					if s.clientByUsername(name) != nil {
-						cmd.client.Terminate(gotext.GetD(cmd.client.language, "That username is already in use."))
-						continue
-					}
-
-					cmd.client.account = a
-					cmd.client.accountID = a.id
-					cmd.client.name = name
-					cmd.client.autoplay = a.autoplay
-				} else {
-					cmd.client.accountID = 0
-					if bytes.HasPrefix(username, []byte("bot_")) {
-						username = append([]byte("BOT_"), username[4:]...)
-					} else if bytes.HasPrefix(username, []byte("guest_")) {
-						username = append([]byte("Guest_"), username[6:]...)
-					} else if !randomUsername {
-						username = append([]byte("Guest_"), username...)
-					}
-					cmd.client.name = username
-				}
-
-				cmd.client.sendEvent(&bgammon.EventWelcome{
-					PlayerName: string(cmd.client.name),
-					Clients:    len(s.clients),
-					Games:      len(s.games),
-				})
-
-				log.Printf("Client %d logged in as %s", cmd.client.id, cmd.client.name)
-
-				// Send user settings.
-				if cmd.client.account != nil {
-					a := cmd.client.account
-					cmd.client.sendEvent(&bgammon.EventSettings{
-						AutoPlay:      a.autoplay,
-						Highlight:     a.highlight,
-						Pips:          a.pips,
-						Moves:         a.moves,
-						Flip:          a.flip,
-						Traditional:   a.traditional,
-						Advanced:      a.advanced,
-						MuteJoinLeave: a.muteJoinLeave,
-						MuteChat:      a.muteChat,
-						MuteRoll:      a.muteRoll,
-						MuteMove:      a.muteMove,
-						MuteBearOff:   a.muteBearOff,
-						Speed:         a.speed,
-					})
-				}
-
-				// Send message of the day.
-				s.sendMOTD(cmd.client)
-
-				// Request translation assistance from international users.
-				var found bool
-				for _, language := range translatedLanguages {
-					if language == cmd.client.language {
-						found = true
-						break
-					}
-				}
-				if !found {
-					cmd.client.sendNotice("Help translate this application into your preferred language at bgammon.org/translate")
-				}
-
-				c := cmd.client
-				if c.accountID != 0 {
-					s.clientsLock.Lock()
-					for _, sc := range s.clients {
-						if sc.accountID <= 0 {
-							continue
-						}
-						for _, target := range c.account.follows {
-							if sc.accountID == target {
-								c.sendNotice(fmt.Sprintf(gotext.GetD(c.language, "%s is online."), sc.name))
-							}
-						}
-						for _, target := range sc.account.follows {
-							if c.accountID == target {
-								sc.sendNotice(fmt.Sprintf(gotext.GetD(c.language, "%s is online."), c.name))
-							}
-						}
-					}
-					s.clientsLock.Unlock()
-				}
-
-				// Rejoin match in progress.
-				s.gamesLock.RLock()
-				for _, g := range s.games {
-					if g.terminated() || g.Winner != 0 {
-						continue
-					}
-
-					var rejoin bool
-					if bytes.Equal(cmd.client.name, g.allowed1) {
-						rejoin = g.rejoin1
-					} else if bytes.Equal(cmd.client.name, g.allowed2) {
-						rejoin = g.rejoin2
-					}
-					if rejoin {
-						g.addClient(cmd.client)
-						cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Rejoined match: %s"), g.name))
-					}
-				}
-				s.gamesLock.RUnlock()
+				go s.handleFirstCommand(cmd, keyword, params, registerCommand)
 				continue
 			}
 
-			cmd.client.Terminate(gotext.GetD(cmd.client.language, "You must login before using other commands."))
+			go func() {
+				time.Sleep(500 * time.Millisecond)
+				s.commands <- cmd
+			}()
 			continue
 		}
 
