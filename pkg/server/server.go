@@ -258,6 +258,7 @@ func (s *server) removeClient(c *serverClient) {
 		}
 	}
 
+	// Send followed player notifications.
 	if c.accountID > 0 {
 		for _, sc := range s.clients {
 			if sc.accountID <= 0 {
@@ -466,6 +467,22 @@ func (s *server) sendMOTD(c *serverClient) {
 		motd = fmt.Sprintf(gotext.GetD(c.language, "Connect with other players and stay up to date on the latest changes. Visit %s"), "bgammon.org/community")
 	}
 	c.sendNotice(motd)
+}
+
+func (s *server) sendMatchList(c *serverClient) {
+	ev := &bgammon.EventList{}
+
+	s.gamesLock.RLock()
+	for _, g := range s.games {
+		listing := g.listing(c.name)
+		if listing == nil {
+			continue
+		}
+		ev.Games = append(ev.Games, *listing)
+	}
+	s.gamesLock.RUnlock()
+
+	c.sendEvent(ev)
 }
 
 func (s *server) gameByClient(c *serverClient) *serverGame {

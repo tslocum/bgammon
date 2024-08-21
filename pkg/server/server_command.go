@@ -198,6 +198,9 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 		})
 	}
 
+	// Send match list.
+	s.sendMatchList(cmd.client)
+
 	// Send message of the day.
 	s.sendMOTD(cmd.client)
 
@@ -218,6 +221,7 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 		}
 	}
 
+	// Send followed player notifications.
 	c := cmd.client
 	if c.accountID != 0 {
 		s.clientsLock.Lock()
@@ -312,6 +316,7 @@ COMMANDS:
 				continue
 			}
 
+			cmd := cmd
 			go func() {
 				time.Sleep(500 * time.Millisecond)
 				s.commands <- cmd
@@ -390,19 +395,7 @@ COMMANDS:
 				}
 			}
 		case bgammon.CommandList, "ls":
-			ev := &bgammon.EventList{}
-
-			s.gamesLock.RLock()
-			for _, g := range s.games {
-				listing := g.listing(cmd.client.name)
-				if listing == nil {
-					continue
-				}
-				ev.Games = append(ev.Games, *listing)
-			}
-			s.gamesLock.RUnlock()
-
-			cmd.client.sendEvent(ev)
+			s.sendMatchList(cmd.client)
 		case bgammon.CommandCreate, "c":
 			if clientGame != nil {
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to create match: Please leave the match you are in before creating another."))
