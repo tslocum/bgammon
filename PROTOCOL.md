@@ -140,6 +140,16 @@ must write some data to the server at least once every 40 seconds.
   - Send a message to all players.
   - This command is only available to server administrators.
 
+- `defcon [level]`
+  - Apply restrictions to guests to prevent abuse.
+  - This command is only available to server administrators and moderators.
+  - Levels:
+    1. Disallow new accounts from being registered.
+    2. Only registered users may create and join matches.
+    3. Only registered users may chat and set custom match titles.
+    4. Warning message is broadcast to all users.
+    5. Normal operation.
+
 - `shutdown <minutes> <reason>`
   - Prevent the creation of new matches and periodically warn players about the server shutting down.
   - This command is only available to server administrators.

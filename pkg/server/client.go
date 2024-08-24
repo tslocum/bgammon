@@ -89,6 +89,10 @@ func (c *serverClient) Admin() bool {
 	return c.accountID == 1
 }
 
+func (c *serverClient) Mod() bool {
+	return false
+}
+
 func (c *serverClient) sendEvent(e interface{}) {
 	// JSON formatted messages.
 	if c.json {
@@ -205,6 +209,20 @@ func (c *serverClient) sendNotice(message string) {
 }
 
 func (c *serverClient) sendBroadcast(message string) {
+	c.sendEvent(&bgammon.EventNotice{
+		Message: gotext.GetD(c.language, "SERVER BROADCAST:") + " " + message,
+	})
+}
+
+func (c *serverClient) sendDefconWarning(defcon int) {
+	var message string
+	if defcon == 4 {
+		message = gotext.GetD(c.language, "Due to ongoing abuse, some actions may become restricted to registered users only. Please log in or register to avoid interruptions.")
+	} else if defcon < 4 {
+		message = gotext.GetD(c.language, "Due to ongoing abuse, some actions are restricted to registered users only. Please log in or register to avoid interruptions.")
+	} else {
+		return
+	}
 	c.sendEvent(&bgammon.EventNotice{
 		Message: gotext.GetD(c.language, "SERVER BROADCAST:") + " " + message,
 	})

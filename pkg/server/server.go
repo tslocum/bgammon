@@ -78,6 +78,8 @@ type server struct {
 	leaderboardCacheTime [12]time.Time
 	leaderboardCacheLock sync.Mutex
 
+	defcon int
+
 	motd string
 
 	sortedCommands []string
@@ -104,6 +106,7 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 		newClientIDs: make(chan int),
 		commands:     make(chan serverCommand, bufferSize),
 		welcome:      []byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!"),
+		defcon:       5,
 		mailServer:   mailServer,
 		passwordSalt: passwordSalt,
 		resetSalt:    resetSalt,

@@ -38,6 +38,11 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 			cmd.client.Terminate(gotext.GetD(cmd.client.language, "Please enter an email, username and password."))
 		}
 
+		if s.defcon == 1 {
+			cmd.client.Terminate(gotext.GetD(cmd.client.language, "Due to ongoing abuse, registration is disabled. Please try again later."))
+			return
+		}
+
 		var email []byte
 		if keyword == bgammon.CommandRegisterJSON || keyword == "rj" {
 			if len(params) < 4 {
@@ -221,6 +226,11 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 		}
 	}
 
+	// Send DEFCON warning message.
+	if s.defcon != 5 {
+		cmd.client.sendDefconWarning(s.defcon)
+	}
+
 	// Send followed player notifications.
 	c := cmd.client
 	if c.accountID != 0 {
@@ -384,6 +394,10 @@ COMMANDS:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Message not sent: There is no one else in the match."))
 				continue
 			}
+			if s.defcon < 4 && cmd.client.accountID == 0 {
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Due to ongoing abuse, some actions are restricted to registered users only. Please log in or register to avoid interruptions."))
+				continue
+			}
 			ev := &bgammon.EventSay{
 				Message: string(bytes.Join(params, []byte(" "))),
 			}
@@ -410,6 +424,11 @@ COMMANDS:
 			}
 			if len(params) < 2 {
 				sendUsage()
+				continue
+			}
+
+			if s.defcon < 3 && cmd.client.accountID == 0 {
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Due to ongoing abuse, some actions are restricted to registered users only. Please log in or register to avoid interruptions."))
 				continue
 			}
 
@@ -465,6 +484,10 @@ COMMANDS:
 				points = 127
 			}
 
+			if s.defcon < 4 && cmd.client.accountID == 0 {
+				gameName = nil
+			}
+
 			// Set default game name.
 			if len(bytes.TrimSpace(gameName)) == 0 {
 				abbr := "'s"
@@ -504,6 +527,13 @@ COMMANDS:
 
 			if len(params) == 0 {
 				sendUsage()
+				continue
+			}
+
+			if s.defcon < 3 && cmd.client.accountID == 0 {
+				cmd.client.sendEvent(&bgammon.EventFailedJoin{
+					Reason: gotext.GetD(cmd.client.language, "Due to ongoing abuse, some actions are restricted to registered users only. Please log in or register to avoid interruptions."),
+				})
 				continue
 			}
 
@@ -1411,6 +1441,35 @@ COMMANDS:
 				sc.sendBroadcast(message)
 			}
 			s.clientsLock.Unlock()
+		case bgammon.CommandDefcon:
+			if len(params) == 0 {
+				cmd.client.sendNotice(fmt.Sprintf("Current DEFCON level: %d.", s.defcon))
+				continue
+			} else if !cmd.client.Admin() && !cmd.client.Mod() {
+				cmd.client.sendNotice("Access denied.")
+				continue
+			}
+
+			v, err := strconv.Atoi(string(params[0]))
+			if err != nil || v < 1 || v > 5 {
+				cmd.client.sendNotice("Failed to update DEFCON level: invalid level.")
+				continue
+			} else if v == s.defcon {
+				cmd.client.sendNotice("Failed to update DEFCON level: already at specified DEFCON level.")
+				continue
+			}
+
+			lastDefcon := s.defcon
+			s.defcon = v
+			cmd.client.sendNotice(fmt.Sprintf("Updated DEFCON level to %d.", v))
+
+			if lastDefcon == 5 {
+				s.clientsLock.Lock()
+				for _, sc := range s.clients {
+					sc.sendDefconWarning(s.defcon)
+				}
+				s.clientsLock.Unlock()
+			}
 		case bgammon.CommandShutdown:
 			if !cmd.client.Admin() {
 				cmd.client.sendNotice("Access denied.")

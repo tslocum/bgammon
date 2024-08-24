@@ -33,6 +33,7 @@ const (
 	CommandDisconnect    = "disconnect"    // Disconnect from server.
 	CommandMOTD          = "motd"          // Read (or write) the message of the day.
 	CommandBroadcast     = "broadcast"     // Send a message to all players.
+	CommandDefcon        = "defcon"        // Apply restrictions to guests to prevent abuse.
 	CommandShutdown      = "shutdown"      // Prevent the creation of new matches.
 )
 
@@ -82,12 +83,13 @@ var HelpText = map[string]string{
 	CommandReset:         "- Reset pending checker movement.",
 	CommandOk:            "[1-6] - Accept double offer or confirm checker movement. The parameter for this command only applies in acey-deucey games.",
 	CommandRematch:       "- Request (or accept) a rematch after a match has been finished.",
-	CommandFollow:        "- Follow a player. A notification is shown whenever a followed player goes online or offline.",
-	CommandUnfollow:      "- Un-follow a player.",
+	CommandFollow:        "<username> - Follow a player. A notification is shown whenever a followed player goes online or offline.",
+	CommandUnfollow:      "<username> - Un-follow a player.",
 	CommandBoard:         "- Request current match state.",
 	CommandPong:          "<message> - Sent in response to server ping event to prevent the connection from timing out.",
 	CommandDisconnect:    "- Disconnect from the server.",
 	CommandMOTD:          "[message] - View (or set) message of the day. Specifying a new message of the day is only available to server administrators.",
 	CommandBroadcast:     "<message> - Send a message to all players. This command is only available to server administrators.",
+	CommandDefcon:        "[level] - Apply restrictions to guests to prevent abuse. Levels:\n1. Disallow new accounts from being registered.\n2. Only registered users may create and join matches.\n3. Only registered users may chat and set custom match titles.\n4. Warning message is broadcast to all users.\n5. Normal operation.",
 	CommandShutdown:      "<minutes> <reason> - Prevent the creation of new matches and periodically warn players about the server shutting down. This command is only available to server administrators.",
 }

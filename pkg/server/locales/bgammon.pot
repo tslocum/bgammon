@@ -49,6 +49,15 @@ msgstr ""
 msgid "Double offered to opponent (%d points)."
 msgstr ""
 
+msgid "Due to ongoing abuse, registration is disabled. Please try again later."
+msgstr ""
+
+msgid "Due to ongoing abuse, some actions are restricted to registered users only. Please log in or register to avoid interruptions."
+msgstr ""
+
+msgid "Due to ongoing abuse, some actions may become restricted to registered users only. Please log in or register to avoid interruptions."
+msgstr ""
+
 msgid "Failed to change password."
 msgstr ""
 
