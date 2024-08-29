@@ -14,10 +14,9 @@ Source code is available [here](https://code.rocket9labs.com/tslocum/boxcars).
 
 ### Android
 
-<a href="https://play.google.com/store/apps/details?id=com.rocket9labs.boxcars"><img width="121" height="36" alt="Google Play" border="0" src="https://rocket9labs.com/static/badge_google_36.png"></a>
- &nbsp; <a href="https://f-droid.org/packages/com.rocket9labs.boxcars/"><img width="121" height="36" alt="F-Droid" border="0" src="https://rocket9labs.com/static/badge_fdroid_36.png"></a>
+<a href="https://f-droid.org/packages/com.rocket9labs.boxcars/"><img width="121" height="36" alt="F-Droid" border="0" src="https://rocket9labs.com/static/badge_fdroid_36.png"></a>
 
-Download Boxcars via [Google Play](https://play.google.com/store/apps/details?id=com.rocket9labs.boxcars) or [F-Droid](https://f-droid.org/packages/com.rocket9labs.boxcars/)
+Download Boxcars via [F-Droid](https://f-droid.org/packages/com.rocket9labs.boxcars/)
 
 Source code is available [here](https://code.rocket9labs.com/tslocum/boxcars-android).
 
