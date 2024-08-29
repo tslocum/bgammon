@@ -78,6 +78,7 @@ CREATE TABLE game (
 	wintype  integer NOT NULL,
 	replay   TEXT NOT NULL DEFAULT ''
 );
+CREATE INDEX ON game USING btree (started);
 CREATE TABLE follow (
 	account integer NOT NULL,
 	target integer NOT NULL,
@@ -860,7 +861,7 @@ func dailyStats(tz *time.Location) (*serverStatsResult, error) {
 	defer tx.Commit(context.Background())
 
 	var earliestGame int64
-	rows, err := tx.Query(context.Background(), "SELECT started FROM game ORDER BY started ASC LIMIT 1")
+	rows, err := tx.Query(context.Background(), "SELECT MIN(started) FROM game")
 	if err != nil {
 		return nil, err
 	}
@@ -933,7 +934,7 @@ func monthlyStats(tz *time.Location) (*serverStatsResult, error) {
 	defer tx.Commit(context.Background())
 
 	var earliestGame int64
-	rows, err := tx.Query(context.Background(), "SELECT started FROM game ORDER BY started ASC LIMIT 1")
+	rows, err := tx.Query(context.Background(), "SELECT MIN(started) FROM game")
 	if err != nil {
 		return nil, err
 	}
@@ -1007,7 +1008,7 @@ func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
 	defer tx.Commit(context.Background())
 
 	var earliestGame int64
-	rows, err := tx.Query(context.Background(), "SELECT started FROM game ORDER BY started ASC LIMIT 1")
+	rows, err := tx.Query(context.Background(), "SELECT MIN(started) FROM game")
 	if err != nil {
 		return nil, err
 	}
@@ -1083,7 +1084,7 @@ func accountStats(name string, matchType int, variant int8, tz *time.Location) (
 	defer tx.Commit(context.Background())
 
 	var earliestGame int64
-	rows, err := tx.Query(context.Background(), "SELECT started FROM game WHERE (player1 = $1 OR player2 = $2) AND variant = $3 ORDER BY started ASC LIMIT 1", name, name, variant)
+	rows, err := tx.Query(context.Background(), "SELECT MIN(started) FROM game WHERE (player1 = $1 OR player2 = $2) AND variant = $3", name, name, variant)
 	if err != nil {
 		return nil, err
 	}
