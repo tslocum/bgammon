@@ -347,18 +347,32 @@ func logClientRead(msg []byte) {
 }
 
 func legacyClient(clientName []byte) bool {
+	// Strip language.
+	slash := bytes.IndexByte(clientName, '/')
+	if slash != -1 {
+		clientName = clientName[:slash]
+	}
+
+	// Split by hyphens.
 	split := bytes.Split(clientName, []byte("-"))
 	if len(split) == 0 {
 		return true
-	} else if !bytes.Equal(split[0], []byte("boxcars")) {
+	}
+
+	// Only Boxcars requires legacy support.
+	if !bytes.Equal(split[0], []byte("boxcars")) {
 		return false
 	}
+
+	// Parse version information.
 	last := split[len(split)-1]
 	lastSplit := bytes.Split(last, []byte("."))
 	if len(lastSplit) != 3 {
 		return true
 	}
 	major, minor := parseInt(lastSplit[0]), parseInt(lastSplit[1])
+
+	// Boxcars releases before v1.4.0 require legacy support.
 	return major < 1 || (major == 1 && minor < 4)
 }
 

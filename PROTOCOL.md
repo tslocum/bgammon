@@ -22,11 +22,11 @@ Clients must send a register command, reset command or login command before send
   - Register an account. A valid email address must be provided.
   - Usernames must contain at least one non-numeric character.
 
-- `registerjson <client name> <email> <username> <password>`
+- `registerjson <client> <email> <username> <password>`
   - Register an account and enable JSON formatted responses.
   - All client applications should use the `registerjson` command to register, as JSON 
 formatted responses are more easily parsed by computers.
-  - The name of the client must be specified.
+  - The client field is specified as follows: `example-client-v1.2.3/en`
   - Aliases: `rj`
 
 - `resetpassword <email>`
@@ -37,11 +37,11 @@ formatted responses are more easily parsed by computers.
   - Log in. A random username is assigned when none is provided.
   - Usernames must contain at least one non-numeric character.
 
-- `loginjson <client name> [username] [password]`
+- `loginjson <client> [username] [password]`
   - Log in and enable JSON formatted responses.
   - All client applications should use the `loginjson` command to log in, as JSON 
 formatted responses are more easily parsed by computers.
-  - The name of the client must be specified.
+  - The client field is specified as follows: `example-client-v1.2.3/en`
   - Aliases: `lj`
 
 - `password <old> <new>`
