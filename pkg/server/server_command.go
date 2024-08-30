@@ -49,6 +49,7 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 				sendUsage()
 				return
 			}
+			cmd.client.legacy = legacyClient(params[0])
 			slashIndex := bytes.IndexRune(params[0], '/')
 			if slashIndex != -1 {
 				cmd.client.language = "bgammon-" + string(s.matchLanguage(params[0][slashIndex+1:]))
@@ -91,6 +92,7 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 		readUsername := func() bool {
 			if cmd.client.json {
 				if len(params) > 0 {
+					cmd.client.legacy = legacyClient(params[0])
 					slashIndex := bytes.IndexRune(params[0], '/')
 					if slashIndex != -1 {
 						cmd.client.language = "bgammon-" + string(s.matchLanguage(params[0][slashIndex+1:]))
@@ -705,7 +707,7 @@ COMMANDS:
 
 				clientGame.replay = append(clientGame.replay, []byte(fmt.Sprintf("%d t", cmd.client.playerNumber)))
 			}
-			clientGame.Ended = time.Now()
+			clientGame.Ended = time.Now().Unix()
 
 			var reset bool
 			if clientGame.Winner == 1 {

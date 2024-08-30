@@ -585,13 +585,13 @@ func recordGameResult(g *serverGame, winType int8, replay [][]byte) error {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
-	if db == nil || g.Started.IsZero() || g.Winner == 0 || len(g.replay) == 0 {
+	if db == nil || g.Started == 0 || g.Winner == 0 || len(g.replay) == 0 {
 		return nil
 	}
 
 	ended := g.Ended
-	if ended.IsZero() {
-		ended = time.Now()
+	if ended == 0 {
+		ended = time.Now().Unix()
 	}
 
 	tx, err := begin()
@@ -600,7 +600,7 @@ func recordGameResult(g *serverGame, winType int8, replay [][]byte) error {
 	}
 	defer tx.Commit(context.Background())
 
-	_, err = tx.Exec(context.Background(), "INSERT INTO game (variant, started, ended, player1, account1, player2, account2, points, winner, wintype, replay) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", g.Variant, g.Started.Unix(), ended.Unix(), g.allowed1, g.account1, g.allowed2, g.account2, g.Points, g.Winner, winType, bytes.Join(replay, []byte("\n")))
+	_, err = tx.Exec(context.Background(), "INSERT INTO game (variant, started, ended, player1, account1, player2, account2, points, winner, wintype, replay) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", g.Variant, g.Started, ended, g.allowed1, g.account1, g.allowed2, g.account2, g.Points, g.Winner, winType, bytes.Join(replay, []byte("\n")))
 	if err != nil {
 		return err
 	}
@@ -624,7 +624,7 @@ func recordMatchResult(g *serverGame, matchType int) error {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
-	if db == nil || g.Started.IsZero() || g.Winner == 0 || g.account1 == 0 || g.account2 == 0 || g.account1 == g.account2 {
+	if db == nil || g.Started == 0 || g.Winner == 0 || g.account1 == 0 || g.account2 == 0 || g.account1 == g.account2 {
 		return nil
 	}
 

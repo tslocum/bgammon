@@ -81,6 +81,7 @@ type serverClient struct {
 	commands     chan []byte
 	autoplay     bool
 	playerNumber int8
+	legacy       bool
 	terminating  bool
 	bgammon.Client
 }
@@ -116,7 +117,24 @@ func (c *serverClient) sendEvent(e interface{}) {
 		case *bgammon.EventFailedLeave:
 			ev.Type = bgammon.EventTypeFailedLeave
 		case *bgammon.EventBoard:
-			ev.Type = bgammon.EventTypeBoard
+			if !c.legacy {
+				ev.Type = bgammon.EventTypeBoard
+			} else {
+				v := &eventBoardCompat{}
+				v.Type = bgammon.EventTypeBoard
+				v.gameStateCompat = gameStateCompat{
+					gameCompat: &gameCompat{
+						Game:    *ev.Game,
+						Started: timestamp(ev.Game.Started),
+						Ended:   timestamp(ev.Game.Ended),
+					},
+					PlayerNumber: ev.PlayerNumber,
+					Available:    ev.Available,
+					Forced:       ev.Forced,
+					Spectating:   ev.Spectating,
+				}
+				e = v
+			}
 		case *bgammon.EventRolled:
 			ev.Type = bgammon.EventTypeRolled
 		case *bgammon.EventFailedRoll:
@@ -326,4 +344,39 @@ func logClientRead(msg []byte) {
 	} else if !bytes.HasPrefix(msgLower, []byte("list")) && !bytes.HasPrefix(msgLower, []byte("ls")) && !bytes.HasPrefix(msgLower, []byte("pong")) {
 		log.Printf("<- %s", msg)
 	}
+}
+
+func legacyClient(clientName []byte) bool {
+	split := bytes.Split(clientName, []byte("-"))
+	if len(split) == 0 {
+		return true
+	} else if !bytes.Equal(split[0], []byte("boxcars")) {
+		return false
+	}
+	last := split[len(split)-1]
+	lastSplit := bytes.Split(last, []byte("."))
+	if len(lastSplit) != 3 {
+		return true
+	}
+	major, minor := parseInt(lastSplit[0]), parseInt(lastSplit[1])
+	return major < 1 || (major == 1 && minor < 4)
+}
+
+func parseInt(buf []byte) int {
+	matches := anyNumbers.FindAll(buf, -1)
+	if len(matches) == 0 {
+		return 0
+	}
+	v, err := strconv.Atoi(string(matches[0]))
+	if err != nil {
+		v = 0
+	}
+	return v
+}
+
+func timestamp(ts int64) time.Time {
+	if ts == 0 {
+		return time.Time{}
+	}
+	return time.Unix(ts, 0)
 }

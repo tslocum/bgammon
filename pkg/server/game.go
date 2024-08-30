@@ -157,8 +157,8 @@ func (g *serverGame) roll(player int8) bool {
 		}
 
 		// Store account IDs.
-		if g.Started.IsZero() && g.Roll1 != 0 && g.Roll2 != 0 {
-			g.Started = time.Now()
+		if g.Started == 0 && g.Roll1 != 0 && g.Roll2 != 0 {
+			g.Started = time.Now().Unix()
 			if g.client1.account != nil {
 				g.account1 = g.client1.account.id
 			}
@@ -596,7 +596,7 @@ func (g *serverGame) nextTurn(reroll bool) {
 }
 
 func (g *serverGame) addReplayHeader() {
-	g.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", g.Started.Unix(), g.allowed1, g.allowed2, g.Points, g.Player1.Points, g.Player2.Points, g.Winner, g.DoubleValue, g.Variant))}, g.replay...)
+	g.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", g.Started, g.allowed1, g.allowed2, g.Points, g.Player1.Points, g.Player2.Points, g.Winner, g.DoubleValue, g.Variant))}, g.replay...)
 }
 
 func (g *serverGame) handleWin() bool {
@@ -681,7 +681,7 @@ func (g *serverGame) handleWin() bool {
 		if g.Player1.Points < g.Points {
 			reset = true
 		} else {
-			g.Ended = time.Now()
+			g.Ended = time.Now().Unix()
 		}
 	} else {
 		winEvent.Player = g.Player2.Name
@@ -689,7 +689,7 @@ func (g *serverGame) handleWin() bool {
 		if g.Player2.Points < g.Points {
 			reset = true
 		} else {
-			g.Ended = time.Now()
+			g.Ended = time.Now().Unix()
 		}
 	}
 

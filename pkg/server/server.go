@@ -33,6 +33,7 @@ const maxUsernameLength = 18
 const inactiveLimit = 600 // 10 minutes.
 
 var (
+	anyNumbers             = regexp.MustCompile(`[0-9]+`)
 	onlyNumbers            = regexp.MustCompile(`^[0-9]+$`)
 	guestName              = regexp.MustCompile(`^guest[0-9]+$`)
 	alphaNumericUnderscore = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
@@ -720,4 +721,24 @@ func (p ratingPlayer) Sigma() float64 {
 
 func (p ratingPlayer) SJ() float64 {
 	return p.outcome
+}
+
+type gameCompat struct {
+	bgammon.Game
+
+	Started time.Time
+	Ended   time.Time
+}
+
+type gameStateCompat struct {
+	*gameCompat
+	PlayerNumber int8
+	Available    [][]int8 // Legal moves.
+	Forced       bool     // A forced move is being played automatically.
+	Spectating   bool
+}
+
+type eventBoardCompat struct {
+	bgammon.Event
+	gameStateCompat
 }

@@ -24,8 +24,8 @@ const (
 )
 
 type Game struct {
-	Started time.Time
-	Ended   time.Time
+	Started int64
+	Ended   int64
 
 	Player1 Player
 	Player2 Player
@@ -124,7 +124,7 @@ func (g *Game) PartialTurn() int8 {
 func (g *Game) PartialTime() int {
 	var delta time.Duration
 	if g.partialTime.IsZero() {
-		delta = time.Since(g.Started)
+		delta = since(g.Started)
 	} else {
 		delta = time.Since(g.partialTime)
 	}
@@ -143,7 +143,7 @@ func (g *Game) SetPartialHandled(handled bool) {
 }
 
 func (g *Game) NextPartialTurn(player int8) {
-	if g.Started.IsZero() || g.Winner != 0 {
+	if g.Started == 0 || g.Winner != 0 {
 		return
 	}
 
@@ -1072,4 +1072,8 @@ func (g *Game) TabulaBoard() (tabula.Board, bool) {
 		tb[highest] = 0
 	}
 	return tb, true
+}
+
+func since(timestamp int64) time.Duration {
+	return time.Since(time.Unix(timestamp, 0))
 }
