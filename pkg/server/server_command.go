@@ -81,7 +81,8 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 			username: username,
 			password: password,
 		}
-		err := registerAccount(s.passwordSalt, a)
+		ipHash := s.hashIP(cmd.client.Address())
+		err := registerAccount(s.passwordSalt, a, ipHash)
 		if err != nil {
 			cmd.client.Terminate(fmt.Sprintf("Failed to register: %s", err))
 			return
@@ -1501,10 +1502,10 @@ COMMANDS:
 			}
 
 			clientGame.Turn = 1
-			clientGame.Roll1 = 3
-			clientGame.Roll2 = 3
+			clientGame.Roll1 = 1
+			clientGame.Roll2 = 2
 			clientGame.Roll3 = 0
-			clientGame.Variant = 0
+			clientGame.Variant = 1
 			clientGame.Player1.Entered = true
 			clientGame.Player2.Entered = true
 			clientGame.Board = []int8{0, 0, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, -3, 0, 0, -3, -6, -2, 0, 0, 0}

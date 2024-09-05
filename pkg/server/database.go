@@ -30,6 +30,7 @@ const databaseSchema = `
 CREATE TABLE account (
 	id                       serial PRIMARY KEY,
 	created                  bigint NOT NULL,
+	createdip                text NOT NULL,
 	confirmed                bigint NOT NULL DEFAULT 0,
 	active                   bigint NOT NULL,
 	reset                    bigint NOT NULL DEFAULT 0,
@@ -97,7 +98,7 @@ var (
 	dbLock = &sync.Mutex{}
 )
 
-var passwordArgon2id = &argon2id.Params{
+var argon2idParameters = &argon2id.Params{
 	Memory:      128 * 1024,
 	Iterations:  16,
 	Parallelism: 4,
@@ -151,7 +152,7 @@ func initDB() {
 	log.Println("Initialized database schema")
 }
 
-func registerAccount(passwordSalt string, a *account) error {
+func registerAccount(passwordSalt string, a *account, ipHash string) error {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
@@ -178,6 +179,13 @@ func registerAccount(passwordSalt string, a *account) error {
 	defer tx.Commit(context.Background())
 
 	var result int
+	err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM account WHERE createdip = $1", ipHash).Scan(&result)
+	if err != nil {
+		log.Fatal(err)
+	} else if result > 0 {
+		return fmt.Errorf("an account has already been registered from your IP address")
+	}
+
 	err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM account WHERE email = $1", bytes.ToLower(bytes.TrimSpace(a.email))).Scan(&result)
 	if err != nil {
 		log.Fatal(err)
@@ -192,14 +200,14 @@ func registerAccount(passwordSalt string, a *account) error {
 		return fmt.Errorf("username already in use")
 	}
 
-	passwordHash, err := argon2id.CreateHash(string(a.password)+passwordSalt, passwordArgon2id)
-	debug.FreeOSMemory() // Password hashing is memory intensive. Return memory to the OS.
+	passwordHash, err := argon2id.CreateHash(string(a.password)+passwordSalt, argon2idParameters)
+	debug.FreeOSMemory() // Hashing is memory intensive. Return memory to the OS.
 	if err != nil {
 		return err
 	}
 
 	timestamp := time.Now().Unix()
-	_, err = tx.Exec(context.Background(), "INSERT INTO account (created, active, email, username, password) VALUES ($1, $2, $3, $4, $5)", timestamp, timestamp, bytes.ToLower(bytes.TrimSpace(a.email)), bytes.ToLower(bytes.TrimSpace(a.username)), passwordHash)
+	_, err = tx.Exec(context.Background(), "INSERT INTO account (created, createdip, active, email, username, password) VALUES ($1, $2, $3, $4, $5, $6)", timestamp, ipHash, timestamp, bytes.ToLower(bytes.TrimSpace(a.email)), bytes.ToLower(bytes.TrimSpace(a.username)), passwordHash)
 	return err
 }
 
@@ -339,8 +347,8 @@ func confirmResetAccount(resetSalt string, passwordSalt string, id int, key stri
 
 	newPassword := randomAlphanumeric(7)
 
-	passwordHash, err := argon2id.CreateHash(newPassword+passwordSalt, passwordArgon2id)
-	debug.FreeOSMemory() // Password hashing is memory intensive. Return memory to the OS.
+	passwordHash, err := argon2id.CreateHash(newPassword+passwordSalt, argon2idParameters)
+	debug.FreeOSMemory() // Hashing is memory intensive. Return memory to the OS.
 	if err != nil {
 		return "", "", err
 	}
@@ -466,7 +474,7 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 	a.muteBearOff = muteBearOff == 1
 
 	match, err := argon2id.ComparePasswordAndHash(string(password)+passwordSalt, string(a.password))
-	debug.FreeOSMemory() // Password hashing is memory intensive. Return memory to the OS.
+	debug.FreeOSMemory() // Hashing is memory intensive. Return memory to the OS.
 	if err != nil {
 		return nil, err
 	} else if !match {
@@ -519,8 +527,8 @@ func setAccountPassword(passwordSalt string, id int, password string) error {
 		return nil
 	}
 
-	passwordHash, err := argon2id.CreateHash(password+passwordSalt, passwordArgon2id)
-	debug.FreeOSMemory() // Password hashing is memory intensive. Return memory to the OS.
+	passwordHash, err := argon2id.CreateHash(password+passwordSalt, argon2idParameters)
+	debug.FreeOSMemory() // Hashing is memory intensive. Return memory to the OS.
 	if err != nil {
 		return err
 	}

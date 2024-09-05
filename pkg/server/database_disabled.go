@@ -19,7 +19,7 @@ func testDBConnection() error {
 func initDB() {
 }
 
-func registerAccount(passwordSalt string, a *account) error {
+func registerAccount(passwordSalt string, a *account, ipHash string) error {
 	return nil
 }
 

@@ -22,6 +22,7 @@ func main() {
 		mailServer     string
 		passwordSalt   string
 		resetSalt      string
+		ipSalt         string
 		verbose        bool
 		debug          int
 		debugCommands  bool
@@ -48,6 +49,7 @@ func main() {
 
 	passwordSalt = os.Getenv("BGAMMON_SALT_PASSWORD")
 	resetSalt = os.Getenv("BGAMMON_SALT_RESET")
+	ipSalt = os.Getenv("BGAMMON_SALT_IP")
 
 	if rollStatistics {
 		printRollStatistics()
@@ -64,7 +66,7 @@ func main() {
 		}()
 	}
 
-	s := server.NewServer(tz, dataSource, mailServer, passwordSalt, resetSalt, false, verbose || debug > 0, debugCommands)
+	s := server.NewServer(tz, dataSource, mailServer, passwordSalt, resetSalt, ipSalt, false, verbose || debug > 0, debugCommands)
 	if tcpAddress != "" {
 		s.Listen("tcp", tcpAddress)
 	}

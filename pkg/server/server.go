@@ -88,6 +88,7 @@ type server struct {
 	mailServer   string
 	passwordSalt string
 	resetSalt    string
+	ipSalt       string
 
 	tz            *time.Location
 	languageTags  []language.Tag
@@ -100,7 +101,7 @@ type server struct {
 	shutdownReason string
 }
 
-func NewServer(tz string, dataSource string, mailServer string, passwordSalt string, resetSalt string, relayChat bool, verbose bool, allowDebug bool) *server {
+func NewServer(tz string, dataSource string, mailServer string, passwordSalt string, resetSalt string, ipSalt string, relayChat bool, verbose bool, allowDebug bool) *server {
 	const bufferSize = 10
 	s := &server{
 		newGameIDs:   make(chan int),
@@ -111,6 +112,7 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 		mailServer:   mailServer,
 		passwordSalt: passwordSalt,
 		resetSalt:    resetSalt,
+		ipSalt:       ipSalt,
 		relayChat:    relayChat,
 		verbose:      verbose,
 	}

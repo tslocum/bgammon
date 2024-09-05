@@ -21,6 +21,7 @@ var _ bgammon.Client = &webSocketClient{}
 
 type webSocketClient struct {
 	conn       *websocket.Conn
+	address    string
 	events     chan []byte
 	commands   chan<- []byte
 	terminated bool
@@ -34,12 +35,22 @@ func newWebSocketClient(r *http.Request, w http.ResponseWriter, commands chan<- 
 		return nil
 	}
 
+	address := r.Header.Get("X-Forwarded-For")
+	if address == "" {
+		address = r.RemoteAddr
+	}
+
 	return &webSocketClient{
 		conn:     conn,
+		address:  address,
 		events:   events,
 		commands: commands,
 		verbose:  verbose,
 	}
+}
+
+func (c *webSocketClient) Address() string {
+	return c.address
 }
 
 func (c *webSocketClient) HandleReadWrite() {

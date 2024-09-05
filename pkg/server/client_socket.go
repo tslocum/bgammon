@@ -15,6 +15,7 @@ var _ bgammon.Client = &socketClient{}
 
 type socketClient struct {
 	conn       net.Conn
+	address    string
 	events     chan []byte
 	commands   chan<- []byte
 	terminated bool
@@ -25,10 +26,15 @@ type socketClient struct {
 func newSocketClient(conn net.Conn, commands chan<- []byte, events chan []byte, verbose bool) *socketClient {
 	return &socketClient{
 		conn:     conn,
+		address:  conn.RemoteAddr().String(),
 		events:   events,
 		commands: commands,
 		verbose:  verbose,
 	}
+}
+
+func (c *socketClient) Address() string {
+	return c.address
 }
 
 func (c *socketClient) HandleReadWrite() {
