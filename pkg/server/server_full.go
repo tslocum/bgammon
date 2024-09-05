@@ -3,6 +3,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,6 +15,7 @@ import (
 
 	"code.rocket9labs.com/tslocum/bgammon"
 	"github.com/gorilla/mux"
+	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -76,7 +78,28 @@ func (s *server) listenWebSocket(address string) {
 	m.HandleFunc("/stats/{username:[A-Za-z0-9_\\-]+}/tabula.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantTabula))
 	m.HandleFunc("/", s.handleWebSocket)
 
-	err := http.ListenAndServe(address, m)
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		Cache:      autocert.DirCache(s.certFolder),
+		HostPolicy: autocert.HostWhitelist(s.certDomain),
+		Email:      s.certEmail,
+	}
+
+	server := &http.Server{
+		Addr:    address,
+		Handler: m,
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+			MinVersion:     tls.VersionTLS12,
+		},
+	}
+
+	go func() {
+		err := http.ListenAndServe(s.certAddress, certManager.HTTPHandler(m))
+		log.Fatalf("failed to listen on %s: %s", s.certAddress, err)
+	}()
+
+	err := server.ListenAndServeTLS("", "")
 	log.Fatalf("failed to listen on %s: %s", address, err)
 }
 

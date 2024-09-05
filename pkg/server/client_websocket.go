@@ -35,14 +35,9 @@ func newWebSocketClient(r *http.Request, w http.ResponseWriter, commands chan<- 
 		return nil
 	}
 
-	address := r.Header.Get("X-Forwarded-For")
-	if address == "" {
-		address = r.RemoteAddr
-	}
-
 	return &webSocketClient{
 		conn:     conn,
-		address:  address,
+		address:  r.RemoteAddr,
 		events:   events,
 		commands: commands,
 		verbose:  verbose,

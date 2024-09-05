@@ -94,6 +94,11 @@ type server struct {
 	languageTags  []language.Tag
 	languageNames [][]byte
 
+	certDomain  string
+	certFolder  string
+	certEmail   string
+	certAddress string
+
 	relayChat bool // Chats are not relayed normally. This option is only used by local servers.
 	verbose   bool
 
@@ -101,7 +106,7 @@ type server struct {
 	shutdownReason string
 }
 
-func NewServer(tz string, dataSource string, mailServer string, passwordSalt string, resetSalt string, ipSalt string, relayChat bool, verbose bool, allowDebug bool) *server {
+func NewServer(tz string, dataSource string, mailServer string, passwordSalt string, resetSalt string, ipSalt string, certDomain string, certFolder string, certEmail string, certAddress string, relayChat bool, verbose bool, allowDebug bool) *server {
 	const bufferSize = 10
 	s := &server{
 		newGameIDs:   make(chan int),
@@ -113,6 +118,10 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 		passwordSalt: passwordSalt,
 		resetSalt:    resetSalt,
 		ipSalt:       ipSalt,
+		certDomain:   certDomain,
+		certFolder:   certFolder,
+		certEmail:    certEmail,
+		certAddress:  certAddress,
 		relayChat:    relayChat,
 		verbose:      verbose,
 	}
