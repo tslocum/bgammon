@@ -48,35 +48,46 @@ func (s *server) handleListener(listener net.Listener) {
 	}
 }
 
+func (s *server) addCORSHeader(f func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		f(w, r)
+	}
+}
+
 func (s *server) listenWebSocket(address string) {
 	log.Printf("Listening for WebSocket connections on %s...", address)
 
 	m := mux.NewRouter()
-	m.HandleFunc("/reset/{id:[0-9]+}/{key:[A-Za-z0-9]+}", s.handleResetPassword)
-	m.HandleFunc("/match/{id:[0-9]+}", s.handleMatch)
-	m.HandleFunc("/matches.json", s.handleListMatches)
-	m.HandleFunc("/leaderboard-casual-backgammon-single.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantBackgammon, false))
-	m.HandleFunc("/leaderboard-casual-backgammon-multi.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantBackgammon, true))
-	m.HandleFunc("/leaderboard-casual-acey-single.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantAceyDeucey, false))
-	m.HandleFunc("/leaderboard-casual-acey-multi.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantAceyDeucey, true))
-	m.HandleFunc("/leaderboard-casual-tabula-single.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantTabula, false))
-	m.HandleFunc("/leaderboard-casual-tabula-multi.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantTabula, true))
-	m.HandleFunc("/leaderboard-rated-backgammon-single.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantBackgammon, false))
-	m.HandleFunc("/leaderboard-rated-backgammon-multi.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantBackgammon, true))
-	m.HandleFunc("/leaderboard-rated-acey-single.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantAceyDeucey, false))
-	m.HandleFunc("/leaderboard-rated-acey-multi.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantAceyDeucey, true))
-	m.HandleFunc("/leaderboard-rated-tabula-single.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantTabula, false))
-	m.HandleFunc("/leaderboard-rated-tabula-multi.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantTabula, true))
-	m.HandleFunc("/stats.json", s.handleStatsFunc(1))
-	m.HandleFunc("/stats-day.json", s.handleStatsFunc(0))
-	m.HandleFunc("/stats-total.json", s.handleStatsFunc(2))
-	m.HandleFunc("/stats-tabula.json", s.handleStatsFunc(3))
-	m.HandleFunc("/stats-wildbg.json", s.handleStatsFunc(4))
-	m.HandleFunc("/stats/{username:[A-Za-z0-9_\\-]+}.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantBackgammon))
-	m.HandleFunc("/stats/{username:[A-Za-z0-9_\\-]+}/backgammon.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantBackgammon))
-	m.HandleFunc("/stats/{username:[A-Za-z0-9_\\-]+}/acey.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantAceyDeucey))
-	m.HandleFunc("/stats/{username:[A-Za-z0-9_\\-]+}/tabula.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantTabula))
-	m.HandleFunc("/", s.handleWebSocket)
+	handle := func(path string, f func(http.ResponseWriter, *http.Request)) *mux.Route {
+		return m.HandleFunc(path, s.addCORSHeader(f))
+	}
+
+	handle("/reset/{id:[0-9]+}/{key:[A-Za-z0-9]+}", s.handleResetPassword)
+	handle("/match/{id:[0-9]+}", s.handleMatch)
+	handle("/matches.json", s.handleListMatches)
+	handle("/leaderboard-casual-backgammon-single.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantBackgammon, false))
+	handle("/leaderboard-casual-backgammon-multi.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantBackgammon, true))
+	handle("/leaderboard-casual-acey-single.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantAceyDeucey, false))
+	handle("/leaderboard-casual-acey-multi.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantAceyDeucey, true))
+	handle("/leaderboard-casual-tabula-single.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantTabula, false))
+	handle("/leaderboard-casual-tabula-multi.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantTabula, true))
+	handle("/leaderboard-rated-backgammon-single.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantBackgammon, false))
+	handle("/leaderboard-rated-backgammon-multi.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantBackgammon, true))
+	handle("/leaderboard-rated-acey-single.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantAceyDeucey, false))
+	handle("/leaderboard-rated-acey-multi.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantAceyDeucey, true))
+	handle("/leaderboard-rated-tabula-single.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantTabula, false))
+	handle("/leaderboard-rated-tabula-multi.json", s.handleLeaderboardFunc(matchTypeRated, bgammon.VariantTabula, true))
+	handle("/stats.json", s.handleStatsFunc(1))
+	handle("/stats-day.json", s.handleStatsFunc(0))
+	handle("/stats-total.json", s.handleStatsFunc(2))
+	handle("/stats-tabula.json", s.handleStatsFunc(3))
+	handle("/stats-wildbg.json", s.handleStatsFunc(4))
+	handle("/stats/{username:[A-Za-z0-9_\\-]+}.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantBackgammon))
+	handle("/stats/{username:[A-Za-z0-9_\\-]+}/backgammon.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantBackgammon))
+	handle("/stats/{username:[A-Za-z0-9_\\-]+}/acey.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantAceyDeucey))
+	handle("/stats/{username:[A-Za-z0-9_\\-]+}/tabula.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantTabula))
+	handle("/", s.handleWebSocket)
 
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,

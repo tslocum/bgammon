@@ -29,7 +29,7 @@ func main() {
 		rollStatistics bool
 	)
 	flag.StringVar(&tcpAddress, "tcp", "localhost:1337", "TCP listen address")
-	flag.StringVar(&wsAddress, "ws", "localhost:1338", "WebSocket listen address")
+	flag.StringVar(&wsAddress, "ws", "", "WebSocket listen address")
 	flag.StringVar(&tz, "tz", "", "Time zone used when calculating statistics")
 	flag.StringVar(&dataSource, "db", "", "Database data source (postgres://username:password@localhost:5432/database_name")
 	flag.StringVar(&mailServer, "smtp", "", "SMTP server address")
