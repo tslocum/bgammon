@@ -100,8 +100,8 @@ var (
 
 var argon2idParameters = &argon2id.Params{
 	Memory:      128 * 1024,
-	Iterations:  16,
-	Parallelism: 4,
+	Iterations:  2,
+	Parallelism: 2,
 	SaltLength:  16,
 	KeyLength:   64,
 }
