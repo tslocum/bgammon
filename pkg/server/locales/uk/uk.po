@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2024-07-09 19:09+0000\n"
+"PO-Revision-Date: 2024-09-11 20:03+0000\n"
 "Last-Translator: \"Andrew \\\"EGYT\\\"\" <hitechni134@gmail.com>\n"
 "Language-Team: Ukrainian <https://hosted.weblate.org/projects/bgammon/"
 "bgammon-server/uk/>\n"
@@ -10,19 +10,25 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Weblate 5.7-dev\n"
+"X-Generator: Weblate 5.8-dev\n"
 
 msgid "%s accepted double."
 msgstr "%s приймає подвоєння."
 
-msgid "%s resigned."
-msgstr "%s здається."
-
 msgid "%s declined double offer."
 msgstr "%s відхиляє подвоєння."
 
+msgid "%s disconnected."
+msgstr "%s від'єднується."
+
+msgid "%s is online."
+msgstr "%s увійшов."
+
 msgid "%s offers a double (%d points)."
 msgstr "%s пропонує подвоєння до %d."
+
+msgid "%s resigned."
+msgstr "%s здається."
 
 msgid "Accepted double."
 msgstr "Прийнято подвоєння."
@@ -54,6 +60,26 @@ msgstr "Відхилено подвоєння."
 
 msgid "Double offered to opponent (%d points)."
 msgstr "Опоненту запропоновано подвоєння до %d."
+
+msgid "Due to ongoing abuse, registration is disabled. Please try again later."
+msgstr ""
+"Через поточні зловживання реєстрацію відключено. Будь ласка, спробуйте ще "
+"раз пізніше."
+
+msgid ""
+"Due to ongoing abuse, some actions are restricted to registered users only. "
+"Please log in or register to avoid interruptions."
+msgstr ""
+"Через поточні зловживання деякі дії доступні лише зареєстрованим "
+"користувачам. Будь ласка, увійдіть або зареєструйтеся, щоб уникнути перебоїв."
+
+msgid ""
+"Due to ongoing abuse, some actions may become restricted to registered users "
+"only. Please log in or register to avoid interruptions."
+msgstr ""
+"Через поточні зловживання деякі дії можуть стати доступними лише для "
+"зареєстрованих користувачів. Будь ласка, увійдіть або зареєструйтеся, щоб "
+"уникнути перебоїв."
 
 msgid "Failed to change password."
 msgstr "Помилка зміни паролю."
@@ -92,6 +118,9 @@ msgstr "Недопустимий пароль."
 
 msgid "Invalid replay ID provided."
 msgstr "Недопустимий ідентифікатор повтору."
+
+msgid "Invalid username: must be %d characters or less."
+msgstr "Недопустимий логін: максимальна кількість символів: %d."
 
 msgid "Invalid username: must contain at least one non-numeric character."
 msgstr "Недопустимий логін: повинен містити хоч один нецифровий символ."
@@ -186,11 +215,17 @@ msgstr "Невідома команда: %s"
 msgid "Waiting for response from opponent."
 msgstr "Очікування на відповідь опонента."
 
+msgid "You are no longer following %s."
+msgstr "Ви більше не слідкуєте за %s."
+
 msgid "You are not allowed to use that command."
 msgstr "Ви не можете використовувати цю команду."
 
 msgid "You are not currently in a match."
 msgstr "Ви не у грі."
+
+msgid "You are now following %s."
+msgstr "Тепер ви слідкуєте за %s."
 
 msgid "You are spectating this match. Chat messages are not relayed."
 msgstr "Ви - глядач. Чат не показується."

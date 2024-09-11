@@ -14,14 +14,20 @@ msgstr ""
 msgid "%s accepted double."
 msgstr "%s doble aceptado."
 
-msgid "%s resigned."
-msgstr "%s abandono."
-
 msgid "%s declined double offer."
 msgstr "%s rechazo la oferta doble."
 
+msgid "%s disconnected."
+msgstr ""
+
+msgid "%s is online."
+msgstr ""
+
 msgid "%s offers a double (%d points)."
 msgstr "%s ofrece un doble (%d puntos)."
+
+msgid "%s resigned."
+msgstr "%s abandono."
 
 msgid "Accepted double."
 msgstr "Doble aceptado."
@@ -53,6 +59,19 @@ msgstr "Decilnar oferta doble."
 
 msgid "Double offered to opponent (%d points)."
 msgstr "Doble ofrecido al oponente (%d puntos)."
+
+msgid "Due to ongoing abuse, registration is disabled. Please try again later."
+msgstr ""
+
+msgid ""
+"Due to ongoing abuse, some actions are restricted to registered users only. "
+"Please log in or register to avoid interruptions."
+msgstr ""
+
+msgid ""
+"Due to ongoing abuse, some actions may become restricted to registered users "
+"only. Please log in or register to avoid interruptions."
+msgstr ""
 
 msgid "Failed to change password."
 msgstr "Error al cambiar la contraseña."
@@ -91,6 +110,9 @@ msgstr "Contraseña invalida."
 
 msgid "Invalid replay ID provided."
 msgstr "El ID de la repetición es inválido."
+
+msgid "Invalid username: must be %d characters or less."
+msgstr ""
 
 msgid "Invalid username: must contain at least one non-numeric character."
 msgstr ""
@@ -137,7 +159,8 @@ msgid "Password changed successfully."
 msgstr "La contraseña ha sido cambiada satisfactoriamente."
 
 msgid "Please enter an email, username and password."
-msgstr "Porfavor ingresé un correo electrónico, nombre de usuario y contraseña."
+msgstr ""
+"Porfavor ingresé un correo electrónico, nombre de usuario y contraseña."
 
 msgid "Please finish your match as soon as possible."
 msgstr "Porfavor termine su partida tan pronto como sea posible."
@@ -184,11 +207,17 @@ msgstr "Comando desconocido: %s"
 msgid "Waiting for response from opponent."
 msgstr "Esperando respuesta del oponente."
 
+msgid "You are no longer following %s."
+msgstr ""
+
 msgid "You are not allowed to use that command."
 msgstr "No tienes permitido usar ese comando."
 
 msgid "You are not currently in a match."
 msgstr "Actualmente no estas en una partida."
+
+msgid "You are now following %s."
+msgstr ""
 
 msgid "You are spectating this match. Chat messages are not relayed."
 msgstr ""

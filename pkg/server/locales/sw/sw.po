@@ -14,13 +14,19 @@ msgstr ""
 msgid "%s accepted double."
 msgstr "%s kukubaliwa mara mbili."
 
-msgid "%s resigned."
-msgstr ""
-
 msgid "%s declined double offer."
 msgstr ""
 
+msgid "%s disconnected."
+msgstr ""
+
+msgid "%s is online."
+msgstr ""
+
 msgid "%s offers a double (%d points)."
+msgstr ""
+
+msgid "%s resigned."
 msgstr ""
 
 msgid "Accepted double."
@@ -48,6 +54,19 @@ msgid "Declined double offer."
 msgstr ""
 
 msgid "Double offered to opponent (%d points)."
+msgstr ""
+
+msgid "Due to ongoing abuse, registration is disabled. Please try again later."
+msgstr ""
+
+msgid ""
+"Due to ongoing abuse, some actions are restricted to registered users only. "
+"Please log in or register to avoid interruptions."
+msgstr ""
+
+msgid ""
+"Due to ongoing abuse, some actions may become restricted to registered users "
+"only. Please log in or register to avoid interruptions."
 msgstr ""
 
 msgid "Failed to change password."
@@ -82,6 +101,9 @@ msgid "Invalid password."
 msgstr ""
 
 msgid "Invalid replay ID provided."
+msgstr ""
+
+msgid "Invalid username: must be %d characters or less."
 msgstr ""
 
 msgid "Invalid username: must contain at least one non-numeric character."
@@ -170,10 +192,16 @@ msgstr ""
 msgid "Waiting for response from opponent."
 msgstr ""
 
+msgid "You are no longer following %s."
+msgstr ""
+
 msgid "You are not allowed to use that command."
 msgstr ""
 
 msgid "You are not currently in a match."
+msgstr ""
+
+msgid "You are now following %s."
 msgstr ""
 
 msgid "You are spectating this match. Chat messages are not relayed."

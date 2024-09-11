@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "PO-Revision-Date: 2024-07-17 14:09+0000\n"
 "Last-Translator: Rhenaud Dubois <rhen33390@gmail.com>\n"
-"Language-Team: French <https://hosted.weblate.org/projects/bgammon/"
-"bgammon-server/fr/>\n"
+"Language-Team: French <https://hosted.weblate.org/projects/bgammon/bgammon-"
+"server/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,14 +14,20 @@ msgstr ""
 msgid "%s accepted double."
 msgstr "%s a accepté le double."
 
-msgid "%s resigned."
-msgstr "%s a abandonné."
-
 msgid "%s declined double offer."
 msgstr "%s a décliné l'offre de double."
 
+msgid "%s disconnected."
+msgstr ""
+
+msgid "%s is online."
+msgstr ""
+
 msgid "%s offers a double (%d points)."
 msgstr "%s offre un double (%d points)."
+
+msgid "%s resigned."
+msgstr "%s a abandonné."
 
 msgid "Accepted double."
 msgstr "Double accepté."
@@ -53,6 +59,19 @@ msgstr "Offre de double déclinée."
 
 msgid "Double offered to opponent (%d points)."
 msgstr "Double proposé à l'adversaire (%d points)."
+
+msgid "Due to ongoing abuse, registration is disabled. Please try again later."
+msgstr ""
+
+msgid ""
+"Due to ongoing abuse, some actions are restricted to registered users only. "
+"Please log in or register to avoid interruptions."
+msgstr ""
+
+msgid ""
+"Due to ongoing abuse, some actions may become restricted to registered users "
+"only. Please log in or register to avoid interruptions."
+msgstr ""
 
 msgid "Failed to change password."
 msgstr "Impossible de changer le mot de passe."
@@ -96,6 +115,9 @@ msgstr "Mot de passe invalide."
 
 msgid "Invalid replay ID provided."
 msgstr "ID de replay donné invalide."
+
+msgid "Invalid username: must be %d characters or less."
+msgstr ""
 
 msgid "Invalid username: must contain at least one non-numeric character."
 msgstr ""
@@ -192,11 +214,17 @@ msgstr "Commande inconnue : %s"
 msgid "Waiting for response from opponent."
 msgstr "En attente de réponse de l'adversaire."
 
+msgid "You are no longer following %s."
+msgstr ""
+
 msgid "You are not allowed to use that command."
 msgstr "Vous n'êtes pas autorisés à utiliser cette commande."
 
 msgid "You are not currently in a match."
 msgstr "Vous n'êtes pas dans une partie."
+
+msgid "You are now following %s."
+msgstr ""
 
 msgid "You are spectating this match. Chat messages are not relayed."
 msgstr ""

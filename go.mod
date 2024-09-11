@@ -1,6 +1,8 @@
 module code.rocket9labs.com/tslocum/bgammon
 
-go 1.17
+go 1.23
+
+toolchain go1.23.0
 
 require (
 	code.rocket9labs.com/tslocum/gotext v0.0.0-20240728181248-46f419ff143b
@@ -8,7 +10,7 @@ require (
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/coder/websocket v1.8.12
 	github.com/gorilla/mux v1.8.1
-	github.com/jackc/pgx/v5 v5.6.0
+	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jlouis/glicko2 v1.0.0
 	github.com/matcornic/hermes/v2 v2.1.0
 	golang.org/x/crypto v0.27.0
@@ -20,7 +22,7 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
-	github.com/PuerkitoBio/goquery v1.9.2 // indirect
+	github.com/PuerkitoBio/goquery v1.10.0 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
