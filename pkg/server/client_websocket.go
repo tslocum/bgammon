@@ -15,6 +15,7 @@ import (
 
 var acceptOptions = &websocket.AcceptOptions{
 	InsecureSkipVerify: true,
+	CompressionMode:    websocket.CompressionContextTakeover,
 }
 
 var _ bgammon.Client = &webSocketClient{}
