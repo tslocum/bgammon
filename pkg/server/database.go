@@ -795,7 +795,7 @@ func getLeaderboard(matchType int, variant int8, multiPoint bool) (*leaderboardR
 
 	var id int
 	result := &leaderboardResult{}
-	rows, err := tx.Query(context.Background(), "SELECT id, username, "+columnName+" FROM account ORDER BY "+columnName+" DESC LIMIT 100")
+	rows, err := tx.Query(context.Background(), "SELECT id, username, "+columnName+" FROM account ORDER BY "+columnName+" DESC LIMIT 50")
 	if err != nil {
 		return nil, err
 	}
