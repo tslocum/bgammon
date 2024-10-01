@@ -81,8 +81,7 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 			username: username,
 			password: password,
 		}
-		ipHash := s.hashIP(cmd.client.Address())
-		err := registerAccount(s.passwordSalt, a, ipHash)
+		err := registerAccount(s.passwordSalt, a, cmd.client.Address())
 		if err != nil {
 			cmd.client.Terminate(fmt.Sprintf("Failed to register: %s", err))
 			return
@@ -176,6 +175,16 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 			username = append([]byte("Guest_"), username...)
 		}
 		cmd.client.name = username
+	}
+
+	banned, banReason := checkBan(cmd.client.Address(), cmd.client.accountID)
+	if banned {
+		msg := "You are banned"
+		if banReason != "" {
+			msg += ": " + banReason
+		}
+		cmd.client.Terminate(msg)
+		return
 	}
 
 	cmd.client.sendEvent(&bgammon.EventWelcome{
@@ -340,7 +349,7 @@ COMMANDS:
 		clientGame := s.gameByClient(cmd.client)
 		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
 			switch keyword {
-			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandShutdown:
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandDefcon, bgammon.CommandBan, bgammon.CommandUnban, bgammon.CommandShutdown:
 				// These commands are allowed to be used by spectators.
 			default:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Command ignored: You are spectating this match."))
@@ -1473,6 +1482,120 @@ COMMANDS:
 				}
 				s.clientsLock.Unlock()
 			}
+		case bgammon.CommandBan:
+			if len(params) == 0 {
+				cmd.client.sendNotice("Please specify an IP address or username.")
+				continue
+			} else if !cmd.client.Admin() && !cmd.client.Mod() {
+				cmd.client.sendNotice("Access denied.")
+				continue
+			}
+
+			var reason string
+			if len(params) > 1 {
+				reason = string(bytes.Join(params[1:], []byte(" ")))
+			}
+
+			msg := "You are banned"
+			if reason != "" {
+				msg += ": " + reason
+			}
+
+			isIP := bytes.ContainsRune(params[0], '.') || bytes.ContainsRune(params[0], ':')
+			if isIP {
+				ip := hashIP(string(params[0]))
+				err := addBan(ip, 0, cmd.client.accountID, reason)
+				if err != nil {
+					cmd.client.sendNotice("Failed to add ban: " + err.Error())
+				}
+
+				s.clientsLock.Lock()
+				for _, sc := range s.clients {
+					if sc.Address() == ip {
+						sc.Client.Terminate(msg)
+					}
+				}
+				s.clientsLock.Unlock()
+
+				cmd.client.sendNotice(fmt.Sprintf("Banned %s.", params[0]))
+			} else {
+				account, err := accountByUsername(string(params[0]))
+				if err != nil {
+					cmd.client.sendNotice("Failed to add ban: " + err.Error())
+					continue
+				} else if account == nil || account.id == 0 {
+					var found bool
+					nameLower := bytes.ToLower(params[0])
+					s.clientsLock.Lock()
+					for _, sc := range s.clients {
+						if bytes.Equal(bytes.ToLower(sc.name), nameLower) {
+							found = true
+							err := addBan(sc.Address(), 0, cmd.client.accountID, reason)
+							if err != nil {
+								cmd.client.sendNotice("Failed to add ban: " + err.Error())
+							}
+							sc.Client.Terminate(msg)
+							break
+						}
+					}
+					s.clientsLock.Unlock()
+
+					if !found {
+						cmd.client.sendNotice("No account was found with that username.")
+					} else {
+						cmd.client.sendNotice(fmt.Sprintf("Banned %s.", params[0]))
+					}
+					continue
+				}
+
+				err = addBan("", account.id, cmd.client.accountID, reason)
+				if err != nil {
+					cmd.client.sendNotice("Failed to add ban: " + err.Error())
+				}
+
+				s.clientsLock.Lock()
+				for _, sc := range s.clients {
+					if sc.accountID == account.id {
+						sc.Client.Terminate(msg)
+						break
+					}
+				}
+				s.clientsLock.Unlock()
+
+				cmd.client.sendNotice(fmt.Sprintf("Banned %s.", params[0]))
+			}
+		case bgammon.CommandUnban:
+			if len(params) == 0 {
+				cmd.client.sendNotice("Please specify an IP address or username.")
+				continue
+			} else if !cmd.client.Admin() && !cmd.client.Mod() {
+				cmd.client.sendNotice("Access denied.")
+				continue
+			}
+
+			isIP := bytes.ContainsRune(params[0], '.') || bytes.ContainsRune(params[0], ':')
+			if isIP {
+				err := deleteBan(hashIP(string(params[0])), 0)
+				if err != nil {
+					cmd.client.sendNotice("Failed to remove ban: " + err.Error())
+					continue
+				}
+			} else {
+				account, err := accountByUsername(string(params[0]))
+				if err != nil {
+					cmd.client.sendNotice("Failed to remove ban: " + err.Error())
+					continue
+				} else if account == nil || account.id == 0 {
+					cmd.client.sendNotice("No account was found with that username.")
+					continue
+				}
+				err = deleteBan("", account.id)
+				if err != nil {
+					cmd.client.sendNotice("Failed to remove ban: " + err.Error())
+					continue
+				}
+			}
+			cmd.client.sendNotice(fmt.Sprintf("Unbanned %s.", params[0]))
 		case bgammon.CommandShutdown:
 			if !cmd.client.Admin() {
 				cmd.client.sendNotice("Access denied.")

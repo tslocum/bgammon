@@ -41,6 +41,8 @@ var (
 
 var allowDebugCommands bool
 
+var ipSalt string
+
 //go:embed locales
 var assetFS embed.FS
 
@@ -88,7 +90,6 @@ type server struct {
 	mailServer   string
 	passwordSalt string
 	resetSalt    string
-	ipSalt       string
 
 	tz            *time.Location
 	languageTags  []language.Tag
@@ -106,7 +107,7 @@ type server struct {
 	shutdownReason string
 }
 
-func NewServer(tz string, dataSource string, mailServer string, passwordSalt string, resetSalt string, ipSalt string, certDomain string, certFolder string, certEmail string, certAddress string, relayChat bool, verbose bool, allowDebug bool) *server {
+func NewServer(tz string, dataSource string, mailServer string, passwordSalt string, resetSalt string, ipAddressSalt string, certDomain string, certFolder string, certEmail string, certAddress string, relayChat bool, verbose bool, allowDebug bool) *server {
 	const bufferSize = 10
 	s := &server{
 		newGameIDs:   make(chan int),
@@ -117,7 +118,6 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 		mailServer:   mailServer,
 		passwordSalt: passwordSalt,
 		resetSalt:    resetSalt,
-		ipSalt:       ipSalt,
 		certDomain:   certDomain,
 		certFolder:   certFolder,
 		certEmail:    certEmail,
@@ -141,6 +141,8 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 	} else {
 		s.tz = time.UTC
 	}
+
+	ipSalt = ipAddressSalt
 
 	if dataSource != "" {
 		err := connectDB(dataSource)

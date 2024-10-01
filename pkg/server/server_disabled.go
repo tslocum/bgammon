@@ -10,6 +10,6 @@ func (s *server) Listen(network string, address string) {
 	log.Fatal("bgammon-server was built without the 'full' tag. Only local connections are possible.")
 }
 
-func (s *server) hashIP(address string) string {
+func hashIP(address string) string {
 	return address
 }

@@ -38,7 +38,7 @@ func newWebSocketClient(r *http.Request, w http.ResponseWriter, commands chan<- 
 
 	return &webSocketClient{
 		conn:     conn,
-		address:  r.RemoteAddr,
+		address:  hashIP(r.RemoteAddr),
 		events:   events,
 		commands: commands,
 		verbose:  verbose,

@@ -63,6 +63,18 @@ func replayByID(id int) ([]byte, error) {
 	return nil, nil
 }
 
+func addBan(ipHash string, account int, staff int, reason string) error {
+	return nil
+}
+
+func checkBan(ipHash string, account int) (bool, string) {
+	return false, ""
+}
+
+func deleteBan(ipHash string, account int) error {
+	return nil
+}
+
 func recordGameResult(g *serverGame, winType int8, replay [][]byte) error {
 	return nil
 }

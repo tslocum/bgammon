@@ -91,6 +91,14 @@ CREATE TABLE follow (
 		FOREIGN KEY(target) 
 		REFERENCES account(id)
 );
+CREATE TABLE ban (
+	ip text NOT NULL,
+	account integer NOT NULL,
+	created integer NOT NULL,
+	staff integer NOT NULL,
+	reason text NOT NULL,
+	UNIQUE (ip, account)
+);
 `
 
 var (
@@ -737,6 +745,108 @@ func replayByID(id int) ([]byte, error) {
 		return nil, nil
 	}
 	return replay, nil
+}
+
+func addBan(ipHash string, account int, staff int, reason string) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil || (ipHash == "" && account == 0) {
+		return nil
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit(context.Background())
+
+	timestamp := time.Now().Unix()
+
+	if ipHash != "" {
+		var result int
+		err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM ban WHERE ip = $1", ipHash).Scan(&result)
+		if err != nil {
+			log.Fatal(err)
+		} else if result == 0 {
+			_, err = tx.Exec(context.Background(), "INSERT INTO ban (ip, account, created, staff, reason) VALUES ($1, $2, $3, $4, $5)", ipHash, 0, timestamp, staff, reason)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+
+	if account != 0 {
+		var result int
+		err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM ban WHERE account = $1", account).Scan(&result)
+		if err != nil {
+			log.Fatal(err)
+		} else if result == 0 {
+			_, err = tx.Exec(context.Background(), "INSERT INTO ban (ip, account, created, staff, reason) VALUES ($1, $2, $3, $4, $5)", "", account, timestamp, staff, reason)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+	return nil
+}
+
+func checkBan(ipHash string, account int) (bool, string) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil || (ipHash == "" && account == 0) {
+		return false, ""
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return false, ""
+	}
+	defer tx.Commit(context.Background())
+
+	var row pgx.Row
+	if account == 0 {
+		row = tx.QueryRow(context.Background(), "SELECT reason FROM ban WHERE ip = $1 LIMIT 1", ipHash)
+	} else {
+		row = tx.QueryRow(context.Background(), "SELECT reason FROM ban WHERE ip = $1 OR account = $2 LIMIT 1", ipHash, account)
+	}
+	var reason string
+	err = row.Scan(&reason)
+	if err != nil {
+		return false, ""
+	}
+	return true, reason
+}
+
+func deleteBan(ipHash string, account int) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil || (ipHash == "" && account == 0) {
+		return nil
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit(context.Background())
+
+	if ipHash != "" {
+		_, err = tx.Exec(context.Background(), "DELETE FROM ban WHERE ip = $1", ipHash)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if account != 0 {
+		_, err = tx.Exec(context.Background(), "DELETE FROM ban WHERE account = $1", account)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	return nil
 }
 
 func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {

@@ -20,7 +20,7 @@ import (
 )
 
 func (s *server) Listen(network string, address string) {
-	if s.passwordSalt == "" || s.resetSalt == "" || s.ipSalt == "" {
+	if s.passwordSalt == "" || s.resetSalt == "" || ipSalt == "" {
 		log.Fatal("error: password, reset and ip salts must be configured")
 	}
 
@@ -381,7 +381,7 @@ func (s *server) handlePrintWildBGStats(w http.ResponseWriter, r *http.Request) 
 	w.Write(s.cachedStats(4))
 }
 
-func (s *server) hashIP(address string) string {
+func hashIP(address string) string {
 	leftBracket, rightBracket := strings.IndexByte(address, '['), strings.IndexByte(address, ']')
 	if leftBracket != -1 && rightBracket != -1 && rightBracket > leftBracket {
 		address = address[1:rightBracket]
@@ -392,7 +392,7 @@ func (s *server) hashIP(address string) string {
 		}
 	}
 
-	buf := []byte(address + s.ipSalt)
+	buf := []byte(address + ipSalt)
 	h := make([]byte, 64)
 	sha3.ShakeSum256(h, buf)
 	return fmt.Sprintf("%x\n", h)

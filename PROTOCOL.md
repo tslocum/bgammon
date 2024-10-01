@@ -150,6 +150,14 @@ must write some data to the server at least once every 40 seconds.
     4. Warning message is broadcast to all users.
     5. Normal operation.
 
+- `ban <username> [reason]`
+  - Ban a user by IP addresss and account (if logged in).
+  - This command is only available to server administrators and moderators.
+
+- `unban <IP>/<username> <reason>`
+  - Unban a user by IP address or account.
+  - This command is only available to server administrators and moderators.
+
 - `shutdown <minutes> <reason>`
   - Prevent the creation of new matches and periodically warn players about the server shutting down.
   - This command is only available to server administrators.

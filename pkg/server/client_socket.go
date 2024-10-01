@@ -26,7 +26,7 @@ type socketClient struct {
 func newSocketClient(conn net.Conn, commands chan<- []byte, events chan []byte, verbose bool) *socketClient {
 	return &socketClient{
 		conn:     conn,
-		address:  conn.RemoteAddr().String(),
+		address:  hashIP(conn.RemoteAddr().String()),
 		events:   events,
 		commands: commands,
 		verbose:  verbose,
