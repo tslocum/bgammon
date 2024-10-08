@@ -7,6 +7,9 @@ msgstr ""
 "Language: \n"
 "X-Generator: xgotext\n"
 
+msgid "%s (%d points)"
+msgstr ""
+
 msgid "%s accepted double."
 msgstr ""
 

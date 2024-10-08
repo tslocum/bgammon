@@ -13,8 +13,8 @@ require (
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jlouis/glicko2 v1.0.0
 	github.com/matcornic/hermes/v2 v2.1.0
-	golang.org/x/crypto v0.27.0
-	golang.org/x/text v0.18.0
+	golang.org/x/crypto v0.28.0
+	golang.org/x/text v0.19.0
 )
 
 require (
@@ -40,6 +40,6 @@ require (
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/vanng822/css v1.0.1 // indirect
 	github.com/vanng822/go-premailer v1.21.0 // indirect
-	golang.org/x/net v0.29.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 )

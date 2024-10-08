@@ -280,7 +280,11 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 		}
 		if rejoin {
 			g.addClient(cmd.client)
-			cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Rejoined match: %s"), g.name))
+			matchName := string(g.name)
+			if g.Points > 1 {
+				matchName = gotext.GetD(cmd.client.language, "%s (%d points)", g.name, g.Points)
+			}
+			cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Rejoined match: %s", matchName))
 		}
 	}
 	s.gamesLock.RUnlock()
@@ -606,7 +610,11 @@ COMMANDS:
 
 					spectator := g.addClient(cmd.client)
 					s.gamesLock.Unlock()
-					cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Joined match: %s"), g.name))
+					matchName := string(g.name)
+					if g.Points > 1 {
+						matchName = gotext.GetD(cmd.client.language, "%s (%d points)", g.name, g.Points)
+					}
+					cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Joined match: %s"), matchName))
 					if spectator {
 						cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are spectating this match. Chat messages are not relayed."))
 					}
