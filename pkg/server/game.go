@@ -705,10 +705,11 @@ func (g *serverGame) handleWin() bool {
 
 	if !reset {
 		// Record match.
-		err := recordMatchResult(g, matchTypeCasual)
+		ratingDelta, err := recordMatchResult(g, matchTypeCasual)
 		if err != nil {
 			log.Fatalf("failed to record match result: %s", err)
 		}
+		winEvent.Rating = ratingDelta
 	} else {
 		// Reset game and continue match.
 		g.Reset()

@@ -79,8 +79,8 @@ func recordGameResult(g *serverGame, winType int8, replay [][]byte) error {
 	return nil
 }
 
-func recordMatchResult(g *serverGame, matchType int) error {
-	return nil
+func recordMatchResult(g *serverGame, matchType int) (int, error) {
+	return 0, nil
 }
 
 func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {

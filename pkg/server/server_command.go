@@ -745,13 +745,14 @@ COMMANDS:
 				}
 
 				if !reset {
-					err := recordMatchResult(clientGame, matchTypeCasual)
+					ratingDelta, err := recordMatchResult(clientGame, matchTypeCasual)
 					if err != nil {
 						log.Fatalf("failed to record match result: %s", err)
 					}
 
 					winEvent = &bgammon.EventWin{
 						Points: clientGame.DoubleValue,
+						Rating: ratingDelta,
 					}
 					if clientGame.Winner == 1 {
 						winEvent.Player = clientGame.Player1.Name

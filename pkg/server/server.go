@@ -359,7 +359,7 @@ func (s *server) handleGames() {
 				if err != nil {
 					log.Fatalf("failed to record game result: %s", err)
 				}
-				err = recordMatchResult(g, matchTypeCasual)
+				_, err = recordMatchResult(g, matchTypeCasual)
 				if err != nil {
 					log.Fatalf("failed to record match result: %s", err)
 				}

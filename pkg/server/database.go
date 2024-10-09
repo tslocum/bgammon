@@ -636,17 +636,17 @@ func recordGameResult(g *serverGame, winType int8, replay [][]byte) error {
 	return nil
 }
 
-func recordMatchResult(g *serverGame, matchType int) error {
+func recordMatchResult(g *serverGame, matchType int) (int, error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
 	if db == nil || g.Started == 0 || g.Winner == 0 || g.account1 == 0 || g.account2 == 0 || g.account1 == g.account2 {
-		return nil
+		return 0, nil
 	}
 
 	tx, err := begin()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer tx.Commit(context.Background())
 
@@ -655,14 +655,14 @@ func recordMatchResult(g *serverGame, matchType int) error {
 	var rating1i int
 	err = tx.QueryRow(context.Background(), "SELECT "+columnName+" FROM account WHERE id = $1", g.account1).Scan(&rating1i)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	rating1 := float64(rating1i) / 100
 
 	var rating2i int
 	err = tx.QueryRow(context.Background(), "SELECT "+columnName+" FROM account WHERE id = $1", g.account2).Scan(&rating2i)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	rating2 := float64(rating2i) / 100
 
@@ -676,11 +676,11 @@ func recordMatchResult(g *serverGame, matchType int) error {
 	active := time.Now().Unix()
 	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1, active = $2 WHERE id = $3", int(rating1New*100), active, g.account1)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	_, err = tx.Exec(context.Background(), "UPDATE account SET "+columnName+" = $1, active = $2 WHERE id = $3", int(rating2New*100), active, g.account2)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if g.client1 != nil && g.client1.account != nil {
@@ -697,7 +697,11 @@ func recordMatchResult(g *serverGame, matchType int) error {
 			g.client2.account.competitive.setRating(g.Variant, g.Points > 1, int(rating2New*100))
 		}
 	}
-	return nil
+	delta := rating1New - rating1
+	if delta <= 0 {
+		delta = rating2New - rating2
+	}
+	return int(delta), nil
 }
 
 func matchInfo(id int) (timestamp int64, player1 string, player2 string, replay []byte, err error) {

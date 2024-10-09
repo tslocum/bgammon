@@ -111,6 +111,7 @@ type EventFailedOk struct {
 type EventWin struct {
 	Event
 	Points int8
+	Rating int
 }
 
 type EventSettings struct {
