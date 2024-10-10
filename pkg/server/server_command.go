@@ -751,8 +751,10 @@ COMMANDS:
 					}
 
 					winEvent = &bgammon.EventWin{
-						Points: clientGame.DoubleValue,
 						Rating: ratingDelta,
+					}
+					if clientGame.Points > 1 {
+						winEvent.Points = clientGame.DoubleValue
 					}
 					if clientGame.Winner == 1 {
 						winEvent.Player = clientGame.Player1.Name

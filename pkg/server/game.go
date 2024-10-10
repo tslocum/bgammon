@@ -671,8 +671,9 @@ func (g *serverGame) handleWin() bool {
 	g.replay = append(g.replay, line)
 
 	// Create win event.
-	winEvent := &bgammon.EventWin{
-		Points: winPoints * g.DoubleValue,
+	winEvent := &bgammon.EventWin{}
+	if g.Points > 1 {
+		winEvent.Points = winPoints * g.DoubleValue
 	}
 	var reset bool
 	if g.Winner == 1 {
