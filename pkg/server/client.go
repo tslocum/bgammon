@@ -210,7 +210,7 @@ func (c *serverClient) sendEvent(e interface{}) {
 	case *bgammon.EventFailedOk:
 		c.Write([]byte(fmt.Sprintf("failedok %s", ev.Reason)))
 	case *bgammon.EventWin:
-		if ev.Points != 0 {
+		if ev.Points > 1 {
 			c.Write([]byte(fmt.Sprintf("win %s wins %d points!", ev.Player, ev.Points)))
 		} else {
 			c.Write([]byte(fmt.Sprintf("win %s wins!", ev.Player)))

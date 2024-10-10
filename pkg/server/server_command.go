@@ -282,7 +282,7 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 			g.addClient(cmd.client)
 			matchName := string(g.name)
 			if g.Points > 1 {
-				matchName = gotext.GetD(cmd.client.language, "%s (%d points)", g.name, g.Points)
+				matchName = gotext.GetND(cmd.client.language, "%[1]s (%[2]d point)", "%[1]s (%[2]d points)", int(g.Points), g.name, g.Points)
 			}
 			cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Rejoined match: %s", matchName))
 		}
@@ -612,7 +612,7 @@ COMMANDS:
 					s.gamesLock.Unlock()
 					matchName := string(g.name)
 					if g.Points > 1 {
-						matchName = gotext.GetD(cmd.client.language, "%s (%d points)", g.name, g.Points)
+						matchName = gotext.GetND(cmd.client.language, "%[1]s (%[2]d point)", "%[1]s (%[2]d points)", int(g.Points), g.name, g.Points)
 					}
 					cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Joined match: %s"), matchName))
 					if spectator {
@@ -678,8 +678,8 @@ COMMANDS:
 			clientGame.DoubleOffered = true
 			clientGame.NextPartialTurn(opponent.playerNumber)
 
-			cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Double offered to opponent (%d points)."), clientGame.DoubleValue*2))
-			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "%s offers a double (%d points)."), cmd.client.name, clientGame.DoubleValue*2))
+			cmd.client.sendNotice(gotext.GetND(cmd.client.language, "Double offered to opponent (%d point).", "Double offered to opponent (%d points).", int(clientGame.DoubleValue*2), clientGame.DoubleValue*2))
+			clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetND(clientGame.opponent(cmd.client).language, "%s offers a double (%d point).", "%s offers a double (%d points).", int(clientGame.DoubleValue*2)), cmd.client.name, clientGame.DoubleValue*2))
 
 			clientGame.eachClient(func(client *serverClient) {
 				if client.json {

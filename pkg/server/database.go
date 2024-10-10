@@ -697,6 +697,7 @@ func recordMatchResult(g *serverGame, matchType int) (int, error) {
 			g.client2.account.competitive.setRating(g.Variant, g.Points > 1, int(rating2New*100))
 		}
 	}
+
 	delta := rating1New - rating1
 	if delta <= 0 {
 		delta = rating2New - rating2

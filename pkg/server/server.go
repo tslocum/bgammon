@@ -571,13 +571,10 @@ func (s *server) handleShutdown() {
 
 		s.clientsLock.Lock()
 		for _, sc := range s.clients {
-			switch minutes {
-			case 0:
+			if minutes == 0 {
 				sc.sendBroadcast(gotext.GetD(sc.language, "The server is shutting down. Reason:"))
-			case 1:
-				sc.sendBroadcast(gotext.GetD(sc.language, "The server is shutting down in 1 minute. Reason:"))
-			default:
-				sc.sendBroadcast(gotext.GetD(sc.language, "The server is shutting down in %d minutes. Reason:", minutes))
+			} else {
+				sc.sendBroadcast(gotext.GetND(sc.language, "The server is shutting down in %d minute. Reason:", "The server is shutting down in %d minutes. Reason:", minutes, minutes))
 			}
 			sc.sendBroadcast(s.shutdownReason)
 			sc.sendBroadcast(gotext.GetD(sc.language, "Please finish your match as soon as possible."))
