@@ -11,6 +11,11 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 5.7-dev\n"
 
+msgid "%[1]s (%[2]d point)"
+msgid_plural "%[1]s (%[2]d points)"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "%s accepted double."
 msgstr "%s hat die Verdopplung akzeptiert."
 
@@ -23,8 +28,10 @@ msgstr ""
 msgid "%s is online."
 msgstr ""
 
-msgid "%s offers a double (%d points)."
-msgstr "%s bietet eine Verdopplung an (%d Punkte)."
+msgid "%[1]s offers a double (%[2]d point)."
+msgid_plural "%[1]s offers a double (%[2]d points)."
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "%s resigned."
 msgstr "%s hat aufgegeben."
@@ -57,8 +64,10 @@ msgstr "Partie erstellt: %s"
 msgid "Declined double offer."
 msgstr "Verdopplung verweigert."
 
-msgid "Double offered to opponent (%d points)."
-msgstr "Verdopplung angeboten (%d Punkte)."
+msgid "Double offered to opponent (%d point)."
+msgid_plural "Double offered to opponent (%d points)."
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "Due to ongoing abuse, registration is disabled. Please try again later."
 msgstr ""
@@ -198,11 +207,10 @@ msgstr "Deine aktuelle Partie läuft noch."
 msgid "The server is shutting down. Reason:"
 msgstr "Der Server fährt herunter. Grund:"
 
-msgid "The server is shutting down in 1 minute. Reason:"
-msgstr "Der Server fährt in 1 Minute herunter. Grund:"
-
-msgid "The server is shutting down in %d minutes. Reason:"
-msgstr "Der Server fährt in %d Minuten herunter. Grund:"
+msgid "The server is shutting down in %d minute. Reason:"
+msgid_plural "The server is shutting down in %d minutes. Reason:"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "Unknown command: %s"
 msgstr "Unbekannter Befehl: %s"

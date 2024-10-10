@@ -11,6 +11,11 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 5.8-dev\n"
 
+msgid "%[1]s (%[2]d point)"
+msgid_plural "%[1]s (%[2]d points)"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "%s accepted double."
 msgstr "%s akceptis duobligon."
 
@@ -23,8 +28,10 @@ msgstr "%s malkonektiĝis."
 msgid "%s is online."
 msgstr "% estas konektita."
 
-msgid "%s offers a double (%d points)."
-msgstr "%s ofertas duobligon (al %d poentoj)."
+msgid "%[1]s offers a double (%[2]d point)."
+msgid_plural "%[1]s offers a double (%[2]d points)."
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "%s resigned."
 msgstr "%s rezignis."
@@ -53,8 +60,10 @@ msgstr "Kreis partion: %s"
 msgid "Declined double offer."
 msgstr ""
 
-msgid "Double offered to opponent (%d points)."
-msgstr "Ofertis duobligon al kontraŭulo (%d poentoj)."
+msgid "Double offered to opponent (%d point)."
+msgid_plural "Double offered to opponent (%d points)."
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "Due to ongoing abuse, registration is disabled. Please try again later."
 msgstr ""
@@ -180,11 +189,10 @@ msgstr ""
 msgid "The server is shutting down. Reason:"
 msgstr ""
 
-msgid "The server is shutting down in 1 minute. Reason:"
-msgstr ""
-
-msgid "The server is shutting down in %d minutes. Reason:"
-msgstr ""
+msgid "The server is shutting down in %d minute. Reason:"
+msgid_plural "The server is shutting down in %d minutes. Reason:"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "Unknown command: %s"
 msgstr "Nekonata komando: %s"
