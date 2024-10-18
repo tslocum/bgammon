@@ -710,29 +710,6 @@ func reverseString(s string) string {
 	return string(runes)
 }
 
-type ratingPlayer struct {
-	r       float64
-	rd      float64
-	sigma   float64
-	outcome float64
-}
-
-func (p ratingPlayer) R() float64 {
-	return p.r
-}
-
-func (p ratingPlayer) RD() float64 {
-	return p.rd
-}
-
-func (p ratingPlayer) Sigma() float64 {
-	return p.sigma
-}
-
-func (p ratingPlayer) SJ() float64 {
-	return p.outcome
-}
-
 type gameCompat struct {
 	bgammon.Game
 
