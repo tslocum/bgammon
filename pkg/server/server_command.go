@@ -1493,6 +1493,42 @@ COMMANDS:
 				}
 				s.clientsLock.Unlock()
 			}
+		case bgammon.CommandKick:
+			if len(params) == 0 {
+				cmd.client.sendNotice("Please specify a username.")
+				continue
+			} else if !cmd.client.Admin() && !cmd.client.Mod() {
+				cmd.client.sendNotice("Access denied.")
+				continue
+			}
+
+			var reason string
+			if len(params) > 1 {
+				reason = string(bytes.Join(params[1:], []byte(" ")))
+			}
+
+			msg := "Kicked"
+			if reason != "" {
+				msg += ": " + reason
+			}
+
+			var found bool
+			nameLower := bytes.ToLower(params[0])
+			s.clientsLock.Lock()
+			for _, sc := range s.clients {
+				if bytes.Equal(bytes.ToLower(sc.name), nameLower) {
+					found = true
+					sc.Client.Terminate(msg)
+					break
+				}
+			}
+			s.clientsLock.Unlock()
+
+			if !found {
+				cmd.client.sendNotice("No client was found with that username.")
+			} else {
+				cmd.client.sendNotice(fmt.Sprintf("Kicked %s.", params[0]))
+			}
 		case bgammon.CommandBan:
 			if len(params) == 0 {
 				cmd.client.sendNotice("Please specify an IP address or username.")
