@@ -6,7 +6,7 @@ toolchain go1.23.0
 
 require (
 	code.rocket9labs.com/tslocum/gotext v0.0.0-20240728181248-46f419ff143b
-	code.rocket9labs.com/tslocum/tabula v0.0.0-20241018194217-9a8d60f945eb
+	code.rocket9labs.com/tslocum/tabula v0.0.0-20241024013344-d112a9463c51
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/coder/websocket v1.8.12
 	github.com/gorilla/mux v1.8.1

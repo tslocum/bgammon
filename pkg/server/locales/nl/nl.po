@@ -1,16 +1,20 @@
 msgid ""
 msgstr ""
+"PO-Revision-Date: 2024-10-24 00:25+0000\n"
+"Last-Translator: josjojo <josjojo@gmail.com>\n"
+"Language-Team: Dutch <https://hosted.weblate.org/projects/bgammon/"
+"bgammon-server/nl/>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: xgotext\n"
+"X-Generator: Weblate 5.8.2-dev\n"
 
 msgid "%[1]s (%[2]d point)"
 msgid_plural "%[1]s (%[2]d points)"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%[1]s (%[2]d punt)"
+msgstr[1] "%[1]s (%[2]d punten)"
 
 msgid "%s accepted double."
 msgstr ""
@@ -19,18 +23,19 @@ msgid "%s declined double offer."
 msgstr ""
 
 msgid "%s disconnected."
-msgstr ""
+msgstr "verbinding met %s verbroken."
 
+#, fuzzy
 msgid "%s is online."
-msgstr ""
+msgstr "%s is online."
 
 msgid "%[1]s offers a double (%[2]d point)."
 msgid_plural "%[1]s offers a double (%[2]d points)."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%[1]s biedt een dubbele (%[2]d punt)."
+msgstr[1] "%[1]s biedt dubbele (%[2]d punten)."
 
 msgid "%s resigned."
-msgstr ""
+msgstr "%s heeft opgegeven."
 
 msgid "Accepted double."
 msgstr ""
@@ -38,20 +43,24 @@ msgstr ""
 msgid ""
 "Bots are not allowed to join player matches. Please create a match instead."
 msgstr ""
+"Bots mogen niet deelnemen aan spelersspellen. Maak in plaats daarvan een "
+"spel."
 
 msgid "Choose which doubles you want for your acey-deucey."
 msgstr ""
 
 msgid "Command ignored: You are spectating this match."
-msgstr ""
+msgstr "Commando genegeerd: Je bent toeschouwer bij deze wedstrijd."
 
 msgid ""
 "Connect with other players and stay up to date on the latest changes. Visit "
 "%s"
 msgstr ""
+"Maak een verbinding met andere spelers en blijf op de hoogte van de laatste "
+"wijzigingen. Bezoek %s"
 
 msgid "Created match: %s"
-msgstr ""
+msgstr "Gemaakt spel: %s"
 
 msgid "Declined double offer."
 msgstr ""
@@ -63,85 +72,100 @@ msgstr[1] ""
 
 msgid "Due to ongoing abuse, registration is disabled. Please try again later."
 msgstr ""
+"Wegens aanhoudend misbruik is de registratie uitgeschakeld. Probeer het "
+"later opnieuw."
 
 msgid ""
 "Due to ongoing abuse, some actions are restricted to registered users only. "
 "Please log in or register to avoid interruptions."
 msgstr ""
+"Wegens aanhoudend misbruik zijn sommige acties beperkt tot geregistreerde "
+"gebruikers. Log in of registreer om beperkingen te voorkomen."
 
 msgid ""
 "Due to ongoing abuse, some actions may become restricted to registered users "
 "only. Please log in or register to avoid interruptions."
 msgstr ""
+"Wegens aanhoudend misbruik kunnen sommige acties beperkt worden tot "
+"uitsluitend geregistreerde gebruikers. Log in of registreer om beperkingen "
+"te voorkomen."
 
 msgid "Failed to change password."
-msgstr ""
+msgstr "Kan wachtwoord niet wijzigen."
 
 msgid "Failed to change password: incorrect existing password."
-msgstr ""
+msgstr "Kan wachtwoord niet wijzigen: onjuist bestaand wachtwoord."
 
 msgid "Failed to change password: you are logged in as a guest."
-msgstr ""
+msgstr "Kan wachtwoord niet wijzigen: je bent ingelogd als gast."
 
 msgid ""
 "Failed to create match: Please leave the match you are in before creating "
 "another."
 msgstr ""
+"Kan geen spel starten: Verlaat het spel waarin je zit voordat je een nieuwe "
+"maakt."
 
 msgid "Failed to create match: The server is shutting down. Reason: %s"
-msgstr ""
+msgstr "Kan geen spel starten: De server wordt afgesloten. Reden: %s"
 
 msgid "Failed to log in: %s"
-msgstr ""
+msgstr "Inloggen mislukt: %s"
 
 msgid ""
 "Failed to register: Invalid username: must contain at least one non-numeric "
 "character."
 msgstr ""
+"Registratie mislukt: Ongeldige gebruikersnaam: moet minimaal één niet-"
+"numeriek teken bevatten."
 
 msgid "Illegal move."
-msgstr ""
+msgstr "Ongeldige zet."
 
 msgid "Invalid password."
-msgstr ""
+msgstr "Ongeldig wachtwoord."
 
 msgid "Invalid replay ID provided."
-msgstr ""
+msgstr "Ongeldige herhalings-ID opgegeven."
 
 msgid "Invalid username: must be %d characters or less."
-msgstr ""
+msgstr "Ongeldige gebruikersnaam: moet %d tekens of minder bevatten."
 
 msgid "Invalid username: must contain at least one non-numeric character."
 msgstr ""
+"Ongeldige gebruikersnaam: moet minimaal één niet-numeriek teken bevatten."
 
 msgid "Invalid username: must contain only letters, numbers and underscores."
 msgstr ""
+"Ongeldige gebruikersnaam: mag alleen letters, cijfers en underscore bevatten."
 
 msgid "It is not your turn to move."
-msgstr ""
+msgstr "Het is niet jouw beurt om te verplaatsen."
 
 msgid "It is not your turn to roll."
-msgstr ""
+msgstr "Het is niet jouw beurt om te rollen."
 
 msgid "It is not your turn."
-msgstr ""
+msgstr "Het is niet jouw beurt."
 
 msgid "Joined match: %s"
-msgstr ""
+msgstr "Verbonden spel: %s"
 
 msgid "Match not found."
-msgstr ""
+msgstr "Spel niet gevonden."
 
 msgid "Message not sent: There is no one else in the match."
-msgstr ""
+msgstr "Bericht niet verzonden: Er is niemand anders in het spel."
 
 msgid "Message not sent: You are not currently in a match."
-msgstr ""
+msgstr "Bericht niet verzonden: Je zit momenteel niet in een spel."
 
 msgid ""
 "No account was found with the provided username and password. To log in as a "
 "guest, do not enter a password."
 msgstr ""
+"Er is geen account gevonden met de opgegeven gebruikersnaam en wachtwoord. "
+"Om als gast in te loggen, voer je geen wachtwoord in."
 
 msgid "No replay was recorded for that game."
 msgstr ""
@@ -194,22 +218,23 @@ msgid "Unknown command: %s"
 msgstr ""
 
 msgid "Waiting for response from opponent."
-msgstr ""
+msgstr "Wachten op een reactie van de tegenstander."
 
 msgid "You are no longer following %s."
-msgstr ""
+msgstr "Je volgt niet langer %s."
 
 msgid "You are not allowed to use that command."
-msgstr ""
+msgstr "Je bent niet gemachtigd om dat commando te gebruiken."
 
 msgid "You are not currently in a match."
-msgstr ""
+msgstr "Je zit momenteel niet in een spel."
 
 msgid "You are now following %s."
-msgstr ""
+msgstr "Je volgt nu %s."
 
 msgid "You are spectating this match. Chat messages are not relayed."
 msgstr ""
+"Je bent toeschouwer bij dit spel. Chatberichten worden niet doorgegeven."
 
 msgid "You do not currently hold the doubling cube."
 msgstr ""
@@ -242,15 +267,17 @@ msgid "You must login before using other commands."
 msgstr ""
 
 msgid "You must roll first."
-msgstr ""
+msgstr "Je moet als eerste rollen."
 
 msgid ""
 "You must wait until your opponent rejoins the match before continuing the "
 "game."
 msgstr ""
+"Je moet wachten tot je tegenstander opnieuw aan het spel deelneemt voordat "
+"je verdergaat met het spel."
 
 msgid "Your opponent left the match."
-msgstr ""
+msgstr "Je tegenstander heeft het spel verlaten."
 
 msgid "Your opponent would like to play again."
-msgstr ""
+msgstr "Je tegenstander wil graag opnieuw spelen."
