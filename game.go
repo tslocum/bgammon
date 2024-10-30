@@ -1004,7 +1004,7 @@ func FormatMoves(moves [][]int8) []byte {
 	var out bytes.Buffer
 	for i := range moves {
 		if i != 0 {
-			out.WriteByte(' ')
+			out.Write([]byte(", "))
 		}
 		out.Write([]byte(fmt.Sprintf("%s/%s", FormatSpace(moves[i][0]), FormatSpace(moves[i][1]))))
 	}
