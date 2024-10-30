@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2024-10-24 00:25+0000\n"
+"PO-Revision-Date: 2024-10-26 18:15+0000\n"
 "Last-Translator: josjojo <josjojo@gmail.com>\n"
 "Language-Team: Dutch <https://hosted.weblate.org/projects/bgammon/"
 "bgammon-server/nl/>\n"
@@ -17,15 +17,14 @@ msgstr[0] "%[1]s (%[2]d punt)"
 msgstr[1] "%[1]s (%[2]d punten)"
 
 msgid "%s accepted double."
-msgstr ""
+msgstr "%s accepteerde dubbelen."
 
 msgid "%s declined double offer."
-msgstr ""
+msgstr "%s heeft het dubbelen afgewezen."
 
 msgid "%s disconnected."
 msgstr "verbinding met %s verbroken."
 
-#, fuzzy
 msgid "%s is online."
 msgstr "%s is online."
 
@@ -38,7 +37,7 @@ msgid "%s resigned."
 msgstr "%s heeft opgegeven."
 
 msgid "Accepted double."
-msgstr ""
+msgstr "Dubbelen geaccepteerd."
 
 msgid ""
 "Bots are not allowed to join player matches. Please create a match instead."
@@ -47,7 +46,7 @@ msgstr ""
 "spel."
 
 msgid "Choose which doubles you want for your acey-deucey."
-msgstr ""
+msgstr "Kies welke dubbele je wilt voor je acey-deucey."
 
 msgid "Command ignored: You are spectating this match."
 msgstr "Commando genegeerd: Je bent toeschouwer bij deze wedstrijd."
@@ -63,12 +62,12 @@ msgid "Created match: %s"
 msgstr "Gemaakt spel: %s"
 
 msgid "Declined double offer."
-msgstr ""
+msgstr "Aanbod om te dubbelen afgewezen."
 
 msgid "Double offered to opponent (%d point)."
 msgid_plural "Double offered to opponent (%d points)."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Dubbel aangeboden aan tegenstander (%d punt)."
+msgstr[1] "Dubbel aangeboden aan tegenstander (%d punten)."
 
 msgid "Due to ongoing abuse, registration is disabled. Please try again later."
 msgstr ""
@@ -168,54 +167,54 @@ msgstr ""
 "Om als gast in te loggen, voer je geen wachtwoord in."
 
 msgid "No replay was recorded for that game."
-msgstr ""
+msgstr "Er is geen herhaling van die wedstrijd opgenomen."
 
 msgid "Password changed successfully."
-msgstr ""
+msgstr "Wachtwoord is gewijzigd."
 
 msgid "Please enter an email, username and password."
-msgstr ""
+msgstr "Vul e-mailadres, gebruikersnaam en wachtwoord in."
 
 msgid "Please finish your match as soon as possible."
-msgstr ""
+msgstr "Voltooi je spel zo snel mogelijk."
 
 msgid "Please leave the match you are in before joining another."
-msgstr ""
+msgstr "Verlaat het huidige spel voordat je aan een andere deelneemt."
 
 msgid "Rejoined match: %s"
-msgstr ""
+msgstr "Opnieuw deelgenomen aan wedstrijd: %s"
 
 msgid "Rematch offer sent."
-msgstr ""
+msgstr "Herkansingsaanbod verzonden."
 
 msgid "Resigned."
-msgstr ""
+msgstr "Opgegeven."
 
 msgid "SERVER BROADCAST:"
-msgstr ""
+msgstr "SERVERUITZENDING:"
 
 msgid "Server error"
-msgstr ""
+msgstr "Serverfout"
 
 msgid "That username is already in use."
-msgstr ""
+msgstr "Deze gebruikersnaam is al in gebruik."
 
 msgid "The following legal moves are available: %s"
-msgstr ""
+msgstr "De volgende geldige verplaatsingen zijn mogelijk: %s"
 
 msgid "The match you are in is still in progress."
-msgstr ""
+msgstr "De wedstrijd waar je aan meedoet, is nog bezig."
 
 msgid "The server is shutting down. Reason:"
-msgstr ""
+msgstr "De server wordt afgesloten. Reden:"
 
 msgid "The server is shutting down in %d minute. Reason:"
 msgid_plural "The server is shutting down in %d minutes. Reason:"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "De server wordt over %d minuut afgesloten. Reden:"
+msgstr[1] "De server wordt over %d minuten afgesloten. Reden:"
 
 msgid "Unknown command: %s"
-msgstr ""
+msgstr "Onbekende opdracht: %s"
 
 msgid "Waiting for response from opponent."
 msgstr "Wachten op een reactie van de tegenstander."
@@ -237,34 +236,38 @@ msgstr ""
 "Je bent toeschouwer bij dit spel. Chatberichten worden niet doorgegeven."
 
 msgid "You do not currently hold the doubling cube."
-msgstr ""
+msgstr "Momenteel heb je de verdubbelingsdobbelsteen niet in je bezit."
 
 msgid "You have already requested a rematch."
-msgstr ""
+msgstr "U hebt al een herkansing aangevraagd."
 
 msgid "You may not accept the double until your opponent rejoins the match."
 msgstr ""
+"Je mag de verdubbeling pas accepteren als je tegenstander weer aan de "
+"wedstrijd deelneemt."
 
 msgid "You may not double at this time."
-msgstr ""
+msgstr "Op dit moment mag je niet verdubbelen."
 
 msgid "You may not double until your opponent rejoins the match."
 msgstr ""
+"Je mag pas verdubbelen als je tegenstander weer aan de wedstrijd deelneemt."
 
 msgid "You may not move until your opponent rejoins the match."
 msgstr ""
+"Je mag niet verplaatsen totdat je tegenstander weer aan het spel deelneemt."
 
 msgid "You may not resign until it is your turn."
-msgstr ""
+msgstr "Je mag pas opgeven als je aan de beurt bent."
 
 msgid "You may not resign until your opponent rejoins the match."
-msgstr ""
+msgstr "Je mag niet opgeven totdat je tegenstander weer aan het spel deelneemt."
 
 msgid "You may not roll until your opponent rejoins the match."
-msgstr ""
+msgstr "Je mag niet rollen totdat je tegenstander weer aan het spel deelneemt."
 
 msgid "You must login before using other commands."
-msgstr ""
+msgstr "Je moet inloggen voordat je andere opdrachten kunt gebruiken."
 
 msgid "You must roll first."
 msgstr "Je moet als eerste rollen."
