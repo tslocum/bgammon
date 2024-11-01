@@ -118,6 +118,9 @@ msgstr ""
 msgid "Joined match: %s"
 msgstr ""
 
+msgid "Left completed match."
+msgstr ""
+
 msgid "Match not found."
 msgstr ""
 

@@ -332,6 +332,18 @@ func (s *server) handleGames() {
 				}
 			}
 
+			// Terminate completed matches after two minutes when only one client remains connected.
+			if !g.terminated() && g.Ended != 0 && g.Winner != 0 && ((g.client1 != nil && g.client2 == nil) || (g.client1 == nil && g.client2 != nil)) && time.Now().Unix()-g.Ended >= 120 {
+				var clients []*serverClient
+				g.eachClient(func(client *serverClient) {
+					clients = append(clients, client)
+				})
+				for _, sc := range clients {
+					sc.sendNotice(gotext.GetD(sc.language, "Left completed match."))
+					g.removeClient(sc)
+				}
+			}
+
 			if !g.terminated() {
 				s.games[i] = g
 				i++
