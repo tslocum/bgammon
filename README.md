@@ -1,5 +1,6 @@
 # bgammon - Backgammon server powering [bgammon.org](https://bgammon.org)
 [![GoDoc](https://code.rocket9labs.com/tslocum/godoc-static/raw/branch/master/badge.svg)](https://docs.rocket9labs.com/code.rocket9labs.com/tslocum/bgammon)
+[![Translate](https://translate.codeberg.org/widget/bgammon/server/svg-badge.svg)](https://translate.codeberg.org/projects/bgammon/)
 [![Donate via LiberaPay](https://img.shields.io/liberapay/receives/rocket9labs.com.svg?logo=liberapay)](https://liberapay.com/rocket9labs.com)
 
 ## Play
@@ -28,7 +29,7 @@ Source code is available [here](https://code.rocket9labs.com/tslocum/bgammon-cli
 
 ## Translate
 
-Translation is handled [online](https://hosted.weblate.org/projects/bgammon/).
+Translation is handled [online](https://translate.codeberg.org/projects/bgammon/).
 
 ## Support
 
