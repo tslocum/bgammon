@@ -305,6 +305,8 @@ func (g *serverGame) addClient(client *serverClient) (spectator bool) {
 		return spectator
 	}
 
+	g.UpdateLastActive()
+
 	var playerNumber int8
 	defer func() {
 		ev := &bgammon.EventJoined{
@@ -399,6 +401,8 @@ func (g *serverGame) removeClient(client *serverClient) {
 		if playerNumber == 0 {
 			return
 		}
+
+		g.UpdateLastActive()
 
 		ev := &bgammon.EventLeft{}
 		ev.Player = string(client.name)

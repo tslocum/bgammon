@@ -52,6 +52,8 @@ type Game struct {
 	partialTime    time.Time
 	partialHandled bool
 
+	lastActive time.Time
+
 	boardStates   [][]int8  // One board state for each move to allow undoing a move.
 	enteredStates [][2]bool // Player 1 entered state and Player 2 entered state for each move.
 
@@ -105,6 +107,8 @@ func (g *Game) Copy(shallow bool) *Game {
 		partialTurn:    g.partialTurn,
 		partialTime:    g.partialTime,
 		partialHandled: g.partialHandled,
+
+		lastActive: g.lastActive,
 	}
 	copy(newGame.Board, g.Board)
 	copy(newGame.Moves, g.Moves)
@@ -142,6 +146,14 @@ func (g *Game) SetPartialHandled(handled bool) {
 	g.partialHandled = handled
 }
 
+func (g *Game) LastActive() time.Time {
+	return g.lastActive
+}
+
+func (g *Game) UpdateLastActive() {
+	g.lastActive = time.Now()
+}
+
 func (g *Game) NextPartialTurn(player int8) {
 	if g.Started == 0 || g.Winner != 0 {
 		return
@@ -159,6 +171,8 @@ func (g *Game) NextPartialTurn(player int8) {
 
 	g.partialTurn = player
 	g.partialTime = time.Now()
+
+	g.UpdateLastActive()
 }
 
 func (g *Game) NextTurn(reroll bool) {
