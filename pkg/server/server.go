@@ -73,8 +73,8 @@ type server struct {
 	gamesCacheTime time.Time
 	gamesCacheLock sync.Mutex
 
-	statsCache     [5][]byte
-	statsCacheTime [5]time.Time
+	statsCache     [6][]byte
+	statsCacheTime [6]time.Time
 	statsCacheLock sync.Mutex
 
 	leaderboardCache     [12][]byte

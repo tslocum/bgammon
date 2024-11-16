@@ -1274,6 +1274,67 @@ func accountStats(name string, matchType int, variant int8, tz *time.Location) (
 	return result, nil
 }
 
+func playerVsPlayerStats(tz *time.Location) (*serverStatsResult, error) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	tx, err := begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	condition := "player1 NOT LIKE 'Guest_%' AND player1 NOT LIKE 'BOT_%' AND player2 NOT LIKE 'Guest_%' AND player2 NOT LIKE 'BOT_%'"
+
+	var earliestGame int64
+	rows, err := tx.Query(context.Background(), "SELECT MIN(started) FROM game WHERE "+condition)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		if err != nil {
+			continue
+		}
+		err = rows.Scan(&earliestGame)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	result := &serverStatsResult{}
+	m := midnight(time.Unix(earliestGame, 0).In(tz))
+	earliest := time.Date(m.Year(), m.Month(), 1, 0, 0, 0, 0, m.Location())
+	rangeStart, rangeEnd := earliest.Unix(), earliest.AddDate(0, 1, 0).Unix()
+	var games int
+	for {
+		rows, err := tx.Query(context.Background(), "SELECT COUNT(*) FROM game WHERE started >= $1 AND started < $2 AND "+condition, rangeStart, rangeEnd)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			if err != nil {
+				continue
+			}
+			err = rows.Scan(&games)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		result.History = append(result.History, &serverStatsEntry{
+			Date:  time.Unix(rangeStart, 0).Format("2006-01"),
+			Games: games,
+		})
+
+		earliest = time.Date(earliest.Year(), earliest.Month()+1, 1, 0, 0, 0, 0, m.Location())
+		rangeStart, rangeEnd = earliest.Unix(), time.Date(earliest.Year(), earliest.Month()+1, 1, 0, 0, 0, 0, m.Location()).Unix()
+		if rangeStart >= time.Now().Unix() {
+			break
+		}
+	}
+	return result, nil
+}
+
 func ratingColumn(matchType int, variant int8, multiPoint bool) string {
 	var columnStart = "casual_"
 	if matchType == matchTypeRated {

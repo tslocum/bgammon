@@ -106,3 +106,7 @@ func cumulativeStats(tz *time.Location) (*serverStatsResult, error) {
 func accountStats(name string, tz *time.Location) (*accountStatsResult, error) {
 	return &accountStatsResult{}, nil
 }
+
+func playerVsPlayerStats(tz *time.Location) (*serverStatsResult, error) {
+	return &serverStatsResult{}, nil
+}
