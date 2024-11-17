@@ -3,20 +3,15 @@ package server
 //go:generate xgotext -no-locations -default bgammon -in . -out locales
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/rand"
 	"embed"
-	"encoding/base64"
 	"fmt"
 	"log"
 	"math/big"
 	"net"
-	"os"
-	"os/exec"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -535,46 +530,6 @@ func (s *server) gameByClient(c *serverClient) *serverGame {
 	return nil
 }
 
-// Analyze returns match analysis information calculated by gnubg.
-func (s *server) Analyze(g *bgammon.Game) {
-	cmd := exec.Command("gnubg", "--tty")
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = cmd.Start()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	go func() {
-		scanner := bufio.NewScanner(stdout)
-		for scanner.Scan() {
-			log.Println("STDOUT", string(scanner.Bytes()))
-		}
-	}()
-
-	go func() {
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			log.Println("STDERR", string(scanner.Bytes()))
-		}
-	}()
-
-	stdin.Write([]byte(fmt.Sprintf("new game\nset board %s\nanalyze game\n", gnubgPosition(g))))
-
-	time.Sleep(2 * time.Second)
-	os.Exit(0)
-}
-
 func (s *server) handleShutdown() {
 	var mins time.Duration
 	var minutes int
@@ -641,89 +596,6 @@ func mul8(a int8, b int8) int8 {
 		}
 	}
 	return v
-}
-
-func gnubgPosition(g *bgammon.Game) string {
-	var opponent int8 = 2
-	start := 0
-	end := 25
-	boardStart := 1
-	boardEnd := 24
-	delta := 1
-	playerBarSpace := bgammon.SpaceBarPlayer
-	opponentBarSpace := bgammon.SpaceBarOpponent
-	switch g.Turn {
-	case 1:
-	case 2:
-		opponent = 1
-		start = 25
-		end = 0
-		boardStart = 24
-		boardEnd = 1
-		delta = -1
-		playerBarSpace = bgammon.SpaceBarOpponent
-		opponentBarSpace = bgammon.SpaceBarPlayer
-	default:
-		log.Fatalf("failed to analyze game: zero turn")
-	}
-
-	var buf []byte
-	for space := boardStart; space != end; space += delta {
-		playerCheckers := bgammon.PlayerCheckers(g.Board[space], g.Turn)
-		for i := int8(0); i < playerCheckers; i++ {
-			buf = append(buf, '1')
-		}
-		buf = append(buf, '0')
-	}
-	playerCheckers := bgammon.PlayerCheckers(g.Board[playerBarSpace], g.Turn)
-	for i := int8(0); i < playerCheckers; i++ {
-		buf = append(buf, '1')
-	}
-	buf = append(buf, '0')
-
-	for space := boardEnd; space != start; space -= delta {
-		opponentCheckers := bgammon.PlayerCheckers(g.Board[space], opponent)
-		for i := int8(0); i < opponentCheckers; i++ {
-			buf = append(buf, '1')
-		}
-		buf = append(buf, '0')
-	}
-	opponentCheckers := bgammon.PlayerCheckers(g.Board[opponentBarSpace], opponent)
-	for i := int8(0); i < opponentCheckers; i++ {
-		buf = append(buf, '1')
-	}
-	buf = append(buf, '0')
-
-	for i := len(buf); i < 80; i++ {
-		buf = append(buf, '0')
-	}
-
-	var out []byte
-	for i := 0; i < len(buf); i += 8 {
-		s := reverseString(string(buf[i : i+8]))
-		v, err := strconv.ParseUint(s, 2, 8)
-		if err != nil {
-			panic(err)
-		}
-		out = append(out, byte(v))
-	}
-
-	position := base64.StdEncoding.EncodeToString(out)
-	if len(position) == 0 {
-		return ""
-	}
-	for position[len(position)-1] == '=' {
-		position = position[:len(position)-1]
-	}
-	return position
-}
-
-func reverseString(s string) string {
-	runes := []rune(s)
-	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
-		runes[i], runes[j] = runes[j], runes[i]
-	}
-	return string(runes)
 }
 
 type gameCompat struct {
