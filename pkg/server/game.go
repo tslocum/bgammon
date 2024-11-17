@@ -282,7 +282,9 @@ func (g *serverGame) eachClient(f func(client *serverClient)) {
 }
 
 func (g *serverGame) addClient(client *serverClient) (spectator bool) {
-	if g.allowed1 != nil && !bytes.Equal(client.name, g.allowed1) && !bytes.Equal(client.name, g.allowed2) {
+	if g.client1 == client || g.client2 == client {
+		return false
+	} else if g.allowed1 != nil && !bytes.Equal(client.name, g.allowed1) && !bytes.Equal(client.name, g.allowed2) {
 		spectator = true
 	} else if g.client1 != nil && g.client2 != nil {
 		spectator = true
