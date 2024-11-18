@@ -710,17 +710,16 @@ func (g *serverGame) handleWin() bool {
 		log.Fatalf("failed to record game result: %s", err)
 	}
 
-	if !reset {
-		// Record match.
-		ratingDelta, err := recordMatchResult(g, matchTypeCasual)
-		if err != nil {
-			log.Fatalf("failed to record match result: %s", err)
-		}
-		winEvent.Rating = ratingDelta
-	} else {
+	if reset {
 		// Reset game and continue match.
 		g.Reset()
 		g.replay = g.replay[:0]
+	} else {
+		// Record match.
+		winEvent.Rating, err = recordMatchResult(g, matchTypeCasual)
+		if err != nil {
+			log.Fatalf("failed to record match result: %s", err)
+		}
 	}
 
 	// Refresh cached ratings.
@@ -733,8 +732,8 @@ func (g *serverGame) handleWin() bool {
 
 	// Send board and win events.
 	g.eachClient(func(client *serverClient) {
-		g.sendBoard(client, false)
 		client.sendEvent(winEvent)
+		g.sendBoard(client, false)
 	})
 	return true
 }

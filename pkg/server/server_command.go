@@ -714,6 +714,7 @@ COMMANDS:
 				clientGame.Winner = opponent.playerNumber
 				clientGame.NextPartialTurn(opponent.playerNumber)
 
+				// TODO Remove when most users are running Boxcars v1.4.7+
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Declined double offer."))
 				clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "%s declined double offer."), cmd.client.name))
 
@@ -725,6 +726,7 @@ COMMANDS:
 				clientGame.Winner = opponent.playerNumber
 				clientGame.NextPartialTurn(opponent.playerNumber)
 
+				// TODO Remove when most users are running Boxcars v1.4.7+
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Resigned."))
 				clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "%s resigned."), cmd.client.name))
 
@@ -749,36 +751,37 @@ COMMANDS:
 					log.Fatalf("failed to record game result: %s", err)
 				}
 
-				if !reset {
-					ratingDelta, err := recordMatchResult(clientGame, matchTypeCasual)
-					if err != nil {
-						log.Fatalf("failed to record match result: %s", err)
-					}
-
-					winEvent = &bgammon.EventWin{
-						Rating: ratingDelta,
-					}
-					if clientGame.Points > 1 {
-						winEvent.Points = clientGame.DoubleValue
-					}
-					if clientGame.Winner == 1 {
-						winEvent.Player = clientGame.Player1.Name
-					} else {
-						winEvent.Player = clientGame.Player2.Name
-					}
+				winEvent = &bgammon.EventWin{}
+				if clientGame.Winner == 1 {
+					winEvent.Player = clientGame.Player1.Name
+					winEvent.Resigned = clientGame.Player2.Name
+				} else {
+					winEvent.Player = clientGame.Player2.Name
+					winEvent.Resigned = clientGame.Player1.Name
+				}
+				if clientGame.Points > 1 {
+					winEvent.Points = clientGame.DoubleValue
 				}
 			}
 
 			if reset {
+				// Reset game and continue match.
 				clientGame.Reset()
 				clientGame.replay = clientGame.replay[:0]
+			} else {
+				// Record match.
+				var err error
+				winEvent.Rating, err = recordMatchResult(clientGame, matchTypeCasual)
+				if err != nil {
+					log.Fatalf("failed to record match result: %s", err)
+				}
 			}
 
 			clientGame.eachClient(func(client *serverClient) {
-				clientGame.sendBoard(client, false)
 				if winEvent != nil {
 					client.sendEvent(winEvent)
 				}
+				clientGame.sendBoard(client, false)
 			})
 		case bgammon.CommandRoll, "r":
 			if clientGame == nil {

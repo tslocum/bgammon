@@ -110,8 +110,9 @@ type EventFailedOk struct {
 
 type EventWin struct {
 	Event
-	Points int8
-	Rating int
+	Points   int8
+	Rating   int
+	Resigned string
 }
 
 type EventSettings struct {
