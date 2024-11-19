@@ -53,6 +53,11 @@ type EventList struct {
 	Games []GameListing
 }
 
+type EventFailedCreate struct {
+	Event
+	Reason string
+}
+
 type EventJoined struct {
 	Event
 	GameID       int
@@ -178,6 +183,8 @@ func DecodeEvent(message []byte) (interface{}, error) {
 		ev = &EventSay{}
 	case EventTypeList:
 		ev = &EventList{}
+	case EventTypeFailedCreate:
+		ev = &EventFailedCreate{}
 	case EventTypeJoined:
 		ev = &EventJoined{}
 	case EventTypeFailedJoin:

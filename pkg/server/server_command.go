@@ -432,24 +432,28 @@ COMMANDS:
 		case bgammon.CommandList, "ls":
 			s.sendMatchList(cmd.client)
 		case bgammon.CommandCreate, "c":
+			failCreate := func(message string) {
+				cmd.client.sendEvent(&bgammon.EventFailedCreate{
+					Reason: message,
+				})
+				// TODO Remove when most users are running Boxcars v1.4.7+
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to create match: %s", message))
+			}
+			sendUsage := func() {
+				failCreate("To create a public match please specify whether it is public or private, and also specify how many points are needed to win the match. When creating a private match, a password must also be provided.")
+			}
+
 			if clientGame != nil {
-				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to create match: Please leave the match you are in before creating another."))
+				failCreate(gotext.GetD(cmd.client.language, "Please leave the match you are in before creating another."))
 				continue
 			} else if !s.shutdownTime.IsZero() {
-				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to create match: The server is shutting down. Reason: %s", s.shutdownReason))
+				failCreate(gotext.GetD(cmd.client.language, "The server is shutting down. Reason: %s", s.shutdownReason))
 				continue
-			}
-
-			sendUsage := func() {
-				cmd.client.sendNotice("To create a public match please specify whether it is public or private, and also specify how many points are needed to win the match. When creating a private match, a password must also be provided.")
-			}
-			if len(params) < 2 {
+			} else if len(params) < 2 {
 				sendUsage()
 				continue
-			}
-
-			if s.defcon < 3 && cmd.client.accountID == 0 {
-				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Due to ongoing abuse, some actions are restricted to registered users only. Please log in or register to avoid interruptions."))
+			} else if s.defcon < 3 && cmd.client.accountID == 0 {
+				failCreate(gotext.GetD(cmd.client.language, "Due to ongoing abuse, some actions are restricted to registered users only. Please log in or register to avoid interruptions."))
 				continue
 			}
 
@@ -714,7 +718,7 @@ COMMANDS:
 				clientGame.Winner = opponent.playerNumber
 				clientGame.NextPartialTurn(opponent.playerNumber)
 
-				// TODO Remove when most users are running Boxcars v1.4.7+
+				// TODO Remove when most users are running Boxcars v1.4.6+
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Declined double offer."))
 				clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "%s declined double offer."), cmd.client.name))
 
@@ -726,7 +730,7 @@ COMMANDS:
 				clientGame.Winner = opponent.playerNumber
 				clientGame.NextPartialTurn(opponent.playerNumber)
 
-				// TODO Remove when most users are running Boxcars v1.4.7+
+				// TODO Remove when most users are running Boxcars v1.4.6+
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Resigned."))
 				clientGame.opponent(cmd.client).sendNotice(fmt.Sprintf(gotext.GetD(clientGame.opponent(cmd.client).language, "%s resigned."), cmd.client.name))
 
@@ -1169,7 +1173,7 @@ COMMANDS:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Your opponent left the match."))
 				continue
 			} else if !s.shutdownTime.IsZero() {
-				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to create match: The server is shutting down. Reason: %s", s.shutdownReason))
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Failed to create match: %s", gotext.GetD(cmd.client.language, "The server is shutting down. Reason: %s", s.shutdownReason)))
 				continue
 			} else if clientGame.rematch != 0 && clientGame.rematch != cmd.client.playerNumber {
 				s.gamesLock.Lock()
@@ -1680,13 +1684,13 @@ COMMANDS:
 			}
 
 			clientGame.Turn = 1
-			clientGame.Roll1 = 1
-			clientGame.Roll2 = 2
+			clientGame.Roll1 = 5
+			clientGame.Roll2 = 5
 			clientGame.Roll3 = 0
-			clientGame.Variant = 1
-			clientGame.Player1.Entered = true
+			clientGame.Variant = bgammon.VariantAceyDeucey
+			clientGame.Player1.Entered = false
 			clientGame.Player2.Entered = true
-			clientGame.Board = []int8{0, 0, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, -3, 0, 0, -3, -6, -2, 0, 0, 0}
+			clientGame.Board = []int8{1, 2, 1, 3, 2, 2, 2, 0, 0, 0, -3, -7, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, -3, 0, 0, -2}
 
 			log.Println(clientGame.Board[0:28])
 

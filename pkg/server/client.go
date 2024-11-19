@@ -108,6 +108,8 @@ func (c *serverClient) sendEvent(e interface{}) {
 			ev.Type = bgammon.EventTypeSay
 		case *bgammon.EventList:
 			ev.Type = bgammon.EventTypeList
+		case *bgammon.EventFailedCreate:
+			ev.Type = bgammon.EventTypeFailedCreate
 		case *bgammon.EventJoined:
 			ev.Type = bgammon.EventTypeJoined
 		case *bgammon.EventFailedJoin:
@@ -189,6 +191,8 @@ func (c *serverClient) sendEvent(e interface{}) {
 			c.Write([]byte(fmt.Sprintf("game %d %d %d %d %s", g.ID, password, g.Points, g.Players, name)))
 		}
 		c.Write([]byte("listend End of matches list."))
+	case *bgammon.EventFailedCreate:
+		c.Write([]byte(fmt.Sprintf("failedcreate %s", ev.Reason)))
 	case *bgammon.EventJoined:
 		c.Write([]byte(fmt.Sprintf("joined %d %d %s", ev.GameID, ev.PlayerNumber, ev.Player)))
 	case *bgammon.EventFailedJoin:

@@ -197,6 +197,9 @@ This document lists events in human-readable format.
 - `listend End of matches list.`
   - End of matches list.
 
+- `failedcreate <message:line>`
+  - Sent after failing to create a match.
+
 - `joined <id:integer> <playerNumber:integer> <playerName:text>`
   - Sent after successfully creating or joining a match, and when another player
 joins a match you are in.
