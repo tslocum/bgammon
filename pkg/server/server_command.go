@@ -177,6 +177,11 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 		cmd.client.name = username
 	}
 
+	if s.defcon <= 2 {
+		cmd.client.Terminate(gotext.GetD(cmd.client.language, "Due to ongoing abuse, only registered users may connect. Please register an account or try again later."))
+		return
+	}
+
 	banned, banReason := checkBan(cmd.client.Address(), cmd.client.accountID)
 	if banned {
 		msg := "You are banned"
@@ -244,7 +249,7 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 	}
 
 	// Send DEFCON warning message.
-	if s.defcon != 5 {
+	if s.defcon < 5 {
 		cmd.client.sendDefconWarning(s.defcon)
 	}
 
@@ -358,7 +363,7 @@ COMMANDS:
 		clientGame := s.gameByClient(cmd.client)
 		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
 			switch keyword {
-			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandDefcon, bgammon.CommandBan, bgammon.CommandUnban, bgammon.CommandShutdown:
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandDefcon, bgammon.CommandKick, bgammon.CommandBan, bgammon.CommandUnban, bgammon.CommandShutdown:
 				// These commands are allowed to be used by spectators.
 			default:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Command ignored: You are spectating this match."))
@@ -415,7 +420,7 @@ COMMANDS:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Message not sent: There is no one else in the match."))
 				continue
 			}
-			if s.defcon < 4 && cmd.client.accountID == 0 {
+			if s.defcon <= 3 && cmd.client.accountID == 0 {
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Due to ongoing abuse, some actions are restricted to registered users only. Please log in or register to avoid interruptions."))
 				continue
 			}
@@ -451,9 +456,6 @@ COMMANDS:
 				continue
 			} else if len(params) < 2 {
 				sendUsage()
-				continue
-			} else if s.defcon < 3 && cmd.client.accountID == 0 {
-				failCreate(gotext.GetD(cmd.client.language, "Due to ongoing abuse, some actions are restricted to registered users only. Please log in or register to avoid interruptions."))
 				continue
 			}
 
@@ -509,7 +511,7 @@ COMMANDS:
 				points = 127
 			}
 
-			if s.defcon < 4 && cmd.client.accountID == 0 {
+			if s.defcon <= 3 && cmd.client.accountID == 0 {
 				gameName = nil
 			}
 
@@ -552,13 +554,6 @@ COMMANDS:
 
 			if len(params) == 0 {
 				sendUsage()
-				continue
-			}
-
-			if s.defcon < 3 && cmd.client.accountID == 0 {
-				cmd.client.sendEvent(&bgammon.EventFailedJoin{
-					Reason: gotext.GetD(cmd.client.language, "Due to ongoing abuse, some actions are restricted to registered users only. Please log in or register to avoid interruptions."),
-				})
 				continue
 			}
 
@@ -1494,17 +1489,14 @@ COMMANDS:
 				continue
 			}
 
-			lastDefcon := s.defcon
 			s.defcon = v
 			cmd.client.sendNotice(fmt.Sprintf("Updated DEFCON level to %d.", v))
 
-			if lastDefcon == 5 {
-				s.clientsLock.Lock()
-				for _, sc := range s.clients {
-					sc.sendDefconWarning(s.defcon)
-				}
-				s.clientsLock.Unlock()
+			s.clientsLock.Lock()
+			for _, sc := range s.clients {
+				sc.sendDefconWarning(s.defcon)
 			}
+			s.clientsLock.Unlock()
 		case bgammon.CommandKick:
 			if len(params) == 0 {
 				cmd.client.sendNotice("Please specify a username.")

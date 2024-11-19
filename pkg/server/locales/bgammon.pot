@@ -58,6 +58,9 @@ msgid_plural "Double offered to opponent (%d points)."
 msgstr[0] ""
 msgstr[1] ""
 
+msgid "Due to ongoing abuse, only registered users may connect. Please register an account or try again later."
+msgstr ""
+
 msgid "Due to ongoing abuse, registration is disabled. Please try again later."
 msgstr ""
 

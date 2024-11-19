@@ -145,7 +145,7 @@ must write some data to the server at least once every 40 seconds.
   - This command is only available to server administrators and moderators.
   - Levels:
     1. Disallow new accounts from being registered.
-    2. Only registered users may create and join matches.
+    2. Only registered users may connect.
     3. Only registered users may chat and set custom match titles.
     4. Warning message is broadcast to all users.
     5. Normal operation.

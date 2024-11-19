@@ -94,7 +94,7 @@ var HelpText = map[string]string{
 	CommandDisconnect:    "- Disconnect from the server.",
 	CommandMOTD:          "[message] - View (or set) message of the day. Specifying a new message of the day is only available to server administrators.",
 	CommandBroadcast:     "<message> - Send a message to all players. This command is only available to server administrators.",
-	CommandDefcon:        "[level] - Apply restrictions to guests to prevent abuse. Levels:\n1. Disallow new accounts from being registered.\n2. Only registered users may create and join matches.\n3. Only registered users may chat and set custom match titles.\n4. Warning message is broadcast to all users.\n5. Normal operation.",
+	CommandDefcon:        "[level] - Apply restrictions to guests to prevent abuse. Levels:\n1. Disallow new accounts from being registered.\n2. Only registered users may connect.\n3. Only registered users may chat and set custom match titles.\n4. Warning message is broadcast to all users.\n5. Normal operation.",
 	CommandKick:          "<username> [reason] - Kick a user from the server.",
 	CommandBan:           "<username> [reason] - Ban a user by IP addresss and account (if logged in).",
 	CommandUnban:         "<IP>/<username> - Unban a user by IP address or account.",
