@@ -16,12 +16,11 @@ import (
 	"code.rocket9labs.com/tslocum/bgammon"
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/acme/autocert"
-	"golang.org/x/crypto/sha3"
 )
 
 func (s *server) Listen(network string, address string) {
-	if s.passwordSalt == "" || s.resetSalt == "" || ipSalt == "" {
-		log.Fatal("error: password, reset and ip salts must be configured")
+	if s.passwordSalt == "" || s.resetSalt == "" || s.ipAddressSalt == "" {
+		log.Fatal("error: password, reset and ip salts must be configured before listening for remote clients")
 	}
 
 	if strings.ToLower(network) == "ws" {
@@ -125,6 +124,7 @@ func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	if wsClient == nil {
 		return
 	}
+	wsClient.address = s.hashIP(r.RemoteAddr)
 
 	now := time.Now().Unix()
 
@@ -399,21 +399,4 @@ func (s *server) handlePrintTabulaStats(w http.ResponseWriter, r *http.Request) 
 func (s *server) handlePrintWildBGStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(s.cachedStats(4))
-}
-
-func hashIP(address string) string {
-	leftBracket, rightBracket := strings.IndexByte(address, '['), strings.IndexByte(address, ']')
-	if leftBracket != -1 && rightBracket != -1 && rightBracket > leftBracket {
-		address = address[1:rightBracket]
-	} else if strings.IndexByte(address, '.') != -1 {
-		colon := strings.IndexByte(address, ':')
-		if colon != -1 {
-			address = address[:colon]
-		}
-	}
-
-	buf := []byte(address + ipSalt)
-	h := make([]byte, 64)
-	sha3.ShakeSum256(h, buf)
-	return fmt.Sprintf("%x\n", h)
 }

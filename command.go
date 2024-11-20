@@ -25,7 +25,7 @@ const (
 	CommandMove          = "move"          // Move checkers.
 	CommandReset         = "reset"         // Reset checker movement.
 	CommandOk            = "ok"            // Confirm checker movement and pass turn to next player.
-	CommandRematch       = "rematch"       // Confirm checker movement and pass turn to next player.
+	CommandRematch       = "rematch"       // Offer (or accept) a rematch after a match has been finished.
 	CommandFollow        = "follow"        // Follow a player.
 	CommandUnfollow      = "unfollow"      // Un-follow a player.
 	CommandBoard         = "board"         // Print current board state in human-readable form.

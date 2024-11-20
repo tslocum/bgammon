@@ -105,7 +105,7 @@ formatted responses are more easily parsed by computers.
   - Aliases: `k`
 
 - `rematch`
-  - Request (or accept) a rematch after a match has been finished.
+  - Offer (or accept) a rematch after a match has been finished.
   - Aliases: `rm`
 
 - `say <message>`

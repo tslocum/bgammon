@@ -1554,7 +1554,7 @@ COMMANDS:
 
 			isIP := bytes.ContainsRune(params[0], '.') || bytes.ContainsRune(params[0], ':')
 			if isIP {
-				ip := hashIP(string(params[0]))
+				ip := s.hashIP(string(params[0]))
 				err := addBan(ip, 0, cmd.client.accountID, reason)
 				if err != nil {
 					cmd.client.sendNotice("Failed to add ban: " + err.Error())
@@ -1626,7 +1626,7 @@ COMMANDS:
 
 			isIP := bytes.ContainsRune(params[0], '.') || bytes.ContainsRune(params[0], ':')
 			if isIP {
-				err := deleteBan(hashIP(string(params[0])), 0)
+				err := deleteBan(s.hashIP(string(params[0])), 0)
 				if err != nil {
 					cmd.client.sendNotice("Failed to remove ban: " + err.Error())
 					continue
@@ -1667,7 +1667,7 @@ COMMANDS:
 
 			s.shutdown(time.Duration(minutes)*time.Minute, string(bytes.Join(params[1:], []byte(" "))))
 		case "endgame":
-			if !allowDebugCommands {
+			if !s.debug {
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "You are not allowed to use that command."))
 				continue
 			} else if clientGame == nil {
@@ -1680,9 +1680,9 @@ COMMANDS:
 			clientGame.Roll2 = 5
 			clientGame.Roll3 = 0
 			clientGame.Variant = bgammon.VariantAceyDeucey
-			clientGame.Player1.Entered = false
+			clientGame.Player1.Entered = true
 			clientGame.Player2.Entered = true
-			clientGame.Board = []int8{1, 2, 1, 3, 2, 2, 2, 0, 0, 0, -3, -7, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, -3, 0, 0, -2}
+			clientGame.Board = []int8{0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0}
 
 			log.Println(clientGame.Board[0:28])
 

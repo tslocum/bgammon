@@ -18,6 +18,7 @@ import (
 
 	"code.rocket9labs.com/tslocum/bgammon"
 	"code.rocket9labs.com/tslocum/gotext"
+	"golang.org/x/crypto/sha3"
 	"golang.org/x/text/language"
 )
 
@@ -33,10 +34,6 @@ var (
 	guestName              = regexp.MustCompile(`^guest[0-9]+$`)
 	alphaNumericUnderscore = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
 )
-
-var allowDebugCommands bool
-
-var ipSalt string
 
 //go:embed locales
 var assetFS embed.FS
@@ -82,9 +79,10 @@ type server struct {
 
 	sortedCommands []string
 
-	mailServer   string
-	passwordSalt string
-	resetSalt    string
+	mailServer    string
+	resetSalt     string
+	passwordSalt  string
+	ipAddressSalt string
 
 	tz            *time.Location
 	languageTags  []language.Tag
@@ -97,28 +95,53 @@ type server struct {
 
 	relayChat bool // Chats are not relayed normally. This option is only used by local servers.
 	verbose   bool
+	debug     bool // Allow users to run debug commands.
 
 	shutdownTime   time.Time
 	shutdownReason string
 }
 
-func NewServer(tz string, dataSource string, mailServer string, passwordSalt string, resetSalt string, ipAddressSalt string, certDomain string, certFolder string, certEmail string, certAddress string, relayChat bool, verbose bool, allowDebug bool) *server {
+type Options struct {
+	TZ         string
+	DataSource string
+	MailServer string
+
+	RelayChat bool
+	Verbose   bool
+	Debug     bool
+
+	CertDomain  string
+	CertFolder  string
+	CertEmail   string
+	CertAddress string
+
+	ResetSalt     string
+	PasswordSalt  string
+	IPAddressSalt string
+}
+
+func NewServer(op *Options) *server {
+	if op == nil {
+		op = &Options{}
+	}
 	const bufferSize = 10
 	s := &server{
-		newGameIDs:   make(chan int),
-		newClientIDs: make(chan int),
-		commands:     make(chan serverCommand, bufferSize),
-		welcome:      []byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!"),
-		defcon:       5,
-		mailServer:   mailServer,
-		passwordSalt: passwordSalt,
-		resetSalt:    resetSalt,
-		certDomain:   certDomain,
-		certFolder:   certFolder,
-		certEmail:    certEmail,
-		certAddress:  certAddress,
-		relayChat:    relayChat,
-		verbose:      verbose,
+		newGameIDs:    make(chan int),
+		newClientIDs:  make(chan int),
+		commands:      make(chan serverCommand, bufferSize),
+		welcome:       []byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!"),
+		defcon:        5,
+		mailServer:    op.MailServer,
+		resetSalt:     op.ResetSalt,
+		passwordSalt:  op.PasswordSalt,
+		ipAddressSalt: op.IPAddressSalt,
+		certDomain:    op.CertDomain,
+		certFolder:    op.CertFolder,
+		certEmail:     op.CertEmail,
+		certAddress:   op.CertAddress,
+		relayChat:     op.RelayChat,
+		verbose:       op.Verbose,
+		debug:         op.Debug,
 	}
 	s.loadLocales()
 
@@ -127,20 +150,18 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 	}
 	sort.Slice(s.sortedCommands, func(i, j int) bool { return s.sortedCommands[i] < s.sortedCommands[j] })
 
-	if tz != "" {
+	if op.TZ != "" {
 		var err error
-		s.tz, err = time.LoadLocation(tz)
+		s.tz, err = time.LoadLocation(op.TZ)
 		if err != nil {
-			log.Fatalf("failed to parse timezone %s: %s", tz, err)
+			log.Fatalf("failed to parse timezone %s: %s", op.TZ, err)
 		}
 	} else {
 		s.tz = time.UTC
 	}
 
-	ipSalt = ipAddressSalt
-
-	if dataSource != "" {
-		err := connectDB(dataSource)
+	if op.DataSource != "" {
+		err := connectDB(op.DataSource)
 		if err != nil {
 			log.Fatalf("failed to connect to database: %s", err)
 		}
@@ -154,8 +175,6 @@ func NewServer(tz string, dataSource string, mailServer string, passwordSalt str
 
 		log.Println("Connected to database successfully")
 	}
-
-	allowDebugCommands = allowDebug
 
 	go s.handleNewGameIDs()
 	go s.handleNewClientIDs()
@@ -408,6 +427,9 @@ func (s *server) handleConnection(conn net.Conn) {
 
 	now := time.Now().Unix()
 
+	sc := newSocketClient(conn, commands, events, s.verbose)
+	sc.address = s.hashIP(conn.RemoteAddr().String())
+
 	c := &serverClient{
 		id:        <-s.newClientIDs,
 		language:  "bgammon-en",
@@ -415,7 +437,7 @@ func (s *server) handleConnection(conn net.Conn) {
 		connected: now,
 		active:    now,
 		commands:  commands,
-		Client:    newSocketClient(conn, commands, events, s.verbose),
+		Client:    sc,
 	}
 	s.sendWelcome(c)
 	s.handleClient(c)
@@ -528,6 +550,23 @@ func (s *server) gameByClient(c *serverClient) *serverGame {
 		}
 	}
 	return nil
+}
+
+func (s *server) hashIP(address string) string {
+	leftBracket, rightBracket := strings.IndexByte(address, '['), strings.IndexByte(address, ']')
+	if leftBracket != -1 && rightBracket != -1 && rightBracket > leftBracket {
+		address = address[1:rightBracket]
+	} else if strings.IndexByte(address, '.') != -1 {
+		colon := strings.IndexByte(address, ':')
+		if colon != -1 {
+			address = address[:colon]
+		}
+	}
+
+	buf := []byte(address + s.ipAddressSalt)
+	h := make([]byte, 64)
+	sha3.ShakeSum256(h, buf)
+	return fmt.Sprintf("%x\n", h)
 }
 
 func (s *server) handleShutdown() {

@@ -14,47 +14,46 @@ import (
 )
 
 func main() {
+	op := &server.Options{}
 	var (
 		tcpAddress     string
 		wsAddress      string
-		tz             string
-		dataSource     string
-		mailServer     string
-		passwordSalt   string
-		resetSalt      string
-		ipSalt         string
-		verbose        bool
-		debug          int
+		debugPort      int
 		debugCommands  bool
 		rollStatistics bool
 	)
 	flag.StringVar(&tcpAddress, "tcp", "localhost:1337", "TCP listen address")
 	flag.StringVar(&wsAddress, "ws", "", "WebSocket listen address")
-	flag.StringVar(&tz, "tz", "", "Time zone used when calculating statistics")
-	flag.StringVar(&dataSource, "db", "", "Database data source (postgres://username:password@localhost:5432/database_name")
-	flag.StringVar(&mailServer, "smtp", "", "SMTP server address")
-	flag.BoolVar(&verbose, "verbose", false, "Print all client messages")
-	flag.IntVar(&debug, "debug", 0, "print debug information and serve pprof on specified port")
+	flag.StringVar(&op.TZ, "tz", "", "Time zone used when calculating statistics")
+	flag.StringVar(&op.DataSource, "db", "", "Database data source (postgres://username:password@localhost:5432/database_name")
+	flag.StringVar(&op.MailServer, "smtp", "", "SMTP server address")
+	flag.BoolVar(&op.Verbose, "verbose", false, "Print all client messages")
+	flag.IntVar(&debugPort, "debug", 0, "print debug information and serve pprof on specified port")
 	flag.BoolVar(&debugCommands, "debug-commands", false, "allow players to use restricted commands")
 	flag.BoolVar(&rollStatistics, "statistics", false, "print dice roll statistics and exit")
 	flag.Parse()
 
-	if dataSource == "" {
-		dataSource = os.Getenv("BGAMMON_DB")
+	if debugPort > 0 {
+		op.Debug = true
+		op.Verbose = true
 	}
 
-	if mailServer == "" {
-		mailServer = os.Getenv("BGAMMON_SMTP")
+	if op.DataSource == "" {
+		op.DataSource = os.Getenv("BGAMMON_DB")
 	}
 
-	passwordSalt = os.Getenv("BGAMMON_SALT_PASSWORD")
-	resetSalt = os.Getenv("BGAMMON_SALT_RESET")
-	ipSalt = os.Getenv("BGAMMON_SALT_IP")
+	if op.MailServer == "" {
+		op.MailServer = os.Getenv("BGAMMON_SMTP")
+	}
 
-	certDomain := os.Getenv("BGAMMON_CERT_DOMAIN")
-	certFolder := os.Getenv("BGAMMON_CERT_FOLDER")
-	certEmail := os.Getenv("BGAMMON_CERT_EMAIL")
-	certAddress := os.Getenv("BGAMMON_CERT_ADDRESS")
+	op.ResetSalt = os.Getenv("BGAMMON_SALT_RESET")
+	op.PasswordSalt = os.Getenv("BGAMMON_SALT_PASSWORD")
+	op.IPAddressSalt = os.Getenv("BGAMMON_SALT_IP")
+
+	op.CertDomain = os.Getenv("BGAMMON_CERT_DOMAIN")
+	op.CertFolder = os.Getenv("BGAMMON_CERT_FOLDER")
+	op.CertEmail = os.Getenv("BGAMMON_CERT_EMAIL")
+	op.CertAddress = os.Getenv("BGAMMON_CERT_ADDRESS")
 
 	if rollStatistics {
 		printRollStatistics()
@@ -65,13 +64,13 @@ func main() {
 		log.Fatal("Error: A TCP and/or WebSocket listen address must be specified.")
 	}
 
-	if debug > 0 {
+	if debugPort > 0 {
 		go func() {
-			log.Fatal(http.ListenAndServe(fmt.Sprintf("localhost:%d", debug), nil))
+			log.Fatal(http.ListenAndServe(fmt.Sprintf("localhost:%d", debugPort), nil))
 		}()
 	}
 
-	s := server.NewServer(tz, dataSource, mailServer, passwordSalt, resetSalt, ipSalt, certDomain, certFolder, certEmail, certAddress, false, verbose || debug > 0, debugCommands)
+	s := server.NewServer(op)
 	if tcpAddress != "" {
 		s.Listen("tcp", tcpAddress)
 	}
