@@ -15,7 +15,6 @@ import (
 
 	"code.rocket9labs.com/tslocum/bgammon"
 	"github.com/gorilla/mux"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 func (s *server) Listen(network string, address string) {
@@ -90,28 +89,15 @@ func (s *server) listenWebSocket(address string) {
 	handle("/stats/{username:[A-Za-z0-9_\\-]+}/tabula.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantTabula))
 	handle("/", s.handleWebSocket)
 
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		Cache:      autocert.DirCache(s.certFolder),
-		HostPolicy: autocert.HostWhitelist(s.certDomain),
-		Email:      s.certEmail,
-	}
-
 	server := &http.Server{
 		Addr:    address,
 		Handler: m,
 		TLSConfig: &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-			MinVersion:     tls.VersionTLS12,
+			MinVersion: tls.VersionTLS12,
 		},
 	}
 
-	go func() {
-		err := http.ListenAndServe(s.certAddress, certManager.HTTPHandler(m))
-		log.Fatalf("failed to listen on %s: %s", s.certAddress, err)
-	}()
-
-	err := server.ListenAndServeTLS("", "")
+	err := server.ListenAndServeTLS(s.certFile, s.certKey)
 	log.Fatalf("failed to listen on %s: %s", address, err)
 }
 

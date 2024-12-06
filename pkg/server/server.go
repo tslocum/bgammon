@@ -88,10 +88,8 @@ type server struct {
 	languageTags  []language.Tag
 	languageNames [][]byte
 
-	certDomain  string
-	certFolder  string
-	certEmail   string
-	certAddress string
+	certFile string
+	certKey  string
 
 	relayChat bool // Chats are not relayed normally. This option is only used by local servers.
 	verbose   bool
@@ -110,10 +108,8 @@ type Options struct {
 	Verbose   bool
 	Debug     bool
 
-	CertDomain  string
-	CertFolder  string
-	CertEmail   string
-	CertAddress string
+	CertFile string
+	CertKey  string
 
 	ResetSalt     string
 	PasswordSalt  string
@@ -135,10 +131,8 @@ func NewServer(op *Options) *server {
 		resetSalt:     op.ResetSalt,
 		passwordSalt:  op.PasswordSalt,
 		ipAddressSalt: op.IPAddressSalt,
-		certDomain:    op.CertDomain,
-		certFolder:    op.CertFolder,
-		certEmail:     op.CertEmail,
-		certAddress:   op.CertAddress,
+		certFile:      op.CertFile,
+		certKey:       op.CertKey,
 		relayChat:     op.RelayChat,
 		verbose:       op.Verbose,
 		debug:         op.Debug,

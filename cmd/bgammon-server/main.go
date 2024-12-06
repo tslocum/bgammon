@@ -50,10 +50,8 @@ func main() {
 	op.PasswordSalt = os.Getenv("BGAMMON_SALT_PASSWORD")
 	op.IPAddressSalt = os.Getenv("BGAMMON_SALT_IP")
 
-	op.CertDomain = os.Getenv("BGAMMON_CERT_DOMAIN")
-	op.CertFolder = os.Getenv("BGAMMON_CERT_FOLDER")
-	op.CertEmail = os.Getenv("BGAMMON_CERT_EMAIL")
-	op.CertAddress = os.Getenv("BGAMMON_CERT_ADDRESS")
+	op.CertFile = os.Getenv("BGAMMON_CERT_FILE")
+	op.CertKey = os.Getenv("BGAMMON_CERT_KEY")
 
 	if rollStatistics {
 		printRollStatistics()
@@ -62,6 +60,10 @@ func main() {
 
 	if tcpAddress == "" && wsAddress == "" {
 		log.Fatal("Error: A TCP and/or WebSocket listen address must be specified.")
+	}
+
+	if wsAddress != "" && (op.CertFile == "" || op.CertKey == "") {
+		log.Fatal("Error: Certificate file and key must be specified to listen for WebSocket connections.")
 	}
 
 	if debugPort > 0 {
