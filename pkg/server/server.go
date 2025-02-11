@@ -20,6 +20,7 @@ import (
 	"code.rocket9labs.com/tslocum/gotext"
 	"golang.org/x/crypto/sha3"
 	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 const clientTimeout = 40 * time.Second
@@ -72,6 +73,10 @@ type server struct {
 	leaderboardCache     [12][]byte
 	leaderboardCacheTime [12]time.Time
 	leaderboardCacheLock sync.Mutex
+
+	diceStatsCache     []byte
+	diceStatsCacheTime time.Time
+	diceStatsCacheLock sync.Mutex
 
 	defcon int
 
@@ -604,6 +609,34 @@ func RandInt(max int) int {
 		panic(err)
 	}
 	return int(i.Int64())
+}
+
+func DiceStats() string {
+	var oneSame, doubles int
+	var lastroll1, lastroll2 int
+	var rolls [6]int
+
+	const total = 10000000
+	for i := 0; i < total; i++ {
+		roll1 := RandInt(6) + 1
+		roll2 := RandInt(6) + 1
+
+		rolls[roll1-1]++
+		rolls[roll2-1]++
+
+		if roll1 == lastroll1 || roll1 == lastroll2 || roll2 == lastroll1 || roll2 == lastroll2 {
+			oneSame++
+		}
+
+		if roll1 == roll2 {
+			doubles++
+		}
+
+		lastroll1, lastroll2 = roll1, roll2
+	}
+
+	p := message.NewPrinter(language.English)
+	return p.Sprintf("Rolled %d pairs of dice.\nDoubles: %d (%.0f%%). One same as last: %d (%.0f%%).\n1s: %d (%.0f%%), 2s: %d (%.0f%%), 3s: %d (%.0f%%), 4s: %d (%.0f%%), 5s: %d (%.0f%%), 6s: %d (%.0f%%).\n", total, doubles, float64(doubles)/float64(total)*100, oneSame, float64(oneSame)/float64(total)*100, rolls[0], float64(rolls[0])/float64(total*2)*100, rolls[1], float64(rolls[1])/float64(total*2)*100, rolls[2], float64(rolls[2])/float64(total*2)*100, rolls[3], float64(rolls[3])/float64(total*2)*100, rolls[4], float64(rolls[4])/float64(total*2)*100, rolls[5], float64(rolls[5])/float64(total*2)*100)
 }
 
 // add8 adds two int8 values without overflowing.

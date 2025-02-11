@@ -63,6 +63,7 @@ func (s *server) listenWebSocket(address string) {
 
 	handle("/reset/{id:[0-9]+}/{key:[A-Za-z0-9]+}", s.handleResetPassword)
 	handle("/match/{id:[0-9]+}", s.handleMatch)
+	handle("/dice", s.handleDiceStats)
 	handle("/matches.json", s.handleListMatches)
 	handle("/leaderboard-casual-backgammon-single.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantBackgammon, false))
 	handle("/leaderboard-casual-backgammon-multi.json", s.handleLeaderboardFunc(matchTypeCasual, bgammon.VariantBackgammon, true))
@@ -278,6 +279,21 @@ func (s *server) cachedStats(statsType int) []byte {
 	return s.statsCache[statsType]
 }
 
+func (s *server) cachedDiceStats() []byte {
+	s.diceStatsCacheLock.Lock()
+	defer s.diceStatsCacheLock.Unlock()
+
+	if time.Since(s.diceStatsCacheTime) < 24*time.Hour {
+		return s.diceStatsCache
+	}
+
+	s.diceStatsCacheTime = time.Now()
+
+	s.diceStatsCache = []byte(DiceStats())
+	s.diceStatsCache = append(s.diceStatsCache, []byte(fmt.Sprintf("Generated %s. Dice statistics refresh every 24 hours.", s.diceStatsCacheTime.Format(time.RFC1123)))...)
+	return s.diceStatsCache
+}
+
 func (s *server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -320,6 +336,11 @@ func (s *server) handleMatch(w http.ResponseWriter, r *http.Request) {
 func (s *server) handleListMatches(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(s.cachedMatches())
+}
+
+func (s *server) handleDiceStats(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write(s.cachedDiceStats())
 }
 
 func (s *server) handleAccountStatsFunc(matchType int, variant int8) func(w http.ResponseWriter, r *http.Request) {
