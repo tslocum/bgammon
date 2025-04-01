@@ -65,6 +65,11 @@ msgid_plural "Double offered to opponent (%d points)."
 msgstr[0] ""
 msgstr[1] ""
 
+msgid ""
+"Due to ongoing abuse, only registered users may connect. Please register an "
+"account or try again later."
+msgstr ""
+
 msgid "Due to ongoing abuse, registration is disabled. Please try again later."
 msgstr ""
 
@@ -88,14 +93,13 @@ msgstr "Klarte ikke å endre passord. Samsvarer ikke med eksisterende passord."
 msgid "Failed to change password: you are logged in as a guest."
 msgstr "Klarte ikke å endre passord. Du er innlogget som gjest."
 
-msgid ""
-"Failed to create match: Please leave the match you are in before creating "
-"another."
+msgid "Failed to create match: %s"
 msgstr ""
-"Klarte ikke å opprette spill. Forlat det du er en del av før du oppretter "
-"nytt."
 
-msgid "Failed to create match: The server is shutting down. Reason: %s"
+msgid "Please leave the match you are in before creating another."
+msgstr ""
+
+msgid "The server is shutting down. Reason: %s"
 msgstr ""
 
 msgid "Failed to log in: %s"
@@ -135,6 +139,9 @@ msgstr "Det er ikke din tur."
 
 msgid "Joined match: %s"
 msgstr "Tok del i spill: %s"
+
+msgid "Left completed match."
+msgstr ""
 
 msgid "Match not found."
 msgstr "Fant ikke spillet."
@@ -269,3 +276,10 @@ msgstr "Motstanderen din har forlatt spillet."
 
 msgid "Your opponent would like to play again."
 msgstr "Motstanderen din vil ha omkamp."
+
+#~ msgid ""
+#~ "Failed to create match: Please leave the match you are in before creating "
+#~ "another."
+#~ msgstr ""
+#~ "Klarte ikke å opprette spill. Forlat det du er en del av før du oppretter "
+#~ "nytt."

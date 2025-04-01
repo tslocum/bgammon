@@ -69,6 +69,11 @@ msgid_plural "Double offered to opponent (%d points)."
 msgstr[0] ""
 msgstr[1] ""
 
+msgid ""
+"Due to ongoing abuse, only registered users may connect. Please register an "
+"account or try again later."
+msgstr ""
+
 msgid "Due to ongoing abuse, registration is disabled. Please try again later."
 msgstr ""
 
@@ -94,17 +99,14 @@ msgstr ""
 "Impossible de changer le mot de passe : Vous êtes connectés en tant "
 "qu'invité."
 
-msgid ""
-"Failed to create match: Please leave the match you are in before creating "
-"another."
+msgid "Failed to create match: %s"
 msgstr ""
-"Impossible de créer la partie : Veuillez quitter votre partie actuelle avant "
-"d'en créer une autre."
 
-msgid "Failed to create match: The server is shutting down. Reason: %s"
+msgid "Please leave the match you are in before creating another."
 msgstr ""
-"Impossible de créer la partie : Le serveur est en train de s'éteindre. "
-"Raison : %s"
+
+msgid "The server is shutting down. Reason: %s"
+msgstr ""
 
 msgid "Failed to log in: %s"
 msgstr "Impossible de se connecter : %s"
@@ -149,6 +151,9 @@ msgstr "Ce n'est pas votre tour."
 
 msgid "Joined match: %s"
 msgstr "Partie rejointe : %s"
+
+msgid "Left completed match."
+msgstr ""
 
 msgid "Match not found."
 msgstr "Partie non trouvée."
@@ -293,3 +298,15 @@ msgstr "Votre adversaire a quitté la partie."
 
 msgid "Your opponent would like to play again."
 msgstr "Votre adversaire voudrait jouer avec vous à nouveau."
+
+#~ msgid ""
+#~ "Failed to create match: Please leave the match you are in before creating "
+#~ "another."
+#~ msgstr ""
+#~ "Impossible de créer la partie : Veuillez quitter votre partie actuelle "
+#~ "avant d'en créer une autre."
+
+#~ msgid "Failed to create match: The server is shutting down. Reason: %s"
+#~ msgstr ""
+#~ "Impossible de créer la partie : Le serveur est en train de s'éteindre. "
+#~ "Raison : %s"

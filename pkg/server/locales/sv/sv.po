@@ -61,6 +61,11 @@ msgid_plural "Double offered to opponent (%d points)."
 msgstr[0] ""
 msgstr[1] ""
 
+msgid ""
+"Due to ongoing abuse, only registered users may connect. Please register an "
+"account or try again later."
+msgstr ""
+
 msgid "Due to ongoing abuse, registration is disabled. Please try again later."
 msgstr ""
 
@@ -83,12 +88,13 @@ msgstr ""
 msgid "Failed to change password: you are logged in as a guest."
 msgstr ""
 
-msgid ""
-"Failed to create match: Please leave the match you are in before creating "
-"another."
+msgid "Failed to create match: %s"
 msgstr ""
 
-msgid "Failed to create match: The server is shutting down. Reason: %s"
+msgid "Please leave the match you are in before creating another."
+msgstr ""
+
+msgid "The server is shutting down. Reason: %s"
 msgstr ""
 
 msgid "Failed to log in: %s"
@@ -127,6 +133,9 @@ msgid "It is not your turn."
 msgstr ""
 
 msgid "Joined match: %s"
+msgstr ""
+
+msgid "Left completed match."
 msgstr ""
 
 msgid "Match not found."
