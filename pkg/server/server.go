@@ -16,8 +16,8 @@ import (
 	"sync"
 	"time"
 
-	"code.rocket9labs.com/tslocum/bgammon"
-	"code.rocket9labs.com/tslocum/gotext"
+	"codeberg.org/tslocum/bgammon"
+	"codeberg.org/tslocum/gotext"
 	"golang.org/x/crypto/sha3"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"

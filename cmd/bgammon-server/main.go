@@ -8,7 +8,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 
-	"code.rocket9labs.com/tslocum/bgammon/pkg/server"
+	"codeberg.org/tslocum/bgammon/pkg/server"
 )
 
 func main() {

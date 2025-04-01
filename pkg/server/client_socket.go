@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"code.rocket9labs.com/tslocum/bgammon"
+	"codeberg.org/tslocum/bgammon"
 )
 
 var _ bgammon.Client = &socketClient{}

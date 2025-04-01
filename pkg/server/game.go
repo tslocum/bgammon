@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"code.rocket9labs.com/tslocum/bgammon"
+	"codeberg.org/tslocum/bgammon"
 )
 
 type serverGame struct {

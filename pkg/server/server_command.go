@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"code.rocket9labs.com/tslocum/bgammon"
-	"code.rocket9labs.com/tslocum/gotext"
+	"codeberg.org/tslocum/bgammon"
+	"codeberg.org/tslocum/gotext"
 )
 
 var clearBytes = []byte("clear")

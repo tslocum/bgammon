@@ -5,7 +5,7 @@ package server
 import (
 	"time"
 
-	"code.rocket9labs.com/tslocum/bgammon"
+	"codeberg.org/tslocum/bgammon"
 )
 
 func connectDB(dataSource string) error {

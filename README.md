@@ -1,5 +1,5 @@
 # bgammon - Backgammon server powering [bgammon.org](https://bgammon.org)
-[![GoDoc](https://code.rocket9labs.com/tslocum/godoc-static/raw/branch/main/badge.svg)](https://docs.rocket9labs.com/code.rocket9labs.com/tslocum/bgammon)
+[![GoDoc](https://codeberg.org/tslocum/godoc-static/raw/branch/main/badge.svg)](https://docs.rocket9labs.com/codeberg.org/tslocum/bgammon)
 [![Translate](https://translate.codeberg.org/widget/bgammon/server/svg-badge.svg)](https://translate.codeberg.org/projects/bgammon/)
 [![Donate via LiberaPay](https://img.shields.io/liberapay/receives/rocket9labs.com.svg?logo=liberapay)](https://liberapay.com/rocket9labs.com)
 
@@ -11,7 +11,7 @@
 
 Download Boxcars at https://bgammon.org/download
 
-Source code is available [here](https://code.rocket9labs.com/tslocum/boxcars).
+Source code is available [here](https://codeberg.org/tslocum/boxcars).
 
 ### Android
 
@@ -19,13 +19,13 @@ Source code is available [here](https://code.rocket9labs.com/tslocum/boxcars).
 
 Download Boxcars via [F-Droid](https://f-droid.org/packages/com.rocket9labs.boxcars/)
 
-Source code is available [here](https://code.rocket9labs.com/tslocum/boxcars-android).
+Source code is available [here](https://codeberg.org/tslocum/boxcars-android).
 
 ### Terminal
 
 `ssh bgammon.org -p 5000`
 
-Source code is available [here](https://code.rocket9labs.com/tslocum/bgammon-cli).
+Source code is available [here](https://codeberg.org/tslocum/bgammon-cli).
 
 ## Translate
 
@@ -33,8 +33,8 @@ Translation is handled [online](https://translate.codeberg.org/projects/bgammon/
 
 ## Support
 
-Please share issues and suggestions [here](https://code.rocket9labs.com/tslocum/bgammon/issues).
+Please share issues and suggestions [here](https://codeberg.org/tslocum/bgammon/issues).
 
-The bgammon protocol is specified in [PROTOCOL.md](https://code.rocket9labs.com/tslocum/bgammon/src/branch/main/PROTOCOL.md).
+The bgammon protocol is specified in [PROTOCOL.md](https://codeberg.org/tslocum/bgammon/src/branch/main/PROTOCOL.md).
 
 Information on how to play backgammon is available [here](https://bkgm.com/rules.html).

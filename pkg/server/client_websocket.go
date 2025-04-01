@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"sync"
 
-	"code.rocket9labs.com/tslocum/bgammon"
+	"codeberg.org/tslocum/bgammon"
 	"github.com/coder/websocket"
 )
 

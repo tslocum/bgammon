@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"code.rocket9labs.com/tslocum/bgammon"
+	"codeberg.org/tslocum/bgammon"
 	"github.com/gorilla/mux"
 )
 

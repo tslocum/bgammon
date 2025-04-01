@@ -165,7 +165,7 @@ must write some data to the server at least once every 40 seconds.
 ## Server events
 
 All events are sent in either JSON or human-readable format. The structure of
-messages sent in JSON format is available via [godoc](https://docs.rocket9labs.com/code.rocket9labs.com/tslocum/bgammon/#Event).
+messages sent in JSON format is available via [godoc](https://docs.rocket9labs.com/codeberg.org/tslocum/bgammon/#Event).
 
 This document lists events in human-readable format.
 

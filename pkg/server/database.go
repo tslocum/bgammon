@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"code.rocket9labs.com/tslocum/bgammon"
+	"codeberg.org/tslocum/bgammon"
 	"github.com/alexedwards/argon2id"
 	"github.com/jackc/pgx/v5"
 	"github.com/jlouis/glicko2"
