@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -57,6 +58,8 @@ type serverGame struct {
 	rejoin1    bool
 	rejoin2    bool
 	replay     [][]byte
+	pending1   []int
+	pending2   []int
 	*bgammon.Game
 }
 
@@ -575,6 +578,37 @@ func (g *serverGame) recordEvent() {
 	}
 	line = append(line, movesFormatted...)
 	g.replay = append(g.replay, line)
+	if g.Turn == 1 || g.Turn == 2 {
+		if len(g.Moves) != 0 {
+			g.SetBlocked(g.Turn, 0)
+			return
+		}
+		var onBar int8
+		if g.Turn == 1 {
+			onBar = bgammon.PlayerCheckers(g.Board[bgammon.SpaceBarPlayer], 1)
+		} else {
+			onBar = bgammon.PlayerCheckers(g.Board[bgammon.SpaceBarOpponent], 2)
+		}
+		if onBar == 0 {
+			g.SetBlocked(g.Turn, 0)
+			return
+		}
+		blocked := g.Blocked(g.Turn) + 1
+		g.SetBlocked(g.Turn, blocked)
+		if blocked == 7 {
+			pending := g.pending2
+			if g.Turn == 2 {
+				pending = g.pending1
+			}
+			if !slices.Contains(pending, AchievementDance) {
+				if g.Turn == 1 {
+					g.pending2 = append(g.pending2, AchievementDance)
+				} else {
+					g.pending1 = append(g.pending1, AchievementDance)
+				}
+			}
+		}
+	}
 }
 
 func (g *serverGame) nextTurn(reroll bool) {
@@ -747,6 +781,22 @@ func (g *serverGame) handleWin() bool {
 			opponentName = g.Player1.Name
 		}
 		if c != nil && c.accountID != 0 {
+			pending := g.pending1
+			if g.Winner == 2 {
+				pending = g.pending2
+			}
+			for _, award := range pending {
+				awarded, err := awardAchievement(c.account, award, gameID, g.Ended)
+				if err != nil {
+					log.Fatal(err)
+				} else if !awarded {
+					continue
+				}
+				info := achievementInfo[award]
+				message := fmt.Sprintf("%s (%s)", gotext.GetD(c.language, info[0]), gotext.GetD(c.language, info[1]))
+				c.sendNotice(gotext.GetD(c.language, "Achievement unlocked: %s", message))
+			}
+
 			var achievements []int
 			switch {
 			case !strings.HasPrefix(opponentName, "BOT_"):

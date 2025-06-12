@@ -54,6 +54,9 @@ type Game struct {
 
 	lastActive time.Time
 
+	blocked1 int
+	blocked2 int
+
 	boardStates   [][]int8  // One board state for each move to allow undoing a move.
 	enteredStates [][2]bool // Player 1 entered state and Player 2 entered state for each move.
 
@@ -109,6 +112,9 @@ func (g *Game) Copy(shallow bool) *Game {
 		partialHandled: g.partialHandled,
 
 		lastActive: g.lastActive,
+
+		blocked1: g.blocked1,
+		blocked2: g.blocked2,
 	}
 	copy(newGame.Board, g.Board)
 	copy(newGame.Moves, g.Moves)
@@ -144,6 +150,23 @@ func (g *Game) PartialHandled() bool {
 
 func (g *Game) SetPartialHandled(handled bool) {
 	g.partialHandled = handled
+}
+
+func (g *Game) Blocked(player int8) int {
+	if player == 1 {
+		return g.blocked1
+	} else if player == 2 {
+		return g.blocked2
+	}
+	return 0
+}
+
+func (g *Game) SetBlocked(player int8, blocked int) {
+	if player == 1 {
+		g.blocked1 = blocked
+	} else if player == 2 {
+		g.blocked2 = blocked
+	}
 }
 
 func (g *Game) LastActive() time.Time {
@@ -218,6 +241,8 @@ func (g *Game) Reset() {
 	g.enteredStates = nil
 	g.partialTurn = 0
 	g.partialTime = time.Time{}
+	g.blocked1 = 0
+	g.blocked2 = 0
 }
 
 func (g *Game) turnPlayer() Player {
