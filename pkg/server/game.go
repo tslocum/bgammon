@@ -26,7 +26,7 @@ const (
 	AchievementDance            = 10
 )
 
-var achievementInfo = map[int][2]string{
+var Achievements = map[int][2]string{
 	AchievementHumanWin:         {"Good Game", "Scored a normal win against a human"},
 	AchievementHumanGammon:      {"Double Trouble", "Scored a gammon against a human"},
 	AchievementHumanBackgammon:  {"Flawless Victory", "Scored a backgammon against a human"},
@@ -792,7 +792,7 @@ func (g *serverGame) handleWin() bool {
 				} else if !awarded {
 					continue
 				}
-				info := achievementInfo[award]
+				info := Achievements[award]
 				message := fmt.Sprintf("%s (%s)", gotext.GetD(c.language, info[0]), gotext.GetD(c.language, info[1]))
 				c.sendNotice(gotext.GetD(c.language, "Achievement unlocked: %s", message))
 			}
@@ -811,7 +811,7 @@ func (g *serverGame) handleWin() bool {
 			if err != nil {
 				log.Fatal(err)
 			} else if awarded {
-				info := achievementInfo[award]
+				info := Achievements[award]
 				message := fmt.Sprintf("%s (%s)", gotext.GetD(c.language, info[0]), gotext.GetD(c.language, info[1]))
 				c.sendNotice(gotext.GetD(c.language, "Achievement unlocked: %s", message))
 			}
