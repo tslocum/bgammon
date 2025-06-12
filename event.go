@@ -151,11 +151,18 @@ type HistoryMatch struct {
 	Winner    int8
 }
 
+type HistoryAchievement struct {
+	ID        int
+	Replay    int
+	Timestamp int64
+}
+
 type EventHistory struct {
 	Event
 	Page                   int
 	Pages                  int
 	Matches                []*HistoryMatch
+	Achievements           []*HistoryAchievement
 	CasualBackgammonSingle int
 	CasualBackgammonMulti  int
 	CasualAceyDeuceySingle int

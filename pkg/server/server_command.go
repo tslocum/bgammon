@@ -1401,7 +1401,7 @@ COMMANDS:
 
 			matches, err := matchHistory(string(params[0]))
 			if err != nil {
-				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Invalid replay ID provided."))
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Invalid username provided."))
 				continue
 			}
 
@@ -1431,6 +1431,15 @@ COMMANDS:
 				ev.CasualAceyDeuceyMulti = a.casual.aceyMulti / 100
 				ev.CasualTabulaSingle = a.casual.tabulaSingle / 100
 				ev.CasualTabulaMulti = a.casual.tabulaMulti / 100
+
+				ev.Achievements = make([]*bgammon.HistoryAchievement, len(a.achievementIDs))
+				for i := range a.achievementIDs {
+					ev.Achievements[i] = &bgammon.HistoryAchievement{
+						ID:        a.achievementIDs[i],
+						Replay:    a.achievementGames[i],
+						Timestamp: a.achievementDates[i],
+					}
+				}
 			}
 			cmd.client.sendEvent(ev)
 		case bgammon.CommandPong:
