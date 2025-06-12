@@ -36,6 +36,10 @@ func main() {
 		op.Verbose = true
 	}
 
+	if debugCommands {
+		op.Debug = true
+	}
+
 	if op.DataSource == "" {
 		op.DataSource = os.Getenv("BGAMMON_DB")
 	}

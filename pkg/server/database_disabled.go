@@ -55,6 +55,10 @@ func setAccountFollows(id int, target int, follows bool) error {
 	return nil
 }
 
+func awardAchievement(a *account, award int, game int, date int64) (bool, error) {
+	return false, nil
+}
+
 func matchInfo(id int) (timestamp int64, player1 string, player2 string, replay []byte, err error) {
 	return 0, "", "", nil, nil
 }
@@ -75,8 +79,8 @@ func deleteBan(ipHash string, account int) error {
 	return nil
 }
 
-func recordGameResult(g *serverGame, winType int8, replay [][]byte) error {
-	return nil
+func recordGameResult(g *serverGame, winType int8, replay [][]byte) (int, error) {
+	return 0, nil
 }
 
 func recordMatchResult(g *serverGame, matchType int) (int, error) {

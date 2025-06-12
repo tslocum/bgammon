@@ -384,7 +384,7 @@ func (s *server) handleGames() {
 				}
 				g.replay = append(g.replay, []byte(fmt.Sprintf("%d t", opponent)))
 
-				err := recordGameResult(g, 4, g.replay)
+				_, err := recordGameResult(g, 4, g.replay)
 				if err != nil {
 					log.Fatalf("failed to record game result: %s", err)
 				}
@@ -581,7 +581,7 @@ func (s *server) handleShutdown() {
 		s.clientsLock.Lock()
 		for _, sc := range s.clients {
 			if minutes == 0 {
-				sc.sendBroadcast(gotext.GetD(sc.language, "The server is shutting down. Reason:"))
+				sc.sendBroadcast(gotext.GetD(sc.language, "The server is shutting down. Reason: %s", ""))
 			} else {
 				sc.sendBroadcast(gotext.GetND(sc.language, "The server is shutting down in %d minute. Reason:", "The server is shutting down in %d minutes. Reason:", minutes, minutes))
 			}

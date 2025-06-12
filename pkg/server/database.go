@@ -39,6 +39,7 @@ CREATE TABLE account (
 	password                 text NOT NULL,
 	icon                     integer NOT NULL DEFAULT 0,
 	icons                    text NOT NULL DEFAULT '',
+	achievements             text NOT NULL DEFAULT '',
 	casual_backgammon_single integer NOT NULL DEFAULT 150000,
 	casual_backgammon_multi  integer NOT NULL DEFAULT 150000,
 	casual_acey_single       integer NOT NULL DEFAULT 150000,
@@ -383,23 +384,12 @@ func accountByID(id int) (*account, error) {
 		casual:      &clientRating{},
 		competitive: &clientRating{},
 	}
-	var autoplay, highlight, pips, moves, flip, traditional, advanced, muteJoinLeave, muteChat, muteRoll, muteMove, muteBearOff int
-	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, icon, autoplay, highlight, pips, moves, flip, traditional, advanced, mutejoinleave, mutechat, muteroll, mutemove, mutebearoff, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE id = $1", id).Scan(&a.id, &a.email, &a.username, &a.password, &a.icon, &autoplay, &highlight, &pips, &moves, &flip, &traditional, &advanced, &muteJoinLeave, &muteChat, &muteRoll, &muteMove, &muteBearOff, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
+	d := &accountData{}
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, icon, achievements, autoplay, highlight, pips, moves, flip, traditional, advanced, mutejoinleave, mutechat, muteroll, mutemove, mutebearoff, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE id = $1", id).Scan(&a.id, &a.email, &a.username, &a.password, &a.icon, &d.achievements, &d.autoplay, &d.highlight, &d.pips, &d.moves, &d.flip, &d.traditional, &d.advanced, &d.muteJoinLeave, &d.muteChat, &d.muteRoll, &d.muteMove, &d.muteBearOff, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
 	if err != nil {
 		return nil, nil
 	}
-	a.autoplay = autoplay == 1
-	a.highlight = highlight == 1
-	a.pips = pips == 1
-	a.moves = moves == 1
-	a.flip = flip == 1
-	a.traditional = traditional == 1
-	a.advanced = advanced == 1
-	a.muteJoinLeave = muteJoinLeave == 1
-	a.muteChat = muteChat == 1
-	a.muteRoll = muteRoll == 1
-	a.muteMove = muteMove == 1
-	a.muteBearOff = muteBearOff == 1
+	a.load(d)
 	return a, nil
 }
 
@@ -421,22 +411,12 @@ func accountByUsername(username string) (*account, error) {
 		casual:      &clientRating{},
 		competitive: &clientRating{},
 	}
-	var autoplay, highlight, pips, moves, flip, advanced, muteJoinLeave, muteChat, muteRoll, muteMove, muteBearOff int
-	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, icon, autoplay, highlight, pips, moves, flip, advanced, mutejoinleave, mutechat, muteroll, mutemove, mutebearoff, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE username = $1", strings.ToLower(username)).Scan(&a.id, &a.email, &a.username, &a.password, &a.icon, &autoplay, &highlight, &pips, &moves, &flip, &advanced, &muteJoinLeave, &muteChat, &muteRoll, &muteMove, &muteBearOff, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
+	d := &accountData{}
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, icon, achivements, autoplay, highlight, pips, moves, flip, advanced, mutejoinleave, mutechat, muteroll, mutemove, mutebearoff, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE username = $1", strings.ToLower(username)).Scan(&a.id, &a.email, &a.username, &a.password, &a.icon, &d.achievements, &d.autoplay, &d.highlight, &d.pips, &d.moves, &d.flip, &d.advanced, &d.muteJoinLeave, &d.muteChat, &d.muteRoll, &d.muteMove, &d.muteBearOff, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
 	if err != nil {
 		return nil, nil
 	}
-	a.autoplay = autoplay == 1
-	a.highlight = highlight == 1
-	a.pips = pips == 1
-	a.moves = moves == 1
-	a.flip = flip == 1
-	a.advanced = advanced == 1
-	a.muteJoinLeave = muteJoinLeave == 1
-	a.muteChat = muteChat == 1
-	a.muteRoll = muteRoll == 1
-	a.muteMove = muteMove == 1
-	a.muteBearOff = muteBearOff == 1
+	a.load(d)
 	return a, nil
 }
 
@@ -462,24 +442,14 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 		casual:      &clientRating{},
 		competitive: &clientRating{},
 	}
-	var autoplay, highlight, pips, moves, flip, advanced, muteJoinLeave, muteChat, muteRoll, muteMove, muteBearOff int
-	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, icon, autoplay, highlight, pips, moves, flip, advanced, mutejoinleave, mutechat, muteroll, mutemove, mutebearoff, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &a.icon, &autoplay, &highlight, &pips, &moves, &flip, &advanced, &muteJoinLeave, &muteChat, &muteRoll, &muteMove, &muteBearOff, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
+	d := &accountData{}
+	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, icon, achievements, autoplay, highlight, pips, moves, flip, advanced, mutejoinleave, mutechat, muteroll, mutemove, mutebearoff, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &a.icon, &d.achievements, &d.autoplay, &d.highlight, &d.pips, &d.moves, &d.flip, &d.advanced, &d.muteJoinLeave, &d.muteChat, &d.muteRoll, &d.muteMove, &d.muteBearOff, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
 	if err != nil {
 		return nil, nil
 	} else if len(a.password) == 0 {
 		return nil, fmt.Errorf("account disabled")
 	}
-	a.autoplay = autoplay == 1
-	a.highlight = highlight == 1
-	a.pips = pips == 1
-	a.moves = moves == 1
-	a.flip = flip == 1
-	a.advanced = advanced == 1
-	a.muteJoinLeave = muteJoinLeave == 1
-	a.muteChat = muteChat == 1
-	a.muteRoll = muteRoll == 1
-	a.muteMove = muteMove == 1
-	a.muteBearOff = muteBearOff == 1
+	a.load(d)
 
 	match, err := argon2id.ComparePasswordAndHash(string(password)+passwordSalt, string(a.password))
 	debug.FreeOSMemory() // Hashing is memory intensive. Return memory to the OS.
@@ -597,12 +567,52 @@ func setAccountFollows(id int, target int, follows bool) error {
 	return err
 }
 
-func recordGameResult(g *serverGame, winType int8, replay [][]byte) error {
+func awardAchievement(a *account, award int, game int, date int64) (bool, error) {
+	for _, achievement := range a.achievementIDs {
+		if achievement == award {
+			return false, nil
+		}
+	}
+
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil {
+		return false, nil
+	} else if a == nil || a.id == 0 || award < 0 {
+		return false, fmt.Errorf("invalid account or achievement: %+v/%d", a, award)
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return false, err
+	}
+	defer tx.Commit(context.Background())
+
+	a.achievementIDs = append(a.achievementIDs, award)
+	a.achievementGames = append(a.achievementGames, game)
+	a.achievementDates = append(a.achievementDates, date)
+
+	var achievements []byte
+	for i := range a.achievementIDs {
+		if i != 0 {
+			achievements = append(achievements, ',')
+		}
+		achievements = append(achievements, []byte(fmt.Sprintf("%d-%d-%d", a.achievementIDs[i], a.achievementGames[i], a.achievementDates[i]))...)
+	}
+	_, err = tx.Exec(context.Background(), "UPDATE account SET achievements = $1 WHERE id = $2", achievements, a.id)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func recordGameResult(g *serverGame, winType int8, replay [][]byte) (int, error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
 	if db == nil || g.Started == 0 || g.Winner == 0 || len(g.replay) == 0 {
-		return nil
+		return 0, nil
 	}
 
 	ended := g.Ended
@@ -612,28 +622,29 @@ func recordGameResult(g *serverGame, winType int8, replay [][]byte) error {
 
 	tx, err := begin()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer tx.Commit(context.Background())
 
-	_, err = tx.Exec(context.Background(), "INSERT INTO game (variant, started, ended, player1, account1, player2, account2, points, winner, wintype, replay) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", g.Variant, g.Started, ended, g.allowed1, g.account1, g.allowed2, g.account2, g.Points, g.Winner, winType, bytes.Join(replay, []byte("\n")))
+	var gameID int
+	err = tx.QueryRow(context.Background(), "INSERT INTO game (variant, started, ended, player1, account1, player2, account2, points, winner, wintype, replay) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id", g.Variant, g.Started, ended, g.allowed1, g.account1, g.allowed2, g.account2, g.Points, g.Winner, winType, bytes.Join(replay, []byte("\n"))).Scan(&gameID)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if g.account1 != 0 {
 		_, err = tx.Exec(context.Background(), "UPDATE account SET active = $1 WHERE id = $2", time.Now().Unix(), g.account1)
 		if err != nil {
-			return err
+			return 0, err
 		}
 	}
 	if g.account2 != 0 {
 		_, err = tx.Exec(context.Background(), "UPDATE account SET active = $1 WHERE id = $2", time.Now().Unix(), g.account2)
 		if err != nil {
-			return err
+			return 0, err
 		}
 	}
-	return nil
+	return gameID, nil
 }
 
 func recordMatchResult(g *serverGame, matchType int) (int, error) {

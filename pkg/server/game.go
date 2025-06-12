@@ -5,10 +5,38 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"codeberg.org/tslocum/bgammon"
+	"codeberg.org/tslocum/gotext"
 )
+
+const (
+	AchievementHumanWin         = 1
+	AchievementHumanGammon      = 2
+	AchievementHumanBackgammon  = 3
+	AchievementTabulaWin        = 4
+	AchievementTabulaGammon     = 5
+	AchievementTabulaBackgammon = 6
+	AchievementWildBGWin        = 7
+	AchievementWildBGGammon     = 8
+	AchievementWildBGBackgammon = 9
+	AchievementDance            = 10
+)
+
+var achievementInfo = map[int][2]string{
+	AchievementHumanWin:         {"Good Game", "Scored a normal win against a human"},
+	AchievementHumanGammon:      {"Double Trouble", "Scored a gammon against a human"},
+	AchievementHumanBackgammon:  {"Flawless Victory", "Scored a backgammon against a human"},
+	AchievementTabulaWin:        {"Mind Over Matter", "Scored a normal win against BOT_tabula"},
+	AchievementTabulaGammon:     {"Weighted Sum", "Scored a gammon against BOT_tabula"},
+	AchievementTabulaBackgammon: {"Calculated", "Scored a backgammon against BOT_tabula"},
+	AchievementWildBGWin:        {"Network Effect", "Scored a normal win against BOT_wildbg"},
+	AchievementWildBGGammon:     {"Hidden Layer", "Scored a gammon against BOT_wildbg"},
+	AchievementWildBGBackgammon: {"Transformer", "Scored a backgammon against BOT_wildbg"},
+	AchievementDance:            {"Boogie Wonderland", "Blocked opponent from entering for 7 consecutive turns"},
+}
 
 type serverGame struct {
 	id         int
@@ -705,9 +733,39 @@ func (g *serverGame) handleWin() bool {
 	if g.Variant != bgammon.VariantBackgammon {
 		winType = 1
 	}
-	err := recordGameResult(g, winType, g.replay)
+	gameID, err := recordGameResult(g, winType, g.replay)
 	if err != nil {
 		log.Fatalf("failed to record game result: %s", err)
+	}
+
+	// Award achievements.
+	if g.Variant == bgammon.VariantBackgammon {
+		c := g.client1
+		opponentName := g.Player2.Name
+		if g.Winner == 2 {
+			c = g.client2
+			opponentName = g.Player1.Name
+		}
+		if c != nil && c.accountID != 0 {
+			var achievements []int
+			switch {
+			case !strings.HasPrefix(opponentName, "BOT_"):
+				achievements = []int{AchievementHumanWin, AchievementHumanGammon, AchievementHumanBackgammon}
+			case opponentName == "BOT_tabula":
+				achievements = []int{AchievementTabulaWin, AchievementTabulaGammon, AchievementTabulaBackgammon}
+			case opponentName == "BOT_wildbg":
+				achievements = []int{AchievementWildBGWin, AchievementWildBGGammon, AchievementWildBGBackgammon}
+			}
+			award := achievements[winPoints-1]
+			awarded, err := awardAchievement(c.account, award, gameID, g.Ended)
+			if err != nil {
+				log.Fatal(err)
+			} else if awarded {
+				info := achievementInfo[award]
+				message := fmt.Sprintf("%s (%s)", gotext.GetD(c.language, info[0]), gotext.GetD(c.language, info[1]))
+				c.sendNotice(gotext.GetD(c.language, "Achievement unlocked: %s", message))
+			}
+		}
 	}
 
 	if reset {

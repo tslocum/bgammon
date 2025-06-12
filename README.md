@@ -1,7 +1,7 @@
 # bgammon - Backgammon server powering [bgammon.org](https://bgammon.org)
 [![GoDoc](https://codeberg.org/tslocum/godoc-static/raw/branch/main/badge.svg)](https://docs.rocket9labs.com/codeberg.org/tslocum/bgammon)
 [![Translate](https://translate.codeberg.org/widget/bgammon/server/svg-badge.svg)](https://translate.codeberg.org/projects/bgammon/)
-[![Donate via LiberaPay](https://img.shields.io/liberapay/receives/rocket9labs.com.svg?logo=liberapay)](https://liberapay.com/rocket9labs.com)
+[![Donate](https://img.shields.io/liberapay/receives/rocket9labs.com.svg?logo=liberapay)](https://liberapay.com/rocket9labs.com)
 
 ## Play
 

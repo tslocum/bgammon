@@ -745,7 +745,7 @@ COMMANDS:
 
 			var winEvent *bgammon.EventWin
 			if clientGame.Winner != 0 {
-				err := recordGameResult(clientGame, 4, clientGame.replay)
+				_, err := recordGameResult(clientGame, 4, clientGame.replay)
 				if err != nil {
 					log.Fatalf("failed to record game result: %s", err)
 				}
@@ -1679,10 +1679,10 @@ COMMANDS:
 			clientGame.Roll1 = 5
 			clientGame.Roll2 = 5
 			clientGame.Roll3 = 0
-			clientGame.Variant = bgammon.VariantAceyDeucey
+			clientGame.Variant = bgammon.VariantBackgammon
 			clientGame.Player1.Entered = true
 			clientGame.Player2.Entered = true
-			clientGame.Board = []int8{0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0}
+			clientGame.Board = []int8{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0}
 
 			log.Println(clientGame.Board[0:28])
 

@@ -395,6 +395,18 @@ func parseInt(buf []byte) int {
 	return v
 }
 
+func parseInt64(buf []byte) int64 {
+	matches := anyNumbers.FindAll(buf, -1)
+	if len(matches) == 0 {
+		return 0
+	}
+	v, err := strconv.ParseInt(string(matches[0]), 10, 64)
+	if err != nil {
+		v = 0
+	}
+	return v
+}
+
 func timestamp(ts int64) time.Time {
 	if ts == 0 {
 		return time.Time{}

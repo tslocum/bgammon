@@ -35,6 +35,15 @@ msgstr ""
 msgid "Accepted double."
 msgstr ""
 
+msgid "Achievement unlocked: %s"
+msgstr ""
+
+msgid "Blocked opponent from entering for 7 consecutive turns"
+msgstr ""
+
+msgid "Boogie Wonderland"
+msgstr ""
+
 msgid "Bots are not allowed to join player matches. Please create a match instead."
 msgstr ""
 
@@ -57,6 +66,9 @@ msgid "Double offered to opponent (%d point)."
 msgid_plural "Double offered to opponent (%d points)."
 msgstr[0] ""
 msgstr[1] ""
+
+msgid "Double Trouble"
+msgstr ""
 
 msgid "Due to ongoing abuse, only registered users may connect. Please register an account or try again later."
 msgstr ""
@@ -82,16 +94,19 @@ msgstr ""
 msgid "Failed to create match: %s"
 msgstr ""
 
-msgid "Please leave the match you are in before creating another."
-msgstr ""
-
-msgid "The server is shutting down. Reason: %s"
-msgstr ""
-
 msgid "Failed to log in: %s"
 msgstr ""
 
 msgid "Failed to register: Invalid username: must contain at least one non-numeric character."
+msgstr ""
+
+msgid "Flawless Victory
+msgstr ""
+
+msgid "Good Game"
+msgstr ""
+
+msgid "Hidden Layer"
 msgstr ""
 
 msgid "Illegal move."
@@ -136,6 +151,12 @@ msgstr ""
 msgid "Message not sent: You are not currently in a match."
 msgstr ""
 
+msgid "Mind Over Matter"
+msgstr ""
+
+msgid "Network Effect"
+msgstr ""
+
 msgid "No account was found with the provided username and password. To log in as a guest, do not enter a password."
 msgstr ""
 
@@ -151,6 +172,9 @@ msgstr ""
 msgid "Please finish your match as soon as possible."
 msgstr ""
 
+msgid "Please leave the match you are in before creating another."
+msgstr ""
+
 msgid "Please leave the match you are in before joining another."
 msgstr ""
 
@@ -161,6 +185,33 @@ msgid "Rematch offer sent."
 msgstr ""
 
 msgid "Resigned."
+msgstr ""
+
+msgid "Scored a backgammon against BOT_tabula"
+msgstr ""
+
+msgid "Scored a backgammon against BOT_wildbg"
+msgstr ""
+
+msgid "Scored a backgammon against a human"
+msgstr ""
+
+msgid "Scored a gammon against BOT_tabula"
+msgstr ""
+
+msgid "Scored a gammon against BOT_wildbg"
+msgstr ""
+
+msgid "Scored a gammon against a human"
+msgstr ""
+
+msgid "Scored a normal win against BOT_tabula"
+msgstr ""
+
+msgid "Scored a normal win against BOT_wildbg"
+msgstr ""
+
+msgid "Scored a normal win against a human"
 msgstr ""
 
 msgid "SERVER BROADCAST:"
@@ -178,7 +229,7 @@ msgstr ""
 msgid "The match you are in is still in progress."
 msgstr ""
 
-msgid "The server is shutting down. Reason:"
+msgid "The server is shutting down. Reason: %s"
 msgstr ""
 
 msgid "The server is shutting down in %d minute. Reason:"
@@ -186,10 +237,16 @@ msgid_plural "The server is shutting down in %d minutes. Reason:"
 msgstr[0] ""
 msgstr[1] ""
 
+msgid "Transformer"
+msgstr ""
+
 msgid "Unknown command: %s"
 msgstr ""
 
 msgid "Waiting for response from opponent."
+msgstr ""
+
+msgid "Weighted Sum"
 msgstr ""
 
 msgid "You are no longer following %s."
