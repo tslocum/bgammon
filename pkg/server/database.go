@@ -583,6 +583,10 @@ func awardAchievement(a *account, award int, game int, date int64) (bool, error)
 		return false, fmt.Errorf("invalid account or achievement: %+v/%d", a, award)
 	}
 
+	if date == 0 {
+		date = time.Now().Unix()
+	}
+
 	tx, err := begin()
 	if err != nil {
 		return false, err
