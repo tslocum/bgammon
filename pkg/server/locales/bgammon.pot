@@ -100,7 +100,7 @@ msgstr ""
 msgid "Failed to register: Invalid username: must contain at least one non-numeric character."
 msgstr ""
 
-msgid "Flawless Victory
+msgid "Flawless Victory"
 msgstr ""
 
 msgid "Good Game"
