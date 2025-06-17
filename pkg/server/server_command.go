@@ -363,7 +363,7 @@ COMMANDS:
 		clientGame := s.gameByClient(cmd.client)
 		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
 			switch keyword {
-			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandDefcon, bgammon.CommandKick, bgammon.CommandBan, bgammon.CommandUnban, bgammon.CommandShutdown:
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandHistory, bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandDefcon, bgammon.CommandKick, bgammon.CommandBan, bgammon.CommandUnban, bgammon.CommandShutdown:
 				// These commands are allowed to be used by spectators.
 			default:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Command ignored: You are spectating this match."))
@@ -1351,39 +1351,6 @@ COMMANDS:
 				continue
 			}
 			_ = setAccountSetting(cmd.client.account.id, name, value)
-		case bgammon.CommandReplay:
-			var (
-				id     int
-				replay []byte
-				err    error
-			)
-			if len(params) == 0 {
-				if clientGame == nil || clientGame.Winner == 0 {
-					cmd.client.sendNotice("Please specify the game as follows: replay <id>")
-					continue
-				}
-				id = -1
-				replay = bytes.Join(clientGame.replay, []byte("\n"))
-			} else {
-				id, err = strconv.Atoi(string(params[0]))
-				if err != nil || id < 0 {
-					cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Invalid replay ID provided."))
-					continue
-				}
-				replay, err = replayByID(id)
-				if err != nil {
-					cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Invalid replay ID provided."))
-					continue
-				}
-			}
-			if len(replay) == 0 {
-				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "No replay was recorded for that game."))
-				continue
-			}
-			cmd.client.sendEvent(&bgammon.EventReplay{
-				ID:      id,
-				Content: replay,
-			})
 		case bgammon.CommandHistory:
 			if len(params) == 0 {
 				cmd.client.sendNotice("Please specify the player as follows: history <username>")
@@ -1403,6 +1370,13 @@ COMMANDS:
 			if err != nil {
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Invalid username provided."))
 				continue
+			} else if clientGame != nil {
+				if cmd.client.playerNumber == 1 {
+					clientGame.rejoin1 = false
+				} else {
+					clientGame.rejoin2 = false
+				}
+				clientGame.removeClient(cmd.client)
 			}
 
 			pages := (len(matches) / historyPageSize)
@@ -1442,6 +1416,46 @@ COMMANDS:
 				}
 			}
 			cmd.client.sendEvent(ev)
+		case bgammon.CommandReplay:
+			var (
+				id     int
+				replay []byte
+				err    error
+			)
+			if len(params) == 0 {
+				if clientGame == nil || clientGame.Winner == 0 {
+					cmd.client.sendNotice("Please specify the game as follows: replay <id>")
+					continue
+				}
+				id = -1
+				replay = bytes.Join(clientGame.replay, []byte("\n"))
+			} else {
+				id, err = strconv.Atoi(string(params[0]))
+				if err != nil || id < 0 {
+					cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Invalid replay ID provided."))
+					continue
+				}
+				replay, err = replayByID(id)
+				if err != nil {
+					cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Invalid replay ID provided."))
+					continue
+				}
+			}
+			if len(replay) == 0 {
+				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "No replay was recorded for that game."))
+				continue
+			} else if clientGame != nil {
+				if cmd.client.playerNumber == 1 {
+					clientGame.rejoin1 = false
+				} else {
+					clientGame.rejoin2 = false
+				}
+				clientGame.removeClient(cmd.client)
+			}
+			cmd.client.sendEvent(&bgammon.EventReplay{
+				ID:      id,
+				Content: replay,
+			})
 		case bgammon.CommandPong:
 			// Do nothing.
 		case bgammon.CommandDisconnect:
