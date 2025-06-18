@@ -1350,6 +1350,35 @@ func playerVsPlayerStats(tz *time.Location) (*serverStatsResult, error) {
 	return result, nil
 }
 
+func achievementStats() (*achievementStatsResult, error) {
+	result := &achievementStatsResult{}
+
+	tx, err := begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit(context.Background())
+
+	err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM account WHERE EXISTS(SELECT 1 FROM game WHERE game.account1 = account.id OR game.account2 = account.id)").Scan(&result.Players)
+	if err != nil {
+		return nil, err
+	}
+
+	for id, info := range Achievements {
+		entry := &achievementStatsEntry{
+			ID:          id,
+			Name:        info[0],
+			Description: info[1],
+		}
+		err = tx.QueryRow(context.Background(), fmt.Sprintf("SELECT COUNT(*) FROM account WHERE achievements ~ '(^%d-|,%d-).*'", id, id)).Scan(&entry.Achieved)
+		if err != nil {
+			return nil, err
+		}
+		result.Achievements = append(result.Achievements, entry)
+	}
+	return result, nil
+}
+
 func ratingColumn(matchType int, variant int8, multiPoint bool) string {
 	var columnStart = "casual_"
 	if matchType == matchTypeRated {

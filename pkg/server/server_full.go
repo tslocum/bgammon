@@ -84,6 +84,7 @@ func (s *server) listenWebSocket(address string) {
 	handle("/stats-wildbg.json", s.handleStatsFunc(4))
 	handle("/stats-player.json", s.handleStatsFunc(5))
 	handle("/stats-gnubg.json", s.handleStatsFunc(6))
+	handle("/achievements.json", s.handleStatsFunc(7))
 	handle("/stats/{username:[A-Za-z0-9_\\-]+}.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantBackgammon))
 	handle("/stats/{username:[A-Za-z0-9_\\-]+}/backgammon.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantBackgammon))
 	handle("/stats/{username:[A-Za-z0-9_\\-]+}/acey.json", s.handleAccountStatsFunc(matchTypeCasual, bgammon.VariantAceyDeucey))
@@ -265,7 +266,7 @@ func (s *server) cachedStats(statsType int) []byte {
 		if err != nil {
 			log.Fatalf("failed to marshal %+v: %s", stats, err)
 		}
-	default: // 6
+	case 6:
 		stats, err := accountStats("BOT_gnubg", matchTypeCasual, bgammon.VariantBackgammon, s.tz)
 		if err != nil {
 			log.Fatalf("failed to fetch gnubg statistics: %s", err)
@@ -273,6 +274,15 @@ func (s *server) cachedStats(statsType int) []byte {
 		s.statsCache[statsType], err = json.Marshal(stats)
 		if err != nil {
 			log.Fatalf("failed to serialize gnubg statistics: %s", err)
+		}
+	default: // 7
+		stats, err := achievementStats()
+		if err != nil {
+			log.Fatalf("failed to fetch achievement statistics: %s", err)
+		}
+		s.statsCache[statsType], err = json.Marshal(stats)
+		if err != nil {
+			log.Fatalf("failed to serialize achievement statistics: %s", err)
 		}
 	}
 

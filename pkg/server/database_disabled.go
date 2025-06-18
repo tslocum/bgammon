@@ -111,6 +111,10 @@ func accountStats(name string, tz *time.Location) (*accountStatsResult, error) {
 	return &accountStatsResult{}, nil
 }
 
+func achievementStats() (*achievementStatsResult, error) {
+	return &achievementStatsResult{}, nil
+}
+
 func playerVsPlayerStats(tz *time.Location) (*serverStatsResult, error) {
 	return &serverStatsResult{}, nil
 }

@@ -116,3 +116,15 @@ type accountStatsEntry struct {
 type accountStatsResult struct {
 	History []*accountStatsEntry
 }
+
+type achievementStatsEntry struct {
+	ID          int
+	Name        string
+	Description string
+	Achieved    int
+}
+
+type achievementStatsResult struct {
+	Players      int
+	Achievements []*achievementStatsEntry
+}
