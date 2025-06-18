@@ -14,6 +14,7 @@ import (
 	"net/smtp"
 	"net/textproto"
 	"runtime/debug"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -1364,7 +1365,15 @@ func achievementStats() (*achievementStatsResult, error) {
 		return nil, err
 	}
 
-	for id, info := range Achievements {
+	ids := make([]int, len(Achievements))
+	var i int
+	for id := range Achievements {
+		ids[i] = id
+		i++
+	}
+	sort.Ints(ids)
+	for _, id := range ids {
+		info := Achievements[id]
 		entry := &achievementStatsEntry{
 			ID:          id,
 			Name:        info[0],
