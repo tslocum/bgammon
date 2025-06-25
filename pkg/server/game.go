@@ -806,14 +806,16 @@ func (g *serverGame) handleWin() bool {
 			case opponentName == "BOT_wildbg":
 				achievements = []int{AchievementWildBGWin, AchievementWildBGGammon, AchievementWildBGBackgammon}
 			}
-			award := achievements[winPoints-1]
-			awarded, err := awardAchievement(c.account, award, gameID, g.Ended)
-			if err != nil {
-				log.Fatal(err)
-			} else if awarded {
-				info := Achievements[award]
-				message := fmt.Sprintf("%s (%s)", gotext.GetD(c.language, info[0]), gotext.GetD(c.language, info[1]))
-				c.sendNotice(gotext.GetD(c.language, "Achievement unlocked: %s", message))
+			if len(achievements) > 0 {
+				award := achievements[winPoints-1]
+				awarded, err := awardAchievement(c.account, award, gameID, g.Ended)
+				if err != nil {
+					log.Fatal(err)
+				} else if awarded {
+					info := Achievements[award]
+					message := fmt.Sprintf("%s (%s)", gotext.GetD(c.language, info[0]), gotext.GetD(c.language, info[1]))
+					c.sendNotice(gotext.GetD(c.language, "Achievement unlocked: %s", message))
+				}
 			}
 		}
 	}
