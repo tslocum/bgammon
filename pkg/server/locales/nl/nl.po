@@ -39,6 +39,15 @@ msgstr "%s heeft opgegeven."
 msgid "Accepted double."
 msgstr "Dubbelen geaccepteerd."
 
+msgid "Achievement unlocked: %s"
+msgstr ""
+
+msgid "Blocked opponent from entering for 7 consecutive turns"
+msgstr ""
+
+msgid "Boogie Wonderland"
+msgstr ""
+
 msgid ""
 "Bots are not allowed to join player matches. Please create a match instead."
 msgstr ""
@@ -68,6 +77,9 @@ msgid "Double offered to opponent (%d point)."
 msgid_plural "Double offered to opponent (%d points)."
 msgstr[0] "Dubbel aangeboden aan tegenstander (%d punt)."
 msgstr[1] "Dubbel aangeboden aan tegenstander (%d punten)."
+
+msgid "Double Trouble"
+msgstr ""
 
 msgid ""
 "Due to ongoing abuse, only registered users may connect. Please register an "
@@ -106,12 +118,6 @@ msgstr "Kan wachtwoord niet wijzigen: je bent ingelogd als gast."
 msgid "Failed to create match: %s"
 msgstr ""
 
-msgid "Please leave the match you are in before creating another."
-msgstr ""
-
-msgid "The server is shutting down. Reason: %s"
-msgstr ""
-
 msgid "Failed to log in: %s"
 msgstr "Inloggen mislukt: %s"
 
@@ -121,6 +127,15 @@ msgid ""
 msgstr ""
 "Registratie mislukt: Ongeldige gebruikersnaam: moet minimaal één niet-"
 "numeriek teken bevatten."
+
+msgid "Flawless Victory"
+msgstr ""
+
+msgid "Good Game"
+msgstr ""
+
+msgid "Hidden Layer"
+msgstr ""
 
 msgid "Illegal move."
 msgstr "Ongeldige zet."
@@ -166,6 +181,12 @@ msgstr "Bericht niet verzonden: Er is niemand anders in het spel."
 msgid "Message not sent: You are not currently in a match."
 msgstr "Bericht niet verzonden: Je zit momenteel niet in een spel."
 
+msgid "Mind Over Matter"
+msgstr ""
+
+msgid "Network Effect"
+msgstr ""
+
 msgid ""
 "No account was found with the provided username and password. To log in as a "
 "guest, do not enter a password."
@@ -185,6 +206,9 @@ msgstr "Vul e-mailadres, gebruikersnaam en wachtwoord in."
 msgid "Please finish your match as soon as possible."
 msgstr "Voltooi je spel zo snel mogelijk."
 
+msgid "Please leave the match you are in before creating another."
+msgstr ""
+
 msgid "Please leave the match you are in before joining another."
 msgstr "Verlaat het huidige spel voordat je aan een andere deelneemt."
 
@@ -196,6 +220,33 @@ msgstr "Herkansingsaanbod verzonden."
 
 msgid "Resigned."
 msgstr "Opgegeven."
+
+msgid "Scored a backgammon against BOT_tabula"
+msgstr ""
+
+msgid "Scored a backgammon against BOT_wildbg"
+msgstr ""
+
+msgid "Scored a backgammon against a human"
+msgstr ""
+
+msgid "Scored a gammon against BOT_tabula"
+msgstr ""
+
+msgid "Scored a gammon against BOT_wildbg"
+msgstr ""
+
+msgid "Scored a gammon against a human"
+msgstr ""
+
+msgid "Scored a normal win against BOT_tabula"
+msgstr ""
+
+msgid "Scored a normal win against BOT_wildbg"
+msgstr ""
+
+msgid "Scored a normal win against a human"
+msgstr ""
 
 msgid "SERVER BROADCAST:"
 msgstr "SERVERUITZENDING:"
@@ -212,19 +263,25 @@ msgstr "De volgende geldige verplaatsingen zijn mogelijk: %s"
 msgid "The match you are in is still in progress."
 msgstr "De wedstrijd waar je aan meedoet, is nog bezig."
 
-msgid "The server is shutting down. Reason:"
-msgstr "De server wordt afgesloten. Reden:"
+msgid "The server is shutting down. Reason: %s"
+msgstr ""
 
 msgid "The server is shutting down in %d minute. Reason:"
 msgid_plural "The server is shutting down in %d minutes. Reason:"
 msgstr[0] "De server wordt over %d minuut afgesloten. Reden:"
 msgstr[1] "De server wordt over %d minuten afgesloten. Reden:"
 
+msgid "Transformer"
+msgstr ""
+
 msgid "Unknown command: %s"
 msgstr "Onbekende opdracht: %s"
 
 msgid "Waiting for response from opponent."
 msgstr "Wachten op een reactie van de tegenstander."
+
+msgid "Weighted Sum"
+msgstr ""
 
 msgid "You are no longer following %s."
 msgstr "Je volgt niet langer %s."
@@ -292,13 +349,3 @@ msgstr "Je tegenstander heeft het spel verlaten."
 
 msgid "Your opponent would like to play again."
 msgstr "Je tegenstander wil graag opnieuw spelen."
-
-#~ msgid ""
-#~ "Failed to create match: Please leave the match you are in before creating "
-#~ "another."
-#~ msgstr ""
-#~ "Kan geen spel starten: Verlaat het spel waarin je zit voordat je een "
-#~ "nieuwe maakt."
-
-#~ msgid "Failed to create match: The server is shutting down. Reason: %s"
-#~ msgstr "Kan geen spel starten: De server wordt afgesloten. Reden: %s"

@@ -39,6 +39,15 @@ msgstr "%s résigné."
 msgid "Accepted double."
 msgstr "Double accepté."
 
+msgid "Achievement unlocked: %s"
+msgstr ""
+
+msgid "Blocked opponent from entering for 7 consecutive turns"
+msgstr ""
+
+msgid "Boogie Wonderland"
+msgstr ""
+
 msgid ""
 "Bots are not allowed to join player matches. Please create a match instead."
 msgstr ""
@@ -68,6 +77,9 @@ msgid "Double offered to opponent (%d point)."
 msgid_plural "Double offered to opponent (%d points)."
 msgstr[0] "Double offert à l'adversaire (%d point)."
 msgstr[1] "Double offert à l'adversaire (%d points)."
+
+msgid "Double Trouble"
+msgstr ""
 
 msgid ""
 "Due to ongoing abuse, only registered users may connect. Please register an "
@@ -112,12 +124,6 @@ msgstr ""
 msgid "Failed to create match: %s"
 msgstr "Création du match ratée : %s"
 
-msgid "Please leave the match you are in before creating another."
-msgstr "Laissez le match dans lequel vous êtes avant d'en créer un autre."
-
-msgid "The server is shutting down. Reason: %s"
-msgstr "Le serveur est en train de s'éteindre. Raison : %s"
-
 msgid "Failed to log in: %s"
 msgstr "Impossible de se connecter : %s"
 
@@ -127,6 +133,15 @@ msgid ""
 msgstr ""
 "Impossible de s'enregistrer : Nom d'utilisateur invalide : il doit contenir "
 "au moins un caractère non numérique."
+
+msgid "Flawless Victory"
+msgstr ""
+
+msgid "Good Game"
+msgstr ""
+
+msgid "Hidden Layer"
+msgstr ""
 
 msgid "Illegal move."
 msgstr "Déplacement illégal."
@@ -174,6 +189,12 @@ msgstr "Message non envoyé : Il n'y a personne d'autre dans la partie."
 msgid "Message not sent: You are not currently in a match."
 msgstr "Message non envoyé : Vous n'êtes pas dans une partie."
 
+msgid "Mind Over Matter"
+msgstr ""
+
+msgid "Network Effect"
+msgstr ""
+
 msgid ""
 "No account was found with the provided username and password. To log in as a "
 "guest, do not enter a password."
@@ -194,6 +215,9 @@ msgstr "Veuillez entrer un email, un nom d'utilisateur et un mot de passe."
 msgid "Please finish your match as soon as possible."
 msgstr "Veuillez terminer votre partie aussi vite que possible."
 
+msgid "Please leave the match you are in before creating another."
+msgstr "Laissez le match dans lequel vous êtes avant d'en créer un autre."
+
 msgid "Please leave the match you are in before joining another."
 msgstr ""
 "Veuillez quitter la partie dans laquelle vous êtes avant d'en rejoindre une "
@@ -207,6 +231,33 @@ msgstr "Offre de nouvelle partie envoyée."
 
 msgid "Resigned."
 msgstr "Abandonné."
+
+msgid "Scored a backgammon against BOT_tabula"
+msgstr ""
+
+msgid "Scored a backgammon against BOT_wildbg"
+msgstr ""
+
+msgid "Scored a backgammon against a human"
+msgstr ""
+
+msgid "Scored a gammon against BOT_tabula"
+msgstr ""
+
+msgid "Scored a gammon against BOT_wildbg"
+msgstr ""
+
+msgid "Scored a gammon against a human"
+msgstr ""
+
+msgid "Scored a normal win against BOT_tabula"
+msgstr ""
+
+msgid "Scored a normal win against BOT_wildbg"
+msgstr ""
+
+msgid "Scored a normal win against a human"
+msgstr ""
 
 msgid "SERVER BROADCAST:"
 msgstr "MESSAGE DU SERVEUR :"
@@ -223,19 +274,25 @@ msgstr "Les déplacements légaux suivants sont possibles : %s"
 msgid "The match you are in is still in progress."
 msgstr "La partie dans laquelle vous êtes est toujours en cours."
 
-msgid "The server is shutting down. Reason:"
-msgstr "Le serveur est en train de s'éteindre. Raison :"
+msgid "The server is shutting down. Reason: %s"
+msgstr "Le serveur est en train de s'éteindre. Raison : %s"
 
 msgid "The server is shutting down in %d minute. Reason:"
 msgid_plural "The server is shutting down in %d minutes. Reason:"
 msgstr[0] "Le serveur va s'éteindre dans %d minute. Raison :"
 msgstr[1] "Le serveur va s'éteindre dans %d minutes. Raison :"
 
+msgid "Transformer"
+msgstr ""
+
 msgid "Unknown command: %s"
 msgstr "Commande inconnue : %s"
 
 msgid "Waiting for response from opponent."
 msgstr "En attente de réponse de l'adversaire."
+
+msgid "Weighted Sum"
+msgstr ""
 
 msgid "You are no longer following %s."
 msgstr "Vous ne suivez plus %s."
@@ -307,15 +364,3 @@ msgstr "Votre adversaire a quitté la partie."
 
 msgid "Your opponent would like to play again."
 msgstr "Votre adversaire voudrait jouer avec vous à nouveau."
-
-#~ msgid ""
-#~ "Failed to create match: Please leave the match you are in before creating "
-#~ "another."
-#~ msgstr ""
-#~ "Impossible de créer la partie : Veuillez quitter votre partie actuelle "
-#~ "avant d'en créer une autre."
-
-#~ msgid "Failed to create match: The server is shutting down. Reason: %s"
-#~ msgstr ""
-#~ "Impossible de créer la partie : Le serveur est en train de s'éteindre. "
-#~ "Raison : %s"
