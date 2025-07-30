@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2025-05-13 07:53+0000\n"
+"PO-Revision-Date: 2025-07-30 17:20+0000\n"
 "Last-Translator: Andy Callisto <andycallisto@noreply.codeberg.org>\n"
 "Language-Team: Ukrainian <https://translate.codeberg.org/projects/bgammon/"
 "server/uk/>\n"
@@ -10,7 +10,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Weblate 5.10.2\n"
+"X-Generator: Weblate 5.12.2\n"
 
 msgid "%[1]s (%[2]d point)"
 msgid_plural "%[1]s (%[2]d points)"
@@ -43,13 +43,13 @@ msgid "Accepted double."
 msgstr "Прийнято подвоєння."
 
 msgid "Achievement unlocked: %s"
-msgstr ""
+msgstr "Досягнення здобуто: %s"
 
 msgid "Blocked opponent from entering for 7 consecutive turns"
-msgstr ""
+msgstr "Не давати увійти опоненту 7 ходів підряд"
 
 msgid "Boogie Wonderland"
-msgstr ""
+msgstr "Бугі Вондерленд"
 
 msgid ""
 "Bots are not allowed to join player matches. Please create a match instead."
@@ -83,7 +83,7 @@ msgstr[1] "Запропоновано подвоєння (%d бали)."
 msgstr[2] "Запропоновано подвоєння (%d балів)."
 
 msgid "Double Trouble"
-msgstr ""
+msgstr "Подвійні проблеми"
 
 msgid ""
 "Due to ongoing abuse, only registered users may connect. Please register an "
@@ -135,13 +135,13 @@ msgstr ""
 "нецифровий символ."
 
 msgid "Flawless Victory"
-msgstr ""
+msgstr "Бездоганна перемога"
 
 msgid "Good Game"
-msgstr ""
+msgstr "Гарна гра"
 
 msgid "Hidden Layer"
-msgstr ""
+msgstr "Прихований шар"
 
 msgid "Illegal move."
 msgstr "Заборонений хід."
@@ -187,10 +187,10 @@ msgid "Message not sent: You are not currently in a match."
 msgstr "Повідомлення не відправлено: Ви не у грі."
 
 msgid "Mind Over Matter"
-msgstr ""
+msgstr "Розум проти матерії"
 
 msgid "Network Effect"
-msgstr ""
+msgstr "Мережевий ефект"
 
 msgid ""
 "No account was found with the provided username and password. To log in as a "
@@ -230,31 +230,31 @@ msgid "Resigned."
 msgstr "Капітульовано."
 
 msgid "Scored a backgammon against BOT_tabula"
-msgstr ""
+msgstr "Виграти кокс у грі проти BOT_tabula"
 
 msgid "Scored a backgammon against BOT_wildbg"
-msgstr ""
+msgstr "Виграти кокс у грі проти BOT_wildbg"
 
 msgid "Scored a backgammon against a human"
-msgstr ""
+msgstr "Виграти кокс у грі проти людини"
 
 msgid "Scored a gammon against BOT_tabula"
-msgstr ""
+msgstr "Виграти марс у грі проти BOT_tabula"
 
 msgid "Scored a gammon against BOT_wildbg"
-msgstr ""
+msgstr "Виграти марс у грі проти BOT_wildbg"
 
 msgid "Scored a gammon against a human"
-msgstr ""
+msgstr "Виграти марс у грі проти людини"
 
 msgid "Scored a normal win against BOT_tabula"
-msgstr ""
+msgstr "Виграти оїн у грі проти BOT_tabula"
 
 msgid "Scored a normal win against BOT_wildbg"
-msgstr ""
+msgstr "Виграти оїн у грі проти BOT_wildbg"
 
 msgid "Scored a normal win against a human"
-msgstr ""
+msgstr "Виграти оїн у грі проти людини"
 
 msgid "SERVER BROADCAST:"
 msgstr "ПОВІДОМЛЕННЯ ВІД СЕРВЕРА:"
@@ -281,7 +281,7 @@ msgstr[1] "Сервер буде вимкнено через %d хвилини. 
 msgstr[2] "Сервер буде вимкнено через %d хвилин. Причина:"
 
 msgid "Transformer"
-msgstr ""
+msgstr "Трансформер"
 
 msgid "Unknown command: %s"
 msgstr "Невідома команда: %s"
@@ -290,7 +290,7 @@ msgid "Waiting for response from opponent."
 msgstr "Очікування на відповідь опонента."
 
 msgid "Weighted Sum"
-msgstr ""
+msgstr "Зважена сума"
 
 msgid "You are no longer following %s."
 msgstr "Ви більше не слідкуєте за %s."
