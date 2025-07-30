@@ -198,7 +198,11 @@ func (s *server) loadLocales() {
 		if !entry.IsDir() {
 			continue
 		}
-		availableTags = append(availableTags, language.MustParse(entry.Name()))
+		var tag language.Tag
+		if !strings.ContainsRune(entry.Name(), '@') {
+			tag = language.MustParse(entry.Name())
+		}
+		availableTags = append(availableTags, tag)
 		availableNames = append(availableNames, []byte(entry.Name()))
 
 		b, err := assetFS.ReadFile(fmt.Sprintf("locales/%s/%s.po", entry.Name(), entry.Name()))
@@ -219,6 +223,12 @@ func (s *server) matchLanguage(identifier []byte) []byte {
 		return englishIdentifier
 	}
 
+	for _, name := range s.languageNames {
+		if bytes.Equal(name, identifier) {
+			return identifier
+		}
+	}
+
 	tag, err := language.Parse(string(identifier))
 	if err != nil {
 		return englishIdentifier
@@ -227,7 +237,7 @@ func (s *server) matchLanguage(identifier []byte) []byte {
 
 	useLanguage, index, _ := language.NewMatcher(s.languageTags).Match(preferred...)
 	useLanguageCode := useLanguage.String()
-	if index < 0 || useLanguageCode == "" || strings.HasPrefix(useLanguageCode, "en") {
+	if index < 0 || useLanguageCode == "" {
 		return englishIdentifier
 	}
 	return s.languageNames[index]

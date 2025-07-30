@@ -16,8 +16,8 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jlouis/glicko2 v1.0.0
 	github.com/matcornic/hermes/v2 v2.1.0
-	golang.org/x/crypto v0.39.0
-	golang.org/x/text v0.26.0
+	golang.org/x/crypto v0.40.0
+	golang.org/x/text v0.27.0
 )
 
 require (
@@ -37,12 +37,12 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/olekukonko/tablewriter v1.0.7 // indirect
+	github.com/olekukonko/tablewriter v1.0.9 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/vanng822/css v1.0.1 // indirect
 	github.com/vanng822/go-premailer v1.25.0 // indirect
-	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 )
