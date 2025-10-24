@@ -6,6 +6,12 @@ import (
 )
 
 const (
+	DimNone   int8 = 0
+	DimPlayer int8 = 1
+	DimAll    int8 = 2
+)
+
+const (
 	SpeedSlow    int8 = 0
 	SpeedMedium  int8 = 1
 	SpeedFast    int8 = 2
@@ -134,6 +140,7 @@ type EventSettings struct {
 	MuteRoll      bool
 	MuteMove      bool
 	MuteBearOff   bool
+	Dim           int8
 	Speed         int8
 }
 

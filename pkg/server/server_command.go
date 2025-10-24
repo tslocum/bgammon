@@ -216,6 +216,7 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 			MuteRoll:      a.muteRoll,
 			MuteMove:      a.muteMove,
 			MuteBearOff:   a.muteBearOff,
+			Dim:           a.dim,
 			Speed:         a.speed,
 		})
 	}
@@ -1324,7 +1325,7 @@ COMMANDS:
 			}
 
 			name := string(bytes.ToLower(params[0]))
-			settings := []string{"autoplay", "highlight", "pips", "moves", "flip", "traditional", "advanced", "mutejoinleave", "mutechat", "muteroll", "mutemove", "mutebearoff", "speed"}
+			settings := []string{"autoplay", "highlight", "pips", "moves", "flip", "traditional", "advanced", "mutejoinleave", "mutechat", "muteroll", "mutemove", "mutebearoff", "dim", "speed"}
 			var found bool
 			for i := range settings {
 				if name == settings[i] {
@@ -1338,7 +1339,15 @@ COMMANDS:
 			}
 
 			value, err := strconv.Atoi(string(params[1]))
-			if err != nil || value < 0 || (name == "speed" && value > 3) || (name != "speed" && value > 1) {
+			minValue := 0
+			maxValue := 1
+			switch name {
+			case "dim":
+				maxValue = 2
+			case "speed":
+				maxValue = 3
+			}
+			if err != nil || value < minValue || value > maxValue {
 				cmd.client.sendNotice("Invalid setting value provided.")
 				continue
 			}

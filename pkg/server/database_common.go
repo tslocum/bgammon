@@ -34,6 +34,7 @@ type account struct {
 	muteRoll      bool
 	muteMove      bool
 	muteBearOff   bool
+	dim           int8
 	speed         int8
 
 	casual      *clientRating
