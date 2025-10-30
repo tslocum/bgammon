@@ -246,7 +246,7 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 
 	// Send leacy client warning message.
 	if cmd.client.legacy {
-		cmd.client.sendNotice("Warning: You are using an outdated client. Please download the latest version at bgammon.org/download (PC) or F-Droid (Android)")
+		cmd.client.sendNotice("Warning: You are using an outdated client. Please download the latest version at bgammon.org/download")
 	}
 
 	// Send DEFCON warning message.

@@ -15,9 +15,7 @@ Source code is available [here](https://codeberg.org/tslocum/boxcars).
 
 ### Android
 
-<a href="https://f-droid.org/packages/com.rocket9labs.boxcars/"><img width="121" height="36" alt="F-Droid" border="0" src="https://rocket9labs.com/static/badge_fdroid_36.png"></a>
-
-Download Boxcars via [F-Droid](https://f-droid.org/packages/com.rocket9labs.boxcars/)
+Boxcars for Android is available [here](https://bgammon.org/boxcars/boxcars-android.apk).
 
 Source code is available [here](https://codeberg.org/tslocum/boxcars-android).
 
