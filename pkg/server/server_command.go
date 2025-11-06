@@ -364,7 +364,7 @@ COMMANDS:
 		clientGame := s.gameByClient(cmd.client)
 		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
 			switch keyword {
-			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandHistory, bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandDefcon, bgammon.CommandKick, bgammon.CommandBan, bgammon.CommandUnban, bgammon.CommandShutdown:
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandHistory, bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandDefcon, bgammon.CommandRename, bgammon.CommandKick, bgammon.CommandBan, bgammon.CommandUnban, bgammon.CommandShutdown:
 				// These commands are allowed to be used by spectators.
 			default:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Command ignored: You are spectating this match."))
@@ -1529,6 +1529,50 @@ COMMANDS:
 				sc.sendDefconWarning(s.defcon)
 			}
 			s.clientsLock.Unlock()
+		case bgammon.CommandRename:
+			if len(params) < 2 {
+				cmd.client.sendNotice("Please specify the account's current username and a new username.")
+				continue
+			} else if !cmd.client.Admin() {
+				cmd.client.sendNotice("Access denied.")
+				continue
+			}
+			oldUsername := strings.ToLower(string(params[0]))
+			newUsername := strings.ToLower(string(params[1]))
+
+			s.clientsLock.Lock()
+			for _, sc := range s.clients {
+				if bytes.Equal(bytes.ToLower(sc.name), []byte(oldUsername)) {
+					sc.Client.Terminate("Renaming account.")
+					break
+				}
+			}
+			s.clientsLock.Unlock()
+
+			oldAccount, err := accountByUsername(oldUsername)
+			if err != nil {
+				oldAccount = nil
+			}
+			if oldAccount == nil {
+				cmd.client.sendNotice("No account was found with that username.")
+				continue
+			}
+
+			newAccount, err := accountByUsername(newUsername)
+			if err != nil {
+				newAccount = nil
+			}
+			if newAccount != nil {
+				cmd.client.sendNotice("An account already exists with that username.")
+				continue
+			}
+
+			err = renameAccount(oldAccount.id, oldUsername, newUsername)
+			if err != nil {
+				cmd.client.sendNotice(fmt.Sprintf("Failed to rename account %s: %s", oldUsername, err))
+				continue
+			}
+			cmd.client.sendNotice(fmt.Sprintf("Renamed account %s.", params[0]))
 		case bgammon.CommandKick:
 			if len(params) == 0 {
 				cmd.client.sendNotice("Please specify a username.")

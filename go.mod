@@ -9,7 +9,7 @@ replace github.com/olekukonko/tablewriter => github.com/olekukonko/tablewriter v
 
 require (
 	codeberg.org/tslocum/gotext v0.0.0-20250401033345-fc2bcce10286
-	codeberg.org/tslocum/tabula v0.0.0-20250401032642-84c7ebdd87e2
+	codeberg.org/tslocum/tabula v0.0.0-20251028214643-fad460fa1451
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/coder/websocket v1.8.14
 	github.com/gorilla/mux v1.8.1
@@ -27,7 +27,8 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/PuerkitoBio/goquery v1.10.3 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
-	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
+	github.com/clipperhouse/stringish v0.1.1 // indirect
+	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect

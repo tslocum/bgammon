@@ -34,6 +34,7 @@ const (
 	CommandMOTD          = "motd"          // Read (or write) the message of the day.
 	CommandBroadcast     = "broadcast"     // Send a message to all players.
 	CommandDefcon        = "defcon"        // Apply restrictions to guests to prevent abuse.
+	CommandRename        = "rename"        // Rename an account.
 	CommandKick          = "kick"          // Kick a user from the server.
 	CommandBan           = "ban"           // Ban an IP address or account.
 	CommandUnban         = "unban"         // Unban an IP address or account.
@@ -95,6 +96,7 @@ var HelpText = map[string]string{
 	CommandMOTD:          "[message] - View (or set) message of the day. Specifying a new message of the day is only available to server administrators.",
 	CommandBroadcast:     "<message> - Send a message to all players. This command is only available to server administrators.",
 	CommandDefcon:        "[level] - Apply restrictions to guests to prevent abuse. Levels:\n1. Disallow new accounts from being registered.\n2. Only registered users may connect.\n3. Only registered users may chat and set custom match titles.\n4. Warning message is broadcast to all users.\n5. Normal operation.",
+	CommandRename:        "<old> <new> - Rename an account.",
 	CommandKick:          "<username> [reason] - Kick a user from the server.",
 	CommandBan:           "<username> [reason] - Ban a user by IP addresss and account (if logged in).",
 	CommandUnban:         "<IP>/<username> - Unban a user by IP address or account.",

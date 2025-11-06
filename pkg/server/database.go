@@ -569,6 +569,48 @@ func setAccountFollows(id int, target int, follows bool) error {
 	return err
 }
 
+func renameAccount(id int, oldUsername string, newUsername string) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil {
+		return nil
+	} else if id <= 0 || oldUsername == "" || newUsername == "" {
+		return fmt.Errorf("invalid id or username: %d (%s / %s)", id, oldUsername, newUsername)
+	}
+
+	tx, err := begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit(context.Background())
+
+	_, err = tx.Exec(context.Background(), "UPDATE account SET username = $1 WHERE id = $2", newUsername, id)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return err
+	}
+
+	_, err = tx.Exec(context.Background(), "UPDATE game SET replay = REPLACE(replay, $1, $2) WHERE account1 = $3 OR account2 = $3", oldUsername, newUsername, id)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return err
+	}
+
+	_, err = tx.Exec(context.Background(), "UPDATE game SET player1 = $1 WHERE account1 = $2", newUsername, id)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return err
+	}
+
+	_, err = tx.Exec(context.Background(), "UPDATE game SET player2 = $1 WHERE account2 = $2", newUsername, id)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return err
+	}
+	return nil
+}
+
 func awardAchievement(a *account, award int, game int, date int64) (bool, error) {
 	for _, achievement := range a.achievementIDs {
 		if achievement == award {

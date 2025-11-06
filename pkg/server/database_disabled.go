@@ -55,6 +55,10 @@ func setAccountFollows(id int, target int, follows bool) error {
 	return nil
 }
 
+func renameAccount(id int, oldUsername string, newUsername string) error {
+	return nil
+}
+
 func awardAchievement(a *account, award int, game int, date int64) (bool, error) {
 	return false, nil
 }
