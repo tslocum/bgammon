@@ -81,7 +81,6 @@ type serverClient struct {
 	commands     chan []byte
 	autoplay     bool
 	playerNumber int8
-	legacy       bool
 	terminating  bool
 	bgammon.Client
 }
@@ -119,24 +118,7 @@ func (c *serverClient) sendEvent(e interface{}) {
 		case *bgammon.EventFailedLeave:
 			ev.Type = bgammon.EventTypeFailedLeave
 		case *bgammon.EventBoard:
-			if !c.legacy {
-				ev.Type = bgammon.EventTypeBoard
-			} else {
-				v := &eventBoardCompat{}
-				v.Type = bgammon.EventTypeBoard
-				v.gameStateCompat = gameStateCompat{
-					gameCompat: &gameCompat{
-						Game:    *ev.Game,
-						Started: timestamp(ev.Game.Started),
-						Ended:   timestamp(ev.Game.Ended),
-					},
-					PlayerNumber: ev.PlayerNumber,
-					Available:    ev.Available,
-					Forced:       ev.Forced,
-					Spectating:   ev.Spectating,
-				}
-				e = v
-			}
+			ev.Type = bgammon.EventTypeBoard
 		case *bgammon.EventRolled:
 			ev.Type = bgammon.EventTypeRolled
 		case *bgammon.EventFailedRoll:
@@ -353,25 +335,22 @@ func logClientRead(msg []byte) {
 	}
 }
 
-func legacyClient(clientName []byte) bool {
+func outdatedBoxcarsClient(clientName []byte) bool {
 	// Strip language.
 	slash := bytes.IndexByte(clientName, '/')
 	if slash != -1 {
 		clientName = clientName[:slash]
 	}
 
-	// Split by hyphens.
+	// Filter out non-Boxcars clients.
+	if !bytes.HasPrefix(clientName, []byte("boxcars")) {
+		return false
+	}
+	// Parse version information.
 	split := bytes.Split(clientName, []byte("-"))
 	if len(split) == 0 {
 		return true
 	}
-
-	// Only Boxcars requires legacy support.
-	if !bytes.Equal(split[0], []byte("boxcars")) {
-		return false
-	}
-
-	// Parse version information.
 	last := split[len(split)-1]
 	lastSplit := bytes.Split(last, []byte("."))
 	if len(lastSplit) != 3 {
@@ -379,8 +358,8 @@ func legacyClient(clientName []byte) bool {
 	}
 	major, minor := parseInt(lastSplit[0]), parseInt(lastSplit[1])
 
-	// Boxcars releases before v1.4.0 require legacy support.
-	return major < 1 || (major == 1 && minor < 4)
+	// Notify Boxcars clients older than v1.5.0 to upgrade.
+	return major < 1 || (major == 1 && minor < 5)
 }
 
 func parseInt(buf []byte) int {

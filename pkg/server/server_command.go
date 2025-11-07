@@ -49,7 +49,6 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 				sendUsage()
 				return
 			}
-			cmd.client.legacy = legacyClient(params[0])
 			slashIndex := bytes.IndexRune(params[0], '/')
 			if slashIndex != -1 {
 				cmd.client.language = "bgammon-" + string(s.matchLanguage(params[0][slashIndex+1:]))
@@ -92,7 +91,6 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 		readUsername := func() bool {
 			if cmd.client.json {
 				if len(params) > 0 {
-					cmd.client.legacy = legacyClient(params[0])
 					slashIndex := bytes.IndexRune(params[0], '/')
 					if slashIndex != -1 {
 						cmd.client.language = "bgammon-" + string(s.matchLanguage(params[0][slashIndex+1:]))
@@ -244,8 +242,8 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 		}
 	}
 
-	// Send leacy client warning message.
-	if cmd.client.legacy {
+	// Send outdated Boxcars client warning.
+	if outdatedBoxcarsClient(params[0]) {
 		cmd.client.sendNotice("Warning: You are using an outdated client. Please download the latest version at bgammon.org/download")
 	}
 
@@ -455,20 +453,23 @@ COMMANDS:
 			} else if !s.shutdownTime.IsZero() {
 				failCreate(gotext.GetD(cmd.client.language, "The server is shutting down. Reason: %s", s.shutdownReason))
 				continue
-			} else if len(params) < 2 {
+			} else if len(params) < 3 {
 				sendUsage()
 				continue
 			}
 
-			var gamePassword []byte
+			// Parse match type and name. Store parameter references.
 			gameType := bytes.ToLower(params[0])
-			var gameName []byte
+			var gamePassword []byte
 			var gamePoints []byte
+			var gameVariant []byte
+			var gameName []byte
 			switch {
 			case bytes.Equal(gameType, []byte("public")):
 				gamePoints = params[1]
-				if len(params) > 2 {
-					gameName = bytes.Join(params[2:], []byte(" "))
+				gameVariant = params[2]
+				if len(params) > 3 {
+					gameName = bytes.Join(params[3:], []byte(" "))
 				}
 			case bytes.Equal(gameType, []byte("private")):
 				if len(params) < 3 {
@@ -477,33 +478,30 @@ COMMANDS:
 				}
 				gamePassword = bytes.ReplaceAll(params[1], []byte("_"), []byte(" "))
 				gamePoints = params[2]
-				if len(params) > 3 {
-					gameName = bytes.Join(params[3:], []byte(" "))
+				gameVariant = params[3]
+				if len(params) > 4 {
+					gameName = bytes.Join(params[4:], []byte(" "))
 				}
 			default:
 				sendUsage()
 				continue
 			}
 
-			variant := bgammon.VariantBackgammon
-
-			// Backwards-compatible acey-deucey and tabula parameter. Acey-deucey added in v1.1.5. Tabula added in v1.2.2.
-			variantNone := bytes.HasPrefix(gameName, []byte("0 ")) || bytes.Equal(gameName, []byte("0"))
-			variantAcey := bytes.HasPrefix(gameName, []byte("1 ")) || bytes.Equal(gameName, []byte("1"))
-			variantTabula := bytes.HasPrefix(gameName, []byte("2 ")) || bytes.Equal(gameName, []byte("2"))
-			if variantNone || variantAcey || variantTabula {
-				if variantAcey {
-					variant = bgammon.VariantAceyDeucey
-				} else if variantTabula {
-					variant = bgammon.VariantTabula
-				}
-				if len(gameName) > 1 {
-					gameName = gameName[2:]
-				} else {
-					gameName = nil
-				}
+			// Parse match variant.
+			var variant int8
+			switch {
+			case bytes.Equal(gameVariant, []byte("0")):
+				variant = bgammon.VariantBackgammon
+			case bytes.Equal(gameVariant, []byte("1")):
+				variant = bgammon.VariantAceyDeucey
+			case bytes.Equal(gameVariant, []byte("2")):
+				variant = bgammon.VariantTabula
+			default:
+				sendUsage()
+				continue
 			}
 
+			// Parse match points.
 			points, err := strconv.Atoi(string(gamePoints))
 			if err != nil || points < 1 {
 				sendUsage()
@@ -516,7 +514,7 @@ COMMANDS:
 				gameName = nil
 			}
 
-			// Set default game name.
+			// Set default match name.
 			if len(bytes.TrimSpace(gameName)) == 0 {
 				abbr := "'s"
 				lastLetter := cmd.client.name[len(cmd.client.name)-1]

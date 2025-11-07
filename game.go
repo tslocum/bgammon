@@ -59,9 +59,6 @@ type Game struct {
 
 	boardStates   [][]int8  // One board state for each move to allow undoing a move.
 	enteredStates [][2]bool // Player 1 entered state and Player 2 entered state for each move.
-
-	// Fields after this point are provided for backwards-compatibility only and will eventually be removed.
-	Acey bool // For Boxcars v1.2.1 and earlier.
 }
 
 func NewGame(variant int8) *Game {
@@ -76,9 +73,6 @@ func NewGame(variant int8) *Game {
 	if variant == VariantBackgammon {
 		g.Player1.Entered = true
 		g.Player2.Entered = true
-	} else {
-		// Set backwards-compatible field.
-		g.Acey = true
 	}
 	return g
 }
