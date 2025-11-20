@@ -1643,52 +1643,50 @@ COMMANDS:
 				s.clientsLock.Unlock()
 
 				cmd.client.sendNotice(fmt.Sprintf("Banned %s.", params[0]))
-			} else {
-				account, err := accountByUsername(string(params[0]))
-				if err != nil {
-					cmd.client.sendNotice("Failed to add ban: " + err.Error())
-					continue
-				} else if account == nil || account.id == 0 {
-					var found bool
-					nameLower := bytes.ToLower(params[0])
-					s.clientsLock.Lock()
-					for _, sc := range s.clients {
-						if bytes.Equal(bytes.ToLower(sc.name), nameLower) {
-							found = true
-							err := addBan(sc.Address(), 0, cmd.client.accountID, reason)
-							if err != nil {
-								cmd.client.sendNotice("Failed to add ban: " + err.Error())
-							}
-							sc.Client.Terminate(msg)
-							break
-						}
-					}
-					s.clientsLock.Unlock()
-
-					if !found {
-						cmd.client.sendNotice("No account was found with that username.")
-					} else {
-						cmd.client.sendNotice(fmt.Sprintf("Banned %s.", params[0]))
-					}
-					continue
-				}
-
-				err = addBan("", account.id, cmd.client.accountID, reason)
-				if err != nil {
-					cmd.client.sendNotice("Failed to add ban: " + err.Error())
-				}
-
-				s.clientsLock.Lock()
-				for _, sc := range s.clients {
-					if sc.accountID == account.id {
-						sc.Client.Terminate(msg)
-						break
-					}
-				}
-				s.clientsLock.Unlock()
-
-				cmd.client.sendNotice(fmt.Sprintf("Banned %s.", params[0]))
+				continue
 			}
+
+			var banned bool
+			s.clientsLock.Lock()
+			for _, sc := range s.clients {
+				if !bytes.Equal(bytes.ToLower(sc.name), bytes.ToLower(params[0])) {
+					continue
+				}
+				err := addBan(sc.Address(), 0, cmd.client.accountID, reason)
+				if err != nil {
+					cmd.client.sendNotice("Failed to add ban: " + err.Error())
+				}
+				sc.Client.Terminate(msg)
+				banned = true
+				break
+			}
+			s.clientsLock.Unlock()
+
+			account, err := accountByUsername(string(params[0]))
+			if err != nil || account == nil || account.id == 0 {
+				if banned {
+					cmd.client.sendNotice(fmt.Sprintf("Banned %s.", params[0]))
+				} else {
+					cmd.client.sendNotice("No users with that name are registered or connected.")
+				}
+				continue
+			}
+
+			err = addBan("", account.id, cmd.client.accountID, reason)
+			if err != nil {
+				cmd.client.sendNotice("Failed to add ban: " + err.Error())
+			}
+
+			s.clientsLock.Lock()
+			for _, sc := range s.clients {
+				if sc.accountID == account.id {
+					sc.Client.Terminate(msg)
+					break
+				}
+			}
+			s.clientsLock.Unlock()
+
+			cmd.client.sendNotice(fmt.Sprintf("Banned %s.", params[0]))
 		case bgammon.CommandUnban:
 			if len(params) == 0 {
 				cmd.client.sendNotice("Please specify an IP address or username.")
