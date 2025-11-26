@@ -23,6 +23,14 @@ const (
 	VariantTabula     int8 = 2
 )
 
+type Crawford int8
+
+const (
+	CrawfordPending Crawford = 0 // Crawford Rule has not yet been activated. Doubling is allowed.
+	CrawfordActive  Crawford = 1 // Crawford Rule is active for this game. Doubling is not allowed.
+	CrawfordExpired Crawford = 2 // Crawford Rule was active during a previous game. Doubling is allowed.
+)
+
 type Game struct {
 	Started int64
 	Ended   int64
@@ -41,10 +49,11 @@ type Game struct {
 	Moves  [][]int8 // Pending moves.
 	Winner int8
 
-	Points        int8 // Points required to win the match.
-	DoubleValue   int8 // Doubling cube value.
-	DoublePlayer  int8 // Player that currently posesses the doubling cube.
-	DoubleOffered bool // Whether the current player is offering a double.
+	Points        int8     // Points required to win the match.
+	Crawford      Crawford // Crawford Rule status.
+	DoubleValue   int8     // Doubling cube value.
+	DoublePlayer  int8     // Player that currently posesses the doubling cube.
+	DoubleOffered bool     // Whether the current player is offering a double.
 
 	Reroll bool // Used in acey-deucey.
 
@@ -95,6 +104,7 @@ func (g *Game) Copy(shallow bool) *Game {
 		Winner:  g.Winner,
 
 		Points:        g.Points,
+		Crawford:      g.Crawford,
 		DoubleValue:   g.DoubleValue,
 		DoublePlayer:  g.DoublePlayer,
 		DoubleOffered: g.DoubleOffered,
@@ -213,6 +223,8 @@ func (g *Game) NextTurn(reroll bool) {
 	g.enteredStates = g.enteredStates[:0]
 }
 
+// Reset resets the board state and prepares for the next game in a match.
+// Create a new Game from scratch to start a rematch.
 func (g *Game) Reset() {
 	g.Player1.Inactive = 0
 	g.Player2.Inactive = 0
@@ -237,6 +249,14 @@ func (g *Game) Reset() {
 	g.partialTime = time.Time{}
 	g.blocked1 = 0
 	g.blocked2 = 0
+	switch g.Crawford {
+	case CrawfordPending:
+		if g.Points > 1 && (g.Player1.Points == g.Points-1 || g.Player2.Points == g.Points-1) {
+			g.Crawford = CrawfordActive
+		}
+	case CrawfordActive:
+		g.Crawford = CrawfordExpired
+	}
 }
 
 func (g *Game) turnPlayer() Player {
