@@ -133,6 +133,8 @@ func (c *serverClient) sendEvent(e interface{}) {
 			ev.Type = bgammon.EventTypeWin
 		case *bgammon.EventSettings:
 			ev.Type = bgammon.EventTypeSettings
+		case *bgammon.EventAchievements:
+			ev.Type = bgammon.EventTypeAchievements
 		case *bgammon.EventReplay:
 			ev.Type = bgammon.EventTypeReplay
 		case *bgammon.EventHistory:

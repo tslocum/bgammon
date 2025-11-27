@@ -10,8 +10,9 @@ const (
 	CommandResetPassword = "resetpassword" // Request password reset link via email.
 	CommandPassword      = "password"      // Change password.
 	CommandSet           = "set"           // Change account setting.
+	CommandAchievements  = "achievements"  // Retrieve achievement IDs, names and descriptions.
 	CommandReplay        = "replay"        // Retrieve replay.
-	CommandHistory       = "history"       // Retrieve match history.
+	CommandHistory       = "history"       // Retrieve player match and achievement history.
 	CommandHelp          = "help"          // Print help information.
 	CommandJSON          = "json"          // Enable or disable JSON formatted messages.
 	CommandSay           = "say"           // Send chat message.
@@ -63,6 +64,7 @@ const (
 	EventTypeFailedOk     = "failedok"
 	EventTypeWin          = "win"
 	EventTypeSettings     = "settings"
+	EventTypeAchievements = "achievements"
 	EventTypeReplay       = "replay"
 	EventTypeHistory      = "history"
 )
@@ -73,6 +75,7 @@ var HelpText = map[string]string{
 	CommandResetPassword: "<email> - Request a password reset link via email.",
 	CommandPassword:      "<old> <new> - Change account password.",
 	CommandSet:           "<name> <value> - Change account setting. Available settings: highlight, pips and moves.",
+	CommandAchievements:  "- Retrieve achievement IDs, names and descriptions.",
 	CommandReplay:        "<id> - Retrieve replay of the specified game.",
 	CommandHistory:       "<username> [page] - Retrieve match history of the specified player.",
 	CommandHelp:          "[command] - Request help for all commands, or optionally a specific command.",

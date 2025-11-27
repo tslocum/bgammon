@@ -144,6 +144,17 @@ type EventSettings struct {
 	Speed         int8
 }
 
+type EventAchievement struct {
+	ID          int
+	Name        string
+	Description string
+}
+
+type EventAchievements struct {
+	Event
+	Achievements []*EventAchievement
+}
+
 type EventReplay struct {
 	Event
 	ID      int
@@ -223,6 +234,8 @@ func DecodeEvent(message []byte) (interface{}, error) {
 		ev = &EventWin{}
 	case EventTypeSettings:
 		ev = &EventSettings{}
+	case EventTypeAchievements:
+		ev = &EventAchievements{}
 	case EventTypeReplay:
 		ev = &EventReplay{}
 	case EventTypeHistory:

@@ -362,7 +362,7 @@ COMMANDS:
 		clientGame := s.gameByClient(cmd.client)
 		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
 			switch keyword {
-			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandHistory, bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandDefcon, bgammon.CommandRename, bgammon.CommandKick, bgammon.CommandBan, bgammon.CommandUnban, bgammon.CommandShutdown:
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandAchievements, bgammon.CommandHistory, bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandDefcon, bgammon.CommandRename, bgammon.CommandKick, bgammon.CommandBan, bgammon.CommandUnban, bgammon.CommandShutdown:
 				// These commands are allowed to be used by spectators.
 			default:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Command ignored: You are spectating this match."))
@@ -1358,6 +1358,12 @@ COMMANDS:
 				continue
 			}
 			_ = setAccountSetting(cmd.client.account.id, name, value)
+		case bgammon.CommandAchievements:
+			ev := &bgammon.EventAchievements{}
+			for id, info := range Achievements {
+				ev.Achievements = append(ev.Achievements, &bgammon.EventAchievement{ID: id, Name: gotext.GetD(cmd.client.language, info[0]), Description: gotext.GetD(cmd.client.language, info[1])})
+			}
+			cmd.client.sendEvent(ev)
 		case bgammon.CommandHistory:
 			if len(params) == 0 {
 				cmd.client.sendNotice("Please specify the player as follows: history <username>")
