@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2025-06-05 07:58+0000\n"
-"Last-Translator: yurtpage <yurtpage@noreply.codeberg.org>\n"
+"PO-Revision-Date: 2025-11-09 19:09+0000\n"
+"Last-Translator: Githabnet <githabnet@noreply.codeberg.org>\n"
 "Language-Team: Russian <https://translate.codeberg.org/projects/bgammon/"
 "server/ru/>\n"
 "Language: ru\n"
@@ -10,7 +10,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Weblate 5.11.4\n"
+"X-Generator: Weblate 5.14\n"
 
 msgid "%[1]s (%[2]d point)"
 msgid_plural "%[1]s (%[2]d points)"
@@ -43,13 +43,14 @@ msgid "Accepted double."
 msgstr "Принято удвоение."
 
 msgid "Achievement unlocked: %s"
-msgstr ""
+msgstr "Достижение разблокировано: %s"
 
 msgid "Blocked opponent from entering for 7 consecutive turns"
 msgstr ""
 
+#, fuzzy
 msgid "Boogie Wonderland"
-msgstr ""
+msgstr "Чудоземля Буги"
 
 msgid ""
 "Bots are not allowed to join player matches. Please create a match instead."
@@ -128,16 +129,19 @@ msgstr "Не удалось создать матч: %s"
 msgid "Failed to log in: %s"
 msgstr "Не удалось войти: %s"
 
+#, fuzzy
 msgid ""
 "Failed to register: Invalid username: must contain at least one non-numeric "
 "character."
 msgstr ""
+"Не удалось зарегистрироваться: Неверное имя пользователя: должно содержать "
+"хотя бы один нецифровой символ."
 
 msgid "Flawless Victory"
-msgstr ""
+msgstr "Безупречная победа"
 
 msgid "Good Game"
-msgstr ""
+msgstr "Хорошая игра"
 
 msgid "Hidden Layer"
 msgstr ""
@@ -155,29 +159,37 @@ msgstr ""
 msgid "Invalid username: must be %d characters or less."
 msgstr ""
 
+#, fuzzy
 msgid "Invalid username: must contain at least one non-numeric character."
 msgstr ""
+"Недопустимое имя пользователя: необходим хотя бы один нецифровой символ."
 
+#, fuzzy
 msgid "Invalid username: must contain only letters, numbers and underscores."
 msgstr ""
+"Имя пользователя должно содержать только буквы, цифры и знак подчеркивания."
 
 msgid "It is not your turn to move."
-msgstr ""
+msgstr "Сейчас не Ваша очередь ходить."
 
 msgid "It is not your turn to roll."
-msgstr ""
+msgstr "Сейчас не Ваша очередь бросать кубик."
 
+#, fuzzy
 msgid "It is not your turn."
-msgstr ""
+msgstr "Сейчас не Ваша очередь."
 
+#, fuzzy
 msgid "Joined match: %s"
-msgstr ""
+msgstr "Присоединяется к матчу: %s"
 
+#, fuzzy
 msgid "Left completed match."
-msgstr ""
+msgstr "Покидает завершённый матч."
 
+#, fuzzy
 msgid "Match not found."
-msgstr ""
+msgstr "Матч не найден."
 
 msgid "Message not sent: There is no one else in the match."
 msgstr ""
@@ -195,18 +207,22 @@ msgid ""
 "No account was found with the provided username and password. To log in as a "
 "guest, do not enter a password."
 msgstr ""
+"Указанная учётная запись и пароль не найдены. Для входа в систему в качестве "
+"гостя не вводите пароль."
 
+#, fuzzy
 msgid "No replay was recorded for that game."
-msgstr ""
+msgstr "Повтор этой игры не записывался."
 
 msgid "Password changed successfully."
-msgstr ""
+msgstr "Пароль успешно изменён."
 
 msgid "Please enter an email, username and password."
-msgstr ""
+msgstr "Введите адрес электронной почты, имя пользователя и пароль."
 
+#, fuzzy
 msgid "Please finish your match as soon as possible."
-msgstr ""
+msgstr "Пожалуйста, закончите матч как можно скорее."
 
 msgid "Please leave the match you are in before creating another."
 msgstr "Пожалуйста, покиньте текущую игру, прежде чем создавать новую."
