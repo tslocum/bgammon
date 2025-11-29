@@ -1265,7 +1265,7 @@ func accountStats(name string, matchType int, variant int8, tz *time.Location) (
 	}
 	defer tx.Commit(context.Background())
 
-	var earliestGame int64
+	var eg *int64
 	rows, err := tx.Query(context.Background(), "SELECT MIN(started) FROM game WHERE (player1 = $1 OR player2 = $2) AND variant = $3", name, name, variant)
 	if err != nil {
 		return nil, err
@@ -1274,11 +1274,14 @@ func accountStats(name string, matchType int, variant int8, tz *time.Location) (
 		if err != nil {
 			continue
 		}
-		err = rows.Scan(&earliestGame)
+		err = rows.Scan(&eg)
 	}
 	if err != nil {
 		return nil, err
+	} else if eg == nil || *eg == 0 {
+		return nil, nil
 	}
+	earliestGame := *eg
 
 	result := &accountStatsResult{}
 	m := midnight(time.Unix(earliestGame, 0).In(tz))
