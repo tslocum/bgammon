@@ -732,12 +732,14 @@ COMMANDS:
 			}
 			clientGame.Ended = time.Now().Unix()
 
+			winPoints := clientGame.winPoints(clientGame.Winner) * clientGame.DoubleValue
+
 			var reset bool
 			if clientGame.Winner == 1 {
-				clientGame.Player1.Points = add8(clientGame.Player1.Points, clientGame.DoubleValue)
+				clientGame.Player1.Points = add8(clientGame.Player1.Points, winPoints)
 				reset = clientGame.Player1.Points < clientGame.Points
 			} else {
-				clientGame.Player2.Points = add8(clientGame.Player2.Points, clientGame.DoubleValue)
+				clientGame.Player2.Points = add8(clientGame.Player2.Points, winPoints)
 				reset = clientGame.Player2.Points < clientGame.Points
 			}
 			clientGame.addReplayHeader()
@@ -758,7 +760,7 @@ COMMANDS:
 					winEvent.Resigned = clientGame.Player1.Name
 				}
 				if clientGame.Points > 1 {
-					winEvent.Points = clientGame.DoubleValue
+					winEvent.Points = winPoints
 				}
 			}
 

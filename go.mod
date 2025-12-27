@@ -1,6 +1,6 @@
 module codeberg.org/tslocum/bgammon
 
-go 1.24.1
+go 1.24.3
 
 toolchain go1.24.9
 
@@ -13,11 +13,11 @@ require (
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/coder/websocket v1.8.14
 	github.com/gorilla/mux v1.8.1
-	github.com/jackc/pgx/v5 v5.7.6
+	github.com/jackc/pgx/v5 v5.8.0
 	github.com/jlouis/glicko2 v1.0.0
 	github.com/matcornic/hermes/v2 v2.1.0
-	golang.org/x/crypto v0.45.0
-	golang.org/x/text v0.31.0
+	golang.org/x/crypto v0.46.0
+	golang.org/x/text v0.32.0
 )
 
 require (
@@ -44,6 +44,6 @@ require (
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/vanng822/css v1.0.1 // indirect
 	github.com/vanng822/go-premailer v1.27.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
 )

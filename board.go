@@ -40,7 +40,9 @@ func NewBoard(variant int8) []int8 {
 
 // HomeRange returns the start and end space of the provided player's home board.
 func HomeRange(player int8, variant int8) (from int8, to int8) {
-	if player == 2 || variant == VariantTabula {
+	if variant == VariantTabula {
+		return 24, 13
+	} else if player == 2 {
 		return 24, 19
 	}
 	return 1, 6

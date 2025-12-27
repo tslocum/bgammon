@@ -667,52 +667,59 @@ func (g *serverGame) addReplayHeader() {
 	g.replay = append([][]byte{[]byte(fmt.Sprintf("i %d %s %s %d %d %d %d %d %d", g.Started, g.allowed1, g.allowed2, g.Points, g.Player1.Points, g.Player2.Points, g.Winner, g.DoubleValue, g.Variant))}, g.replay...)
 }
 
-func (g *serverGame) handleWin() bool {
-	if g.Winner == 0 {
-		return false
-	}
+// winPoints returns the number of points a game is worth when a player has won
+// without applying the doubling cube.
+func (g *serverGame) winPoints(winner int8) int8 {
 	var opponent int8 = 1
 	opponentHome := bgammon.SpaceHomePlayer
 	opponentEntered := g.Player1.Entered
 	playerBar := bgammon.SpaceBarPlayer
-	if g.Winner == 1 {
+	if winner == 1 {
 		opponent = 2
 		opponentHome = bgammon.SpaceHomeOpponent
 		opponentEntered = g.Player2.Entered
 		playerBar = bgammon.SpaceBarOpponent
 	}
 
-	// Check for backgammon win.
-	backgammon := bgammon.PlayerCheckers(g.Board[playerBar], opponent) != 0
-	if !backgammon {
-		homeStart, homeEnd := bgammon.HomeRange(g.Winner, g.Variant)
-		bgammon.IterateSpaces(homeStart, homeEnd, g.Variant, func(space int8, spaceCount int8) {
-			if bgammon.PlayerCheckers(g.Board[space], opponent) != 0 {
-				backgammon = true
-			}
-		})
-	}
-
-	// Calculate win type and point value.
-	var winPoints int8
-	switch g.Variant {
-	case bgammon.VariantAceyDeucey:
+	var points int8
+	// Calculate acey-deucey points.
+	if g.Variant == bgammon.VariantAceyDeucey {
 		for space := int8(0); space < bgammon.BoardSpaces; space++ {
 			if (space == bgammon.SpaceHomePlayer || space == bgammon.SpaceHomeOpponent) && opponentEntered {
 				continue
 			}
-			winPoints += bgammon.PlayerCheckers(g.Board[space], opponent)
+			points += bgammon.PlayerCheckers(g.Board[space], opponent)
 		}
-	case bgammon.VariantTabula:
-		winPoints = 1
-	default:
-		if backgammon {
-			winPoints = 3 // Award backgammon.
-		} else if g.Board[opponentHome] == 0 {
-			winPoints = 2 // Award gammon.
-		} else {
-			winPoints = 1
+		return points
+	}
+
+	// Calculate Backgammon and Tabula points.
+	backgammon := g.Variant == bgammon.VariantTabula && !opponentEntered // Award backgammon when playing Tabula and opponent has not entered all of their checkers.
+	if !backgammon {
+		backgammon = bgammon.PlayerCheckers(g.Board[playerBar], opponent) != 0 // Award backgammon if one or more checkers are on the bar.
+		if !backgammon {
+			// Award backgammon if one or more checkers are in the winner's home row.
+			homeStart, homeEnd := bgammon.HomeRange(winner, g.Variant)
+			bgammon.IterateSpaces(homeStart, homeEnd, g.Variant, func(space int8, spaceCount int8) {
+				if bgammon.PlayerCheckers(g.Board[space], opponent) != 0 {
+					backgammon = true
+				}
+			})
 		}
+	}
+	if backgammon {
+		points = 3 // Award backgammon.
+	} else if g.Board[opponentHome] == 0 {
+		points = 2 // Award gammon.
+	} else {
+		points = 1 // Award normal win.
+	}
+	return points
+}
+
+func (g *serverGame) handleWin() bool {
+	if g.Winner == 0 {
+		return false
 	}
 
 	// Finalize replay.
@@ -737,6 +744,8 @@ func (g *serverGame) handleWin() bool {
 	}
 	line = append(line, movesFormatted...)
 	g.replay = append(g.replay, line)
+
+	winPoints := g.winPoints(g.Winner)
 
 	// Create win event.
 	winEvent := &bgammon.EventWin{}
