@@ -750,7 +750,7 @@ func (g *serverGame) handleWin() bool {
 	// Create win event.
 	winEvent := &bgammon.EventWin{}
 	if g.Points > 1 {
-		winEvent.Points = winPoints * g.DoubleValue
+		winEvent.Points = mul8(winPoints, g.DoubleValue)
 	}
 	var reset bool
 	if g.Winner == 1 {

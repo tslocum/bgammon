@@ -732,7 +732,7 @@ COMMANDS:
 			}
 			clientGame.Ended = time.Now().Unix()
 
-			winPoints := clientGame.winPoints(clientGame.Winner) * clientGame.DoubleValue
+			winPoints := mul8(clientGame.winPoints(clientGame.Winner), clientGame.DoubleValue)
 
 			var reset bool
 			if clientGame.Winner == 1 {
