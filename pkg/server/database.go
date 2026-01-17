@@ -253,7 +253,9 @@ func resetAccount(mailServer string, resetSalt string, email []byte) error {
 		passwordHash []byte
 	)
 	err = tx.QueryRow(context.Background(), "SELECT id, reset, email, password FROM account WHERE email = $1", bytes.ToLower(bytes.TrimSpace(email))).Scan(&id, &reset, &accountEmail, &passwordHash)
-	if err != nil {
+	if err == pgx.ErrNoRows {
+		return nil
+	} else if err != nil {
 		return err
 	} else if id == 0 || len(passwordHash) == 0 {
 		return nil
@@ -345,7 +347,9 @@ func confirmResetAccount(resetSalt string, passwordSalt string, id int, key stri
 	var username string
 	var reset int
 	err = tx.QueryRow(context.Background(), "SELECT username, reset FROM account WHERE id = $1", id).Scan(&username, &reset)
-	if err != nil {
+	if err == pgx.ErrNoRows {
+		return "", "", nil
+	} else if err != nil {
 		return "", "", err
 	}
 
@@ -388,7 +392,9 @@ func accountByID(id int) (*account, error) {
 	}
 	d := &accountData{}
 	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, icon, achievements, autoplay, highlight, pips, moves, flip, traditional, advanced, mutejoinleave, mutechat, muteroll, mutemove, mutebearoff, dim, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE id = $1", id).Scan(&a.id, &a.email, &a.username, &a.password, &a.icon, &d.achievements, &d.autoplay, &d.highlight, &d.pips, &d.moves, &d.flip, &d.traditional, &d.advanced, &d.muteJoinLeave, &d.muteChat, &d.muteRoll, &d.muteMove, &d.muteBearOff, &a.dim, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
-	if err != nil {
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
 	a.load(d)
@@ -415,7 +421,9 @@ func accountByUsername(username string) (*account, error) {
 	}
 	d := &accountData{}
 	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, icon, achievements, autoplay, highlight, pips, moves, flip, advanced, mutejoinleave, mutechat, muteroll, mutemove, mutebearoff, dim, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE username = $1", strings.ToLower(username)).Scan(&a.id, &a.email, &a.username, &a.password, &a.icon, &d.achievements, &d.autoplay, &d.highlight, &d.pips, &d.moves, &d.flip, &d.advanced, &d.muteJoinLeave, &d.muteChat, &d.muteRoll, &d.muteMove, &d.muteBearOff, &a.dim, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
-	if err != nil {
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
 	a.load(d)
@@ -446,7 +454,9 @@ func loginAccount(passwordSalt string, username []byte, password []byte) (*accou
 	}
 	d := &accountData{}
 	err = tx.QueryRow(context.Background(), "SELECT id, email, username, password, icon, achievements, autoplay, highlight, pips, moves, flip, advanced, mutejoinleave, mutechat, muteroll, mutemove, mutebearoff, dim, speed, casual_backgammon_single, casual_backgammon_multi, casual_acey_single, casual_acey_multi, casual_tabula_single, casual_tabula_multi, rated_backgammon_single, rated_backgammon_multi, rated_acey_single, rated_acey_multi, rated_tabula_single, rated_tabula_multi FROM account WHERE username = $1 OR email = $2", bytes.ToLower(bytes.TrimSpace(username)), bytes.ToLower(bytes.TrimSpace(username))).Scan(&a.id, &a.email, &a.username, &a.password, &a.icon, &d.achievements, &d.autoplay, &d.highlight, &d.pips, &d.moves, &d.flip, &d.advanced, &d.muteJoinLeave, &d.muteChat, &d.muteRoll, &d.muteMove, &d.muteBearOff, &a.dim, &a.speed, &a.casual.backgammonSingle, &a.casual.backgammonMulti, &a.casual.aceySingle, &a.casual.aceyMulti, &a.casual.tabulaSingle, &a.casual.tabulaMulti, &a.competitive.backgammonSingle, &a.competitive.backgammonMulti, &a.competitive.aceySingle, &a.competitive.aceyMulti, &a.competitive.tabulaSingle, &a.competitive.tabulaMulti)
-	if err != nil {
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	} else if len(a.password) == 0 {
 		return nil, fmt.Errorf("account disabled")
@@ -781,7 +791,9 @@ func matchInfo(id int) (timestamp int64, player1 string, player2 string, replay 
 	defer tx.Commit(context.Background())
 
 	err = tx.QueryRow(context.Background(), "SELECT started, player1, player2, replay FROM game WHERE id = $1 AND replay != ''", id).Scan(&timestamp, &player1, &player2, &replay)
-	if err != nil {
+	if err == pgx.ErrNoRows {
+		return 0, "", "", nil, nil
+	} else if err != nil {
 		return 0, "", "", nil, err
 	}
 	return timestamp, player1, player2, replay, nil
@@ -805,7 +817,9 @@ func replayByID(id int) ([]byte, error) {
 
 	var replay []byte
 	err = tx.QueryRow(context.Background(), "SELECT replay FROM game WHERE id = $1", id).Scan(&replay)
-	if err != nil {
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
 	return replay, nil
@@ -877,8 +891,10 @@ func checkBan(ipHash string, account int) (bool, string) {
 	}
 	var reason string
 	err = row.Scan(&reason)
-	if err != nil {
+	if err == pgx.ErrNoRows {
 		return false, ""
+	} else if err != nil {
+		log.Fatalf("failed to check for ban: %s", err)
 	}
 	return true, reason
 }
