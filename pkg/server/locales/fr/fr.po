@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2025-05-31 13:58+0000\n"
-"Last-Translator: milimarg <milimarg@noreply.codeberg.org>\n"
+"PO-Revision-Date: 2026-02-07 11:29+0000\n"
+"Last-Translator: KinGaume <kingaume@noreply.codeberg.org>\n"
 "Language-Team: French <https://translate.codeberg.org/projects/bgammon/"
 "server/fr/>\n"
 "Language: fr\n"
@@ -9,7 +9,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.11.4\n"
+"X-Generator: Weblate 5.15.2\n"
 
 msgid "%[1]s (%[2]d point)"
 msgid_plural "%[1]s (%[2]d points)"
@@ -40,13 +40,13 @@ msgid "Accepted double."
 msgstr "Double accepté."
 
 msgid "Achievement unlocked: %s"
-msgstr ""
+msgstr "Réussite débloquée : %s"
 
 msgid "Blocked opponent from entering for 7 consecutive turns"
-msgstr ""
+msgstr "Empêche l'adversaire d'entrer pendant 7 tours consécutifs"
 
 msgid "Boogie Wonderland"
-msgstr ""
+msgstr "Le pays merveilleux de la danse mystique"
 
 msgid ""
 "Bots are not allowed to join player matches. Please create a match instead."
@@ -79,7 +79,7 @@ msgstr[0] "Double offert à l'adversaire (%d point)."
 msgstr[1] "Double offert à l'adversaire (%d points)."
 
 msgid "Double Trouble"
-msgstr ""
+msgstr "Double problème"
 
 msgid ""
 "Due to ongoing abuse, only registered users may connect. Please register an "
@@ -135,13 +135,13 @@ msgstr ""
 "au moins un caractère non numérique."
 
 msgid "Flawless Victory"
-msgstr ""
+msgstr "Victoire sans faille"
 
 msgid "Good Game"
-msgstr ""
+msgstr "Bon jeu"
 
 msgid "Hidden Layer"
-msgstr ""
+msgstr "Couche cachée"
 
 msgid "Illegal move."
 msgstr "Déplacement illégal."
@@ -190,10 +190,10 @@ msgid "Message not sent: You are not currently in a match."
 msgstr "Message non envoyé : Vous n'êtes pas dans une partie."
 
 msgid "Mind Over Matter"
-msgstr ""
+msgstr "L'esprit domine la matière"
 
 msgid "Network Effect"
-msgstr ""
+msgstr "Effet de réseau"
 
 msgid ""
 "No account was found with the provided username and password. To log in as a "
@@ -233,31 +233,31 @@ msgid "Resigned."
 msgstr "Abandonné."
 
 msgid "Scored a backgammon against BOT_tabula"
-msgstr ""
+msgstr "A marqué un backgammon contre BOT_tabula"
 
 msgid "Scored a backgammon against BOT_wildbg"
-msgstr ""
+msgstr "A marqué un backgammon contre BOT_wildbg"
 
 msgid "Scored a backgammon against a human"
-msgstr ""
+msgstr "A marqué un backgammon contre un humain"
 
 msgid "Scored a gammon against BOT_tabula"
-msgstr ""
+msgstr "A marqué un gammon contre BOT_tabula"
 
 msgid "Scored a gammon against BOT_wildbg"
-msgstr ""
+msgstr "A marqué un gammon contre BOT_wildbg"
 
 msgid "Scored a gammon against a human"
-msgstr ""
+msgstr "A marqué un gammon contre un humain"
 
 msgid "Scored a normal win against BOT_tabula"
-msgstr ""
+msgstr "A remporté une victoire normale contre BOT_tabula"
 
 msgid "Scored a normal win against BOT_wildbg"
-msgstr ""
+msgstr "A remporté une victoire normale contre BOT_wildbg"
 
 msgid "Scored a normal win against a human"
-msgstr ""
+msgstr "A remporté une victoire normale contre un humain"
 
 msgid "SERVER BROADCAST:"
 msgstr "MESSAGE DU SERVEUR :"
@@ -283,7 +283,7 @@ msgstr[0] "Le serveur va s'éteindre dans %d minute. Raison :"
 msgstr[1] "Le serveur va s'éteindre dans %d minutes. Raison :"
 
 msgid "Transformer"
-msgstr ""
+msgstr "Transformateur"
 
 msgid "Unknown command: %s"
 msgstr "Commande inconnue : %s"
@@ -292,7 +292,7 @@ msgid "Waiting for response from opponent."
 msgstr "En attente de réponse de l'adversaire."
 
 msgid "Weighted Sum"
-msgstr ""
+msgstr "Somme pondérée"
 
 msgid "You are no longer following %s."
 msgstr "Vous ne suivez plus %s."

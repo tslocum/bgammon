@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2024-12-13 01:42+0000\n"
-"Last-Translator: fitopot <fitopot@users.noreply.translate.codeberg.org>\n"
+"PO-Revision-Date: 2026-02-07 11:29+0000\n"
+"Last-Translator: KinGaume <kingaume@noreply.codeberg.org>\n"
 "Language-Team: Italian <https://translate.codeberg.org/projects/bgammon/"
 "server/it/>\n"
 "Language: it\n"
@@ -9,7 +9,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.8.4\n"
+"X-Generator: Weblate 5.15.2\n"
 
 msgid "%[1]s (%[2]d point)"
 msgid_plural "%[1]s (%[2]d points)"
@@ -40,10 +40,10 @@ msgid "Accepted double."
 msgstr "Raddoppio accettato."
 
 msgid "Achievement unlocked: %s"
-msgstr ""
+msgstr "Obiettivo sbloccato: %s"
 
 msgid "Blocked opponent from entering for 7 consecutive turns"
-msgstr ""
+msgstr "Impedito all'avversario di entrare per 7 turni consecutivi"
 
 msgid "Boogie Wonderland"
 msgstr ""
@@ -79,12 +79,14 @@ msgstr[0] "Raddoppio offerto all'avversario (%d punto)."
 msgstr[1] "Raddoppio offerto all'avversario (%d punti)."
 
 msgid "Double Trouble"
-msgstr ""
+msgstr "Doppio guaio"
 
 msgid ""
 "Due to ongoing abuse, only registered users may connect. Please register an "
 "account or try again later."
 msgstr ""
+"A causa di continui abusi, solo gli utenti registrati possono connettersi. "
+"Registra un account o riprova più tardi."
 
 msgid "Due to ongoing abuse, registration is disabled. Please try again later."
 msgstr ""
@@ -102,6 +104,8 @@ msgid ""
 "Due to ongoing abuse, some actions may become restricted to registered users "
 "only. Please log in or register to avoid interruptions."
 msgstr ""
+"A causa di continui abusi, alcune azioni potrebbero essere limitate ai soli "
+"utenti registrati. Effettua il login o registrati per evitare interruzioni."
 
 msgid "Failed to change password."
 msgstr "Impossibile cambiare la password."
@@ -122,172 +126,180 @@ msgid ""
 "Failed to register: Invalid username: must contain at least one non-numeric "
 "character."
 msgstr ""
+"Registrazione non riuscita: nome utente non valido: deve contenere almeno un "
+"carattere non numerico."
 
 msgid "Flawless Victory"
-msgstr ""
+msgstr "Vittoria impeccabile"
 
 msgid "Good Game"
-msgstr ""
+msgstr "Buona partita"
 
 msgid "Hidden Layer"
-msgstr ""
+msgstr "Livello nascosto"
 
 msgid "Illegal move."
-msgstr ""
+msgstr "Mossa illegale."
 
 msgid "Invalid password."
-msgstr ""
+msgstr "Password non valida."
 
 msgid "Invalid replay ID provided."
-msgstr ""
+msgstr "ID di replay non valido."
 
 msgid "Invalid username: must be %d characters or less."
-msgstr ""
+msgstr "Nome utente non valido: deve contenere al massimo %d caratteri."
 
 msgid "Invalid username: must contain at least one non-numeric character."
 msgstr ""
+"Nome utente non valido: deve contenere almeno un carattere non numerico."
 
 msgid "Invalid username: must contain only letters, numbers and underscores."
 msgstr ""
+"Nome utente non valido: deve contenere solo lettere, numeri e trattini bassi."
 
 msgid "It is not your turn to move."
-msgstr ""
+msgstr "Non è il tuo turno di giocare."
 
 msgid "It is not your turn to roll."
-msgstr ""
+msgstr "Non è il tuo turno di tirare."
 
 msgid "It is not your turn."
-msgstr ""
+msgstr "Non è il tuo turno."
 
 msgid "Joined match: %s"
-msgstr ""
+msgstr "Partita congiunta: %s"
 
 msgid "Left completed match."
-msgstr ""
+msgstr "Ha lasciato la partita completata."
 
 msgid "Match not found."
-msgstr ""
+msgstr "Partita non trovata."
 
 msgid "Message not sent: There is no one else in the match."
-msgstr ""
+msgstr "Messaggio non inviato: non ci sono altri giocatori nella partita."
 
 msgid "Message not sent: You are not currently in a match."
-msgstr ""
+msgstr "Messaggio non inviato: al momento non sei in una partita."
 
 msgid "Mind Over Matter"
-msgstr ""
+msgstr "La mente vince sulla materia"
 
 msgid "Network Effect"
-msgstr ""
+msgstr "Effetto rete"
 
 msgid ""
 "No account was found with the provided username and password. To log in as a "
 "guest, do not enter a password."
 msgstr ""
+"Non è stato trovato alcun account con il nome utente e la password forniti. "
+"Per accedere come ospite, non inserire alcuna password."
 
 msgid "No replay was recorded for that game."
-msgstr ""
+msgstr "Non è stata registrata alcuno replay di quella partita."
 
 msgid "Password changed successfully."
-msgstr ""
+msgstr "Password modificata con successo."
 
 msgid "Please enter an email, username and password."
-msgstr ""
+msgstr "Inserisci un indirizzo e-mail, un nome utente e una password."
 
 msgid "Please finish your match as soon as possible."
-msgstr ""
+msgstr "Si prega di terminare la partita il prima possibile."
 
 msgid "Please leave the match you are in before creating another."
 msgstr "Esci dalla partita corrente prima di crearne una nuova."
 
 msgid "Please leave the match you are in before joining another."
-msgstr ""
+msgstr "Esci dalla partita corrente prima di partecipare a un'altra."
 
 msgid "Rejoined match: %s"
-msgstr ""
+msgstr "Partita ripresa: %s"
 
 msgid "Rematch offer sent."
-msgstr ""
+msgstr "Offerta di rivincita inviata."
 
 msgid "Resigned."
-msgstr ""
+msgstr "Dimesso."
 
 msgid "Scored a backgammon against BOT_tabula"
-msgstr ""
+msgstr "Ha segnato un backgammon contro BOT_tabula"
 
 msgid "Scored a backgammon against BOT_wildbg"
-msgstr ""
+msgstr "Ha segnato un backgammon contro BOT_wildbg"
 
 msgid "Scored a backgammon against a human"
-msgstr ""
+msgstr "Ha segnato un backgammon contro un umano"
 
 msgid "Scored a gammon against BOT_tabula"
-msgstr ""
+msgstr "Ha segnato un gammon contro BOT_tabula"
 
 msgid "Scored a gammon against BOT_wildbg"
-msgstr ""
+msgstr "Ha segnato un gammon contro BOT_wildbg"
 
 msgid "Scored a gammon against a human"
-msgstr ""
+msgstr "Ha segnato un gammon contro un umano"
 
 msgid "Scored a normal win against BOT_tabula"
-msgstr ""
+msgstr "Ha ottenuto una vittoria normale contro BOT_tabula"
 
 msgid "Scored a normal win against BOT_wildbg"
-msgstr ""
+msgstr "Ha ottenuto una vittoria normale contro BOT_wildbg"
 
 msgid "Scored a normal win against a human"
-msgstr ""
+msgstr "Ha ottenuto una vittoria normale contro un umano"
 
 msgid "SERVER BROADCAST:"
-msgstr ""
+msgstr "TRASMISSIONE SERVER:"
 
 msgid "Server error"
-msgstr ""
+msgstr "Errore server"
 
 msgid "That username is already in use."
-msgstr ""
+msgstr "Quel nome utente è già in uso."
 
 msgid "The following legal moves are available: %s"
-msgstr ""
+msgstr "Sono disponibili le seguenti mosse legali: %s"
 
 msgid "The match you are in is still in progress."
-msgstr ""
+msgstr "La partita a cui stai partecipando è ancora in corso."
 
 msgid "The server is shutting down. Reason: %s"
 msgstr "Il server si sta spegnendo. Motivo: %s"
 
 msgid "The server is shutting down in %d minute. Reason:"
 msgid_plural "The server is shutting down in %d minutes. Reason:"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Il server si spegnerà tra %d minuto. Motivo:"
+msgstr[1] "Il server si spegnerà tra %d minuti. Motivo:"
 
 msgid "Transformer"
-msgstr ""
+msgstr "Trasformatore"
 
 msgid "Unknown command: %s"
-msgstr ""
+msgstr "Comando sconosciuto: %s"
 
 msgid "Waiting for response from opponent."
-msgstr ""
+msgstr "In attesa di risposta dall'avversario."
 
 msgid "Weighted Sum"
-msgstr ""
+msgstr "Somma ponderata"
 
 msgid "You are no longer following %s."
-msgstr ""
+msgstr "Non stai più seguendo %s."
 
 msgid "You are not allowed to use that command."
-msgstr ""
+msgstr "Non è consentito utilizzare quel comando."
 
 msgid "You are not currently in a match."
-msgstr ""
+msgstr "Al momento non sei in una partita."
 
 msgid "You are now following %s."
-msgstr ""
+msgstr "Ora stai seguendo %s."
 
 msgid "You are spectating this match. Chat messages are not relayed."
 msgstr ""
+"Stai assistendo a questa partita. I messaggi della chat non vengono "
+"trasmessi."
 
 msgid "You do not currently hold the doubling cube."
 msgstr ""
