@@ -537,7 +537,7 @@ COMMANDS:
 			cmd.client.sendNotice(fmt.Sprintf(gotext.GetD(cmd.client.language, "Created match: %s"), g.name))
 
 			if len(g.password) == 0 {
-				cmd.client.sendNotice("Note: A chime will sound when another player joins. While you wait, join the bgammon.org community via Matrix or IRC at bgammon.org/community")
+				cmd.client.sendNotice("Note: A chime will sound when another player joins. While you wait, join the bgammon.org community at bgammon.org/community")
 			}
 		case bgammon.CommandJoin, "j":
 			if clientGame != nil {
