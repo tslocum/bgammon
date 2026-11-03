@@ -104,9 +104,8 @@ func (s *server) listenWebSocket(address string) {
 }
 
 func (s *server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	const bufferSize = 8
-	commands := make(chan []byte, bufferSize)
-	events := make(chan []byte, bufferSize)
+	commands := make(chan []byte, clientBufferSize)
+	events := make(chan []byte, clientBufferSize)
 
 	wsClient := newWebSocketClient(r, w, commands, events, s.verbose)
 	if wsClient == nil {

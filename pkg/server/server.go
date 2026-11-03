@@ -23,11 +23,15 @@ import (
 	"golang.org/x/text/message"
 )
 
-const clientTimeout = 40 * time.Second
+const (
+	clientBufferSize    = 16
+	clientTimeout       = 40 * time.Second
+	clientMaxNameLength = 18
 
-const maxUsernameLength = 18
+	inactiveTimeout = 600 // 10 minutes.
 
-const inactiveLimit = 600 // 10 minutes.
+	serverBufferSize = 64
+)
 
 var (
 	anyNumbers             = regexp.MustCompile(`[0-9]+`)
@@ -125,11 +129,10 @@ func NewServer(op *Options) *server {
 	if op == nil {
 		op = &Options{}
 	}
-	const bufferSize = 10
 	s := &server{
 		newGameIDs:    make(chan int),
 		newClientIDs:  make(chan int),
-		commands:      make(chan serverCommand, bufferSize),
+		commands:      make(chan serverCommand, serverBufferSize),
 		welcome:       []byte("hello Welcome to bgammon.org! Please log in by sending the 'login' command. You may specify a username, otherwise you will be assigned a random username. If you specify a username, you may also specify a password. Have fun!"),
 		defcon:        5,
 		mailServer:    op.MailServer,
@@ -306,7 +309,7 @@ func (s *server) removeClient(c *serverClient) {
 			}
 			for _, target := range sc.account.follows {
 				if c.accountID == target {
-					sc.sendNotice(fmt.Sprintf(gotext.GetD(c.language, "%s disconnected."), c.name))
+					sc.sendNotice(gotext.GetD(c.language, "%s disconnected.", c.name))
 				}
 			}
 		}
@@ -330,7 +333,7 @@ func (s *server) handleGames() {
 					case 2:
 						total += g.Player2.Inactive
 					}
-					if total >= inactiveLimit {
+					if total >= inactiveTimeout {
 						g.inactive = partialTurn
 						g.SetPartialHandled(true)
 						if !g.terminated() {
@@ -430,9 +433,8 @@ func (s *server) handleClient(c *serverClient) {
 }
 
 func (s *server) handleConnection(conn net.Conn) {
-	const bufferSize = 8
-	commands := make(chan []byte, bufferSize)
-	events := make(chan []byte, bufferSize)
+	commands := make(chan []byte, clientBufferSize)
+	events := make(chan []byte, clientBufferSize)
 
 	now := time.Now().Unix()
 
@@ -523,7 +525,7 @@ func (s *server) sendWelcome(c *serverClient) {
 func (s *server) sendMOTD(c *serverClient) {
 	motd := s.motd
 	if motd == "" {
-		motd = fmt.Sprintf(gotext.GetD(c.language, "Connect with other players and stay up to date on the latest changes. Visit %s"), "bgammon.org/community")
+		motd = gotext.GetD(c.language, "Connect with other players and stay up to date on the latest changes. Visit %s", "bgammon.org/community")
 	}
 	c.sendNotice(motd)
 }

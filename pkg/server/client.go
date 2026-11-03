@@ -199,7 +199,7 @@ func (c *serverClient) sendEvent(e interface{}) {
 		c.Write([]byte(fmt.Sprintf("failedok %s", ev.Reason)))
 	case *bgammon.EventWin:
 		if ev.Resigned != "" {
-			c.Write([]byte(fmt.Sprintf(gotext.GetD(c.language, "%s resigned."), ev.Resigned)))
+			c.Write([]byte(gotext.GetD(c.language, "%s resigned.", ev.Resigned)))
 		}
 		if ev.Points > 1 {
 			c.Write([]byte(fmt.Sprintf("win %s wins %d points!", ev.Player, ev.Points)))
