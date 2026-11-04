@@ -1,11 +1,15 @@
 msgid ""
 msgstr ""
+"PO-Revision-Date: 2026-04-09 14:57+0000\n"
+"Last-Translator: Fabrix <fabrix@noreply.codeberg.org>\n"
+"Language-Team: Portuguese (Brazil) <https://translate.codeberg.org/projects/"
+"bgammon/server/pt_BR/>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: xgotext\n"
+"X-Generator: Weblate 5.16.2\n"
 
 msgid "%[1]s (%[2]d point)"
 msgid_plural "%[1]s (%[2]d points)"
@@ -13,16 +17,16 @@ msgstr[0] ""
 msgstr[1] ""
 
 msgid "%s accepted double."
-msgstr ""
+msgstr "%s aceito em dobro."
 
 msgid "%s declined double offer."
-msgstr ""
+msgstr "%s recusou a oferta dupla."
 
 msgid "%s disconnected."
-msgstr ""
+msgstr "%s desconectado."
 
 msgid "%s is online."
-msgstr ""
+msgstr "%s está online."
 
 msgid "%[1]s offers a double (%[2]d point)."
 msgid_plural "%[1]s offers a double (%[2]d points)."

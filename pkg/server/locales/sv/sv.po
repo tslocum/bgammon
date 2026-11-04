@@ -5,318 +5,344 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: xgotext\n"
+"X-Generator: Weblate 2026.8.1\n"
+"PO-Revision-Date: 2026-09-13 19:25+0000\n"
+"Last-Translator: yeager <yeager@noreply.codeberg.org>\n"
+"Language-Team: Swedish <https://translate.codeberg.org/projects/bgammon/"
+"server/sv/>\n"
 
 msgid "%[1]s (%[2]d point)"
 msgid_plural "%[1]s (%[2]d points)"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%[1]s (%[2]d poäng)"
+msgstr[1] "%[1]s (%[2]d poäng)"
 
 msgid "%s accepted double."
-msgstr ""
+msgstr "%s accepterade dubblingen."
 
 msgid "%s declined double offer."
-msgstr ""
+msgstr "%s avböjde erbjudandet om dubbling."
 
 msgid "%s disconnected."
-msgstr ""
+msgstr "%s kopplade från."
 
 msgid "%s is online."
-msgstr ""
+msgstr "%s är online."
 
 msgid "%[1]s offers a double (%[2]d point)."
 msgid_plural "%[1]s offers a double (%[2]d points)."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%[1]s erbjuder en dubbling (%[2]d poäng)."
+msgstr[1] "%[1]s erbjuder en dubbling (%[2]d poäng)."
 
 msgid "%s resigned."
-msgstr ""
+msgstr "%s gav upp."
 
 msgid "Accepted double."
-msgstr ""
+msgstr "Dubbling accepterad."
 
 msgid "Achievement unlocked: %s"
-msgstr ""
+msgstr "Prestation upplåst: %s"
 
 msgid "Blocked opponent from entering for 7 consecutive turns"
-msgstr ""
+msgstr "Blockerade motståndaren från att gå in under 7 turer i följd"
 
 msgid "Boogie Wonderland"
-msgstr ""
+msgstr "Boogie Wonderland"
 
 msgid ""
 "Bots are not allowed to join player matches. Please create a match instead."
-msgstr ""
+msgstr "Botar får inte delta i spelarmatcher. Skapa en match i stället."
 
 msgid "Choose which doubles you want for your acey-deucey."
-msgstr ""
+msgstr "Välj vilka dubblingar du vill ha för ditt acey-deucey."
 
 msgid "Command ignored: You are spectating this match."
-msgstr ""
+msgstr "Kommandot ignorerades: Du åskådar denna match."
 
 msgid ""
 "Connect with other players and stay up to date on the latest changes. Visit "
 "%s"
 msgstr ""
+"Anslut till andra spelare och håll dig uppdaterad om de senaste ändringarna. "
+"Besök %s"
 
 msgid "Created match: %s"
-msgstr ""
+msgstr "Match skapad: %s"
 
 msgid "Declined double offer."
-msgstr ""
+msgstr "Erbjudandet om dubbling avböjdes."
 
 msgid "Double offered to opponent (%d point)."
 msgid_plural "Double offered to opponent (%d points)."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Dubbling erbjöds motståndaren (%d poäng)."
+msgstr[1] "Dubbling erbjöds motståndaren (%d poäng)."
 
 msgid "Double Trouble"
-msgstr ""
+msgstr "Dubbel trubbel"
 
 msgid ""
 "Due to ongoing abuse, only registered users may connect. Please register an "
 "account or try again later."
 msgstr ""
+"På grund av pågående missbruk får endast registrerade användare ansluta. "
+"Registrera ett konto eller försök igen senare."
 
 msgid "Due to ongoing abuse, registration is disabled. Please try again later."
 msgstr ""
+"På grund av pågående missbruk är registreringen avstängd. Försök igen senare."
 
 msgid ""
 "Due to ongoing abuse, some actions are restricted to registered users only. "
 "Please log in or register to avoid interruptions."
 msgstr ""
+"På grund av pågående missbruk är vissa åtgärder begränsade till registrerade "
+"användare. Logga in eller registrera dig för att undvika avbrott."
 
 msgid ""
 "Due to ongoing abuse, some actions may become restricted to registered users "
 "only. Please log in or register to avoid interruptions."
 msgstr ""
+"På grund av pågående missbruk kan vissa åtgärder begränsas till registrerade "
+"användare. Logga in eller registrera dig för att undvika avbrott."
 
 msgid "Failed to change password."
-msgstr ""
+msgstr "Det gick inte att ändra lösenordet."
 
 msgid "Failed to change password: incorrect existing password."
 msgstr ""
+"Det gick inte att ändra lösenordet: det nuvarande lösenordet är felaktigt."
 
 msgid "Failed to change password: you are logged in as a guest."
-msgstr ""
+msgstr "Det gick inte att ändra lösenordet: du är inloggad som gäst."
 
 msgid "Failed to create match: %s"
-msgstr ""
+msgstr "Det gick inte att skapa matchen: %s"
 
 msgid "Failed to log in: %s"
-msgstr ""
+msgstr "Det gick inte att logga in: %s"
 
 msgid ""
 "Failed to register: Invalid username: must contain at least one non-numeric "
 "character."
 msgstr ""
+"Det gick inte att registrera: Ogiltigt användarnamn: det måste innehålla "
+"minst ett icke-numeriskt tecken."
 
 msgid "Flawless Victory"
-msgstr ""
+msgstr "Felfri seger"
 
 msgid "Good Game"
-msgstr ""
+msgstr "Bra spel"
 
 msgid "Hidden Layer"
-msgstr ""
+msgstr "Dolt lager"
 
 msgid "Illegal move."
-msgstr ""
+msgstr "Ogiltigt drag."
 
 msgid "Invalid password."
-msgstr ""
+msgstr "Ogiltigt lösenord."
 
 msgid "Invalid replay ID provided."
-msgstr ""
+msgstr "Ogiltigt repris-ID angivet."
 
 msgid "Invalid username: must be %d characters or less."
-msgstr ""
+msgstr "Ogiltigt användarnamn: det får vara högst %d tecken långt."
 
 msgid "Invalid username: must contain at least one non-numeric character."
 msgstr ""
+"Ogiltigt användarnamn: det måste innehålla minst ett icke-numeriskt tecken."
 
 msgid "Invalid username: must contain only letters, numbers and underscores."
 msgstr ""
+"Ogiltigt användarnamn: det får endast innehålla bokstäver, siffror och "
+"understreck."
 
 msgid "It is not your turn to move."
-msgstr ""
+msgstr "Det är inte din tur att flytta."
 
 msgid "It is not your turn to roll."
-msgstr ""
+msgstr "Det är inte din tur att slå tärningen."
 
 msgid "It is not your turn."
-msgstr ""
+msgstr "Det är inte din tur."
 
 msgid "Joined match: %s"
-msgstr ""
+msgstr "Anslöt till match: %s"
 
 msgid "Left completed match."
-msgstr ""
+msgstr "Lämnade avslutad match."
 
 msgid "Match not found."
-msgstr ""
+msgstr "Matchen hittades inte."
 
 msgid "Message not sent: There is no one else in the match."
-msgstr ""
+msgstr "Meddelandet skickades inte: Det finns ingen annan i matchen."
 
 msgid "Message not sent: You are not currently in a match."
-msgstr ""
+msgstr "Meddelandet skickades inte: Du är för närvarande inte i en match."
 
 msgid "Mind Over Matter"
-msgstr ""
+msgstr "Ande över materia"
 
 msgid "Network Effect"
-msgstr ""
+msgstr "Nätverkseffekt"
 
 msgid ""
 "No account was found with the provided username and password. To log in as a "
 "guest, do not enter a password."
 msgstr ""
+"Inget konto hittades med det angivna användarnamnet och lösenordet. Om du "
+"vill logga in som gäst ska du inte ange något lösenord."
 
 msgid "No replay was recorded for that game."
-msgstr ""
+msgstr "Ingen repris spelades in för det spelet."
 
 msgid "Password changed successfully."
-msgstr ""
+msgstr "Lösenordet har ändrats."
 
 msgid "Please enter an email, username and password."
-msgstr ""
+msgstr "Ange en e-postadress, ett användarnamn och ett lösenord."
 
 msgid "Please finish your match as soon as possible."
-msgstr ""
+msgstr "Avsluta matchen så snart som möjligt."
 
 msgid "Please leave the match you are in before creating another."
-msgstr ""
+msgstr "Lämna matchen du är med i innan du skapar en annan."
 
 msgid "Please leave the match you are in before joining another."
-msgstr ""
+msgstr "Lämna matchen du är med i innan du ansluter till en annan."
 
 msgid "Rejoined match: %s"
-msgstr ""
+msgstr "Anslöt till match igen: %s"
 
 msgid "Rematch offer sent."
-msgstr ""
+msgstr "Erbjudande om returmatch skickat."
 
 msgid "Resigned."
-msgstr ""
+msgstr "Gav upp."
 
 msgid "Scored a backgammon against BOT_tabula"
-msgstr ""
+msgstr "Vann en backgammon mot BOT_tabula"
 
 msgid "Scored a backgammon against BOT_wildbg"
-msgstr ""
+msgstr "Vann en backgammon mot BOT_wildbg"
 
 msgid "Scored a backgammon against a human"
-msgstr ""
+msgstr "Vann en backgammon mot en människa"
 
 msgid "Scored a gammon against BOT_tabula"
-msgstr ""
+msgstr "Vann en gammon mot BOT_tabula"
 
 msgid "Scored a gammon against BOT_wildbg"
-msgstr ""
+msgstr "Vann en gammon mot BOT_wildbg"
 
 msgid "Scored a gammon against a human"
-msgstr ""
+msgstr "Vann en gammon mot en människa"
 
 msgid "Scored a normal win against BOT_tabula"
-msgstr ""
+msgstr "Vann en vanlig vinst mot BOT_tabula"
 
 msgid "Scored a normal win against BOT_wildbg"
-msgstr ""
+msgstr "Vann en vanlig vinst mot BOT_wildbg"
 
 msgid "Scored a normal win against a human"
-msgstr ""
+msgstr "Vann en vanlig vinst mot en människa"
 
 msgid "SERVER BROADCAST:"
-msgstr ""
+msgstr "SERVERMEDDELANDE:"
 
 msgid "Server error"
-msgstr ""
+msgstr "Serverfel"
 
 msgid "That username is already in use."
-msgstr ""
+msgstr "Det användarnamnet används redan."
 
 msgid "The following legal moves are available: %s"
-msgstr ""
+msgstr "Följande giltiga drag är tillgängliga: %s"
 
 msgid "The match you are in is still in progress."
-msgstr ""
+msgstr "Matchen du är med i pågår fortfarande."
 
 msgid "The server is shutting down. Reason: %s"
-msgstr ""
+msgstr "Servern stängs av. Orsak: %s"
 
 msgid "The server is shutting down in %d minute. Reason:"
 msgid_plural "The server is shutting down in %d minutes. Reason:"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Servern stängs av om %d minut. Orsak:"
+msgstr[1] "Servern stängs av om %d minuter. Orsak:"
 
 msgid "Transformer"
-msgstr ""
+msgstr "Transformator"
 
 msgid "Unknown command: %s"
-msgstr ""
+msgstr "Okänt kommando: %s"
 
 msgid "Waiting for response from opponent."
-msgstr ""
+msgstr "Väntar på svar från motståndaren."
 
 msgid "Weighted Sum"
-msgstr ""
+msgstr "Viktad summa"
 
 msgid "You are no longer following %s."
-msgstr ""
+msgstr "Du följer inte längre %s."
 
 msgid "You are not allowed to use that command."
-msgstr ""
+msgstr "Du har inte behörighet att använda det kommandot."
 
 msgid "You are not currently in a match."
-msgstr ""
+msgstr "Du är för närvarande inte i en match."
 
 msgid "You are now following %s."
-msgstr ""
+msgstr "Du följer nu %s."
 
 msgid "You are spectating this match. Chat messages are not relayed."
-msgstr ""
+msgstr "Du åskådar denna match. Chattmeddelanden vidarebefordras inte."
 
 msgid "You do not currently hold the doubling cube."
-msgstr ""
+msgstr "Du har för närvarande inte dubbleringskuben."
 
 msgid "You have already requested a rematch."
-msgstr ""
+msgstr "Du har redan begärt en returmatch."
 
 msgid "You may not accept the double until your opponent rejoins the match."
 msgstr ""
+"Du kan inte acceptera dubblingen förrän motståndaren har anslutit till "
+"matchen igen."
 
 msgid "You may not double at this time."
-msgstr ""
+msgstr "Du kan inte dubbla just nu."
 
 msgid "You may not double until your opponent rejoins the match."
-msgstr ""
+msgstr "Du kan inte dubbla förrän motståndaren har anslutit till matchen igen."
 
 msgid "You may not move until your opponent rejoins the match."
-msgstr ""
+msgstr "Du kan inte flytta förrän motståndaren har anslutit till matchen igen."
 
 msgid "You may not resign until it is your turn."
-msgstr ""
+msgstr "Du kan inte ge upp förrän det är din tur."
 
 msgid "You may not resign until your opponent rejoins the match."
-msgstr ""
+msgstr "Du kan inte ge upp förrän motståndaren har anslutit till matchen igen."
 
 msgid "You may not roll until your opponent rejoins the match."
 msgstr ""
+"Du kan inte slå tärningen förrän motståndaren har anslutit till matchen igen."
 
 msgid "You must login before using other commands."
-msgstr ""
+msgstr "Du måste logga in innan du använder andra kommandon."
 
 msgid "You must roll first."
-msgstr ""
+msgstr "Du måste slå tärningen först."
 
 msgid ""
 "You must wait until your opponent rejoins the match before continuing the "
 "game."
 msgstr ""
+"Du måste vänta på att motståndaren ansluter till matchen igen innan du "
+"fortsätter spelet."
 
 msgid "Your opponent left the match."
-msgstr ""
+msgstr "Din motståndare lämnade matchen."
 
 msgid "Your opponent would like to play again."
-msgstr ""
+msgstr "Din motståndare vill spela igen."
