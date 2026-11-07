@@ -26,6 +26,7 @@ import (
 const (
 	clientBufferSize    = 16
 	clientTimeout       = 40 * time.Second
+	clientWriteTimeout  = 2 * time.Second
 	clientMaxNameLength = 18
 
 	inactiveTimeout = 600 // 10 minutes.

@@ -18,6 +18,7 @@ type socketClient struct {
 	address    string
 	events     chan []byte
 	commands   chan<- []byte
+	timeout    *time.Timer
 	terminated bool
 	wgEvents   sync.WaitGroup
 	verbose    bool
@@ -28,6 +29,7 @@ func newSocketClient(conn net.Conn, commands chan<- []byte, events chan []byte, 
 		conn:     conn,
 		events:   events,
 		commands: commands,
+		timeout:  time.NewTimer(clientWriteTimeout),
 		verbose:  verbose,
 	}
 }
@@ -55,7 +57,13 @@ func (c *socketClient) Write(message []byte) {
 	}
 
 	c.wgEvents.Add(1)
-	c.events <- message
+	c.timeout.Reset(clientWriteTimeout)
+	select {
+	case c.events <- message:
+	case <-c.timeout.C:
+		c.wgEvents.Done()
+		c.Terminate("Connection timed out")
+	}
 }
 
 func (c *socketClient) readCommands() {
