@@ -190,6 +190,11 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 		return
 	}
 
+	if len(s.listeners) > 0 && strings.HasPrefix(string(cmd.client.name), "BOT_") && cmd.client.accountID == 0 {
+		cmd.client.Terminate("Please register an account for your bot.")
+		return
+	}
+
 	cmd.client.sendEvent(&bgammon.EventWelcome{
 		PlayerName: string(cmd.client.name),
 		Clients:    len(s.clients),
@@ -807,6 +812,9 @@ COMMANDS:
 				})
 				continue
 			}
+			clientGame.Roll1 = 6
+			clientGame.Roll2 = 6
+			clientGame.Roll3 = 0
 
 			clientGame.eachClient(func(client *serverClient) {
 				ev := &bgammon.EventRolled{
@@ -1756,13 +1764,14 @@ COMMANDS:
 			}
 
 			clientGame.Turn = 1
-			clientGame.Roll1 = 5
-			clientGame.Roll2 = 5
+			clientGame.Roll1 = 0
+			clientGame.Roll2 = 0
 			clientGame.Roll3 = 0
 			clientGame.Variant = bgammon.VariantBackgammon
 			clientGame.Player1.Entered = true
 			clientGame.Player2.Entered = true
-			clientGame.Board = []int8{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0}
+			clientGame.Board = []int8{0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0}
+			clientGame.Points = 5
 
 			log.Println(clientGame.Board[0:28])
 
