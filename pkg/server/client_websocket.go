@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"codeberg.org/tslocum/bgammon"
 	"github.com/coder/websocket"
@@ -25,6 +26,7 @@ type webSocketClient struct {
 	address    string
 	events     chan []byte
 	commands   chan<- []byte
+	timeout    *time.Timer
 	terminated bool
 	wgEvents   sync.WaitGroup
 	verbose    bool
@@ -40,6 +42,7 @@ func newWebSocketClient(r *http.Request, w http.ResponseWriter, commands chan<- 
 		conn:     conn,
 		events:   events,
 		commands: commands,
+		timeout:  time.NewTimer(clientWriteTimeout),
 		verbose:  verbose,
 	}
 }
@@ -67,7 +70,13 @@ func (c *webSocketClient) Write(message []byte) {
 	}
 
 	c.wgEvents.Add(1)
-	c.events <- message
+	c.timeout.Reset(clientWriteTimeout)
+	select {
+	case c.events <- message:
+	case <-c.timeout.C:
+		c.wgEvents.Done()
+		c.Terminate("Connection timed out")
+	}
 }
 
 func (c *webSocketClient) readCommands() {

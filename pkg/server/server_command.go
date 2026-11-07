@@ -812,9 +812,6 @@ COMMANDS:
 				})
 				continue
 			}
-			clientGame.Roll1 = 6
-			clientGame.Roll2 = 6
-			clientGame.Roll3 = 0
 
 			clientGame.eachClient(func(client *serverClient) {
 				ev := &bgammon.EventRolled{
