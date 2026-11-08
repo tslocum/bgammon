@@ -102,6 +102,13 @@ CREATE TABLE ban (
 	reason text NOT NULL,
 	UNIQUE (ip, account)
 );
+CREATE TABLE forbid (
+	username text NOT NULL,
+	created integer NOT NULL,
+	staff integer NOT NULL,
+	reason text NOT NULL,
+	UNIQUE (username)
+);
 `
 
 var (
@@ -927,6 +934,61 @@ func deleteBan(ipHash string, account int) error {
 		}
 	}
 	return nil
+}
+
+func addForbid(username string, staff int, reason string) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil || username == "" {
+		return nil
+	}
+	username = strings.ToLower(username)
+
+	tx, err := begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit(context.Background())
+
+	timestamp := time.Now().Unix()
+
+	var result int
+	err = tx.QueryRow(context.Background(), "SELECT COUNT(*) FROM forbid WHERE username = $1", username).Scan(&result)
+	if err != nil {
+		log.Fatal(err)
+	} else if result == 0 {
+		_, err = tx.Exec(context.Background(), "INSERT INTO forbid (username, created, staff, reason) VALUES ($1, $2, $3, $4)", username, timestamp, staff, reason)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	return nil
+}
+
+func checkForbid(username string) (bool, string) {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	if db == nil || username == "" {
+		return false, ""
+	}
+	username = strings.ToLower(username)
+
+	tx, err := begin()
+	if err != nil {
+		return false, ""
+	}
+	defer tx.Commit(context.Background())
+
+	var reason string
+	err = tx.QueryRow(context.Background(), "SELECT reason FROM forbid WHERE position(username in $1) > 0 LIMIT 1", username).Scan(&reason)
+	if err == pgx.ErrNoRows {
+		return false, ""
+	} else if err != nil {
+		log.Fatalf("failed to check for forbidden username: %s", err)
+	}
+	return true, reason
 }
 
 func matchHistory(username string) ([]*bgammon.HistoryMatch, error) {

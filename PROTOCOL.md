@@ -169,6 +169,10 @@ must write some data to the server at least once every 40 seconds.
   - Unban a user by IP address or account.
   - This command is only available to server administrators and moderators.
 
+- `forbid <username> [reason]`
+  - Forbid a username.
+  - This command is only available to server administrators and moderators.
+
 - `shutdown <minutes> <reason>`
   - Prevent the creation of new matches and periodically warn players about the server shutting down.
   - This command is only available to server administrators.

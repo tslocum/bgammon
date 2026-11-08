@@ -38,6 +38,7 @@ const (
 	CommandRename        = "rename"        // Rename an account.
 	CommandKick          = "kick"          // Kick a user from the server.
 	CommandBan           = "ban"           // Ban an IP address or account.
+	CommandForbid        = "forbid"        // Forbid username.
 	CommandUnban         = "unban"         // Unban an IP address or account.
 	CommandShutdown      = "shutdown"      // Prevent the creation of new matches.
 )
@@ -102,6 +103,7 @@ var HelpText = map[string]string{
 	CommandRename:        "<old> <new> - Rename an account.",
 	CommandKick:          "<username> [reason] - Kick a user from the server.",
 	CommandBan:           "<username> [reason] - Ban a user by IP addresss and account (if logged in).",
+	CommandForbid:        "<username> [reason] - Forbid username.",
 	CommandUnban:         "<IP>/<username> - Unban a user by IP address or account.",
 	CommandShutdown:      "<minutes> <reason> - Prevent the creation of new matches and periodically warn players about the server shutting down. This command is only available to server administrators.",
 }

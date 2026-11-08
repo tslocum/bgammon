@@ -190,6 +190,17 @@ func (s *server) handleFirstCommand(cmd serverCommand, keyword string, params []
 		return
 	}
 
+	forbidden, forbiddenReason := checkForbid(string(cmd.client.name))
+	if forbidden {
+		addBan(cmd.client.Address(), cmd.client.accountID, 0, forbiddenReason)
+		msg := "You are banned"
+		if banReason != "" {
+			msg += ": " + forbiddenReason
+		}
+		cmd.client.Terminate(msg)
+		return
+	}
+
 	if len(s.listeners) > 0 && strings.HasPrefix(string(cmd.client.name), "BOT_") && cmd.client.accountID == 0 {
 		cmd.client.Terminate("Please register an account for your bot.")
 		return
@@ -367,7 +378,7 @@ COMMANDS:
 		clientGame := s.gameByClient(cmd.client)
 		if clientGame != nil && clientGame.client1 != cmd.client && clientGame.client2 != cmd.client {
 			switch keyword {
-			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandAchievements, bgammon.CommandHistory, bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandDefcon, bgammon.CommandRename, bgammon.CommandKick, bgammon.CommandBan, bgammon.CommandUnban, bgammon.CommandShutdown:
+			case bgammon.CommandHelp, "h", bgammon.CommandJSON, bgammon.CommandList, "ls", bgammon.CommandBoard, "b", bgammon.CommandLeave, "l", bgammon.CommandAchievements, bgammon.CommandHistory, bgammon.CommandReplay, bgammon.CommandSet, bgammon.CommandPassword, bgammon.CommandFollow, bgammon.CommandUnfollow, bgammon.CommandPong, bgammon.CommandDisconnect, bgammon.CommandMOTD, bgammon.CommandBroadcast, bgammon.CommandDefcon, bgammon.CommandRename, bgammon.CommandKick, bgammon.CommandBan, bgammon.CommandUnban, bgammon.CommandForbid, bgammon.CommandShutdown:
 				// These commands are allowed to be used by spectators.
 			default:
 				cmd.client.sendNotice(gotext.GetD(cmd.client.language, "Command ignored: You are spectating this match."))
@@ -1732,6 +1743,26 @@ COMMANDS:
 				}
 			}
 			cmd.client.sendNotice(fmt.Sprintf("Unbanned %s.", params[0]))
+		case bgammon.CommandForbid:
+			if len(params) == 0 {
+				cmd.client.sendNotice("Please specify a username.")
+				continue
+			} else if !cmd.client.Admin() && !cmd.client.Mod() {
+				cmd.client.sendNotice("Access denied.")
+				continue
+			}
+
+			var reason string
+			if len(params) > 1 {
+				reason = string(bytes.Join(params[1:], []byte(" ")))
+			}
+
+			err := addForbid(string(params[0]), cmd.client.accountID, reason)
+			if err != nil {
+				cmd.client.sendNotice("Failed to forbid username: " + err.Error())
+			}
+
+			cmd.client.sendNotice(fmt.Sprintf("Forbid username %s.", params[0]))
 		case bgammon.CommandShutdown:
 			if !cmd.client.Admin() {
 				cmd.client.sendNotice("Access denied.")
